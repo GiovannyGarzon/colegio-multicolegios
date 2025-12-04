@@ -1,0 +1,559 @@
+{% load static %}
+{% load extras %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Boletín {{ estudiante.apellidos }} {{ estudiante.nombres }}</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 1.8cm 1.8cm 2cm 1.8cm;
+    }
+
+    /* Colores institucionales */
+    :root{
+      --verde: #00796B;
+      --verde-oscuro: #005f54;
+      --azul-claro: #d7e3ff;
+      --gris-area: #f2f2f2;
+    }
+
+    body {
+      font-family: "Arial", "Helvetica", sans-serif;
+      font-size: 11px;
+      color: #000;
+      background: #ffffff;
+    }
+
+    .page {
+      width: 100%;
+      background:#fff;
+      border: 2px solid #000;
+      padding: 8px 10px 10px;
+    }
+
+    table { border-collapse: collapse; width: 100%; }
+
+    /* ---------- ENCABEZADO ---------- */
+    h1 {
+      font-size: 16px;
+      font-weight: bold;
+      margin: 0;
+    }
+
+    .subtitulo-colegio{
+      font-size: 10px;
+      margin: 0;
+    }
+
+    .subtitulo-periodo{
+      margin: 4px 0 0;
+      font-size: 13px;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+
+    /* ---------- BARRA BAJA ENCABEZADO (VERDE) ---------- */
+    .barra-encabezado{
+      height: 4px;
+      background: var(--verde);
+      margin: 4px 0 8px;
+    }
+
+    /* ---------- DATOS DEL ESTUDIANTE ---------- */
+    .datos-alumno {
+      border: 1.5px solid #000;
+      margin-bottom: 8px;
+    }
+
+    .datos-alumno td {
+      border-right: 1px solid #000;
+      padding: 3px 4px;
+      font-size: 10px;
+    }
+    .datos-alumno tr:first-child td{
+      border-bottom:1px solid #000;
+    }
+    .datos-alumno td:last-child{
+      border-right:0;
+    }
+    .datos-label {
+      font-weight: bold;
+      width: 90px;
+      background: var(--azul-claro);
+      text-transform: uppercase;
+    }
+
+    /* ---------- TABLA PRINCIPAL ---------- */
+    .tabla-notas {
+      border: 1.5px solid #000;
+      margin-top: 6px;
+    }
+
+    .tabla-notas th,
+    .tabla-notas td {
+      border: 1px solid #000;
+      padding: 3px 4px;
+      vertical-align: top;
+      font-size: 10px;
+    }
+
+    .tabla-notas thead th {
+      text-align: center;
+      font-weight: bold;
+      background: var(--azul-claro);
+      text-transform: uppercase;
+    }
+
+    .area-row td {
+      background: var(--azul-claro);;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+
+    /* “Recuadro azul” para el nombre de la asignatura */
+    .asig-nombre{
+      display:inline-block;
+      padding:2px 6px;
+      margin-bottom:2px;
+      font-weight:bold;
+      background: var(--azul-claro);
+      border:1px solid #9fb6ff;
+    }
+
+    .competencia-texto { text-align: justify; }
+
+    .consolidado-block{
+      border:1px solid #ccc;
+      padding:2px 4px;
+      background: var(--azul-claro);
+      line-height:1.2;
+    }
+    .consolidado-block span.label{
+      font-weight:bold;
+    }
+    /* ----- Consolidado horizontal por asignatura ----- */
+    .col-consolidado {
+      padding: 0;
+    }
+
+    .tabla-consolidado-asig{
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 9px;
+    }
+
+    .tabla-consolidado-asig th,
+    .tabla-consolidado-asig td{
+      border: 1px solid #000;
+      text-align: center;
+      padding: 1px 2px;
+    }
+
+    .tabla-consolidado-asig th.titulo{
+      background: var(--azul-claro);
+      font-weight: bold;
+    }
+
+    .tabla-consolidado-asig th.periodo{
+      width: 8%;
+    }
+
+    .tabla-consolidado-asig td.nota{
+      width: 10%;
+    }
+
+    .tabla-consolidado-asig th.promedio{
+      width: 18%;
+    }
+    /* ------------ BLOQUES FINALES ------------ */
+    .bloque-final {
+      margin-top: 10px;
+      font-size: 10px;
+    }
+    .bloque-final h2 {
+      margin: 0 0 4px;
+      font-size: 11px;
+      text-transform: uppercase;
+      font-weight: bold;
+      border-bottom: 1px solid #000;
+    }
+
+    /* ---------- TABLA ESCALA ---------- */
+    .tabla-escala{
+      width:40%;
+      border-collapse:collapse;
+      font-size:10px;
+    }
+    .tabla-escala th{
+      border:2px solid #000;
+      text-align:center;
+      padding:4px;
+      background:#e5e7eb;
+    }
+    .tabla-escala td{
+      border:2px solid #000;
+      text-align:center;
+      padding:2px 0;
+    }
+    .tabla-escala td:first-child{
+      font-weight:bold;
+    }
+    .bloques-asistencia-escala{
+      width:100%;
+      border-collapse:collapse;
+      margin-top:10px;
+    }
+
+    .bloques-asistencia-escala td{
+      vertical-align:top;
+      padding:0;
+    }
+
+    /* Dentro de la tabla no necesitamos margen extra arriba */
+    .bloques-asistencia-escala .bloque-final{
+      margin-top:0;
+    }
+/* ---- Tabla de asistencia ---- */
+    .tabla-asistencia{
+      border-collapse: collapse;
+      font-size: 10px;
+      margin-top: 4px;
+    }
+
+    .tabla-asistencia th,
+    .tabla-asistencia td{
+      border: 1px solid #000;
+      padding: 2px 4px;
+    }
+
+    .tabla-asistencia th{
+      background: var(--azul-claro);
+      text-align: left;
+      font-weight: bold;
+    }
+    .tabla-asistencia td{
+      text-align: center;
+      width: 60px;
+    }
+    /* ---------- FIRMAS ---------- */
+    .firmas {
+      margin-top: 26px;
+      width: 100%;
+      font-size: 10px;
+      text-align:center;
+    }
+    .firmas strong{
+      font-size:10px;
+    }
+/* ---------- TABLA PROMEDIOS + PUESTOS ---------- */
+    .tabla-promedios {
+      border-collapse: collapse;
+      font-size: 10px;
+      margin: 0 auto;           /* centrada */
+      margin-top: 4px;
+    }
+
+    .tabla-promedios th,
+    .tabla-promedios td {
+      border: 1px solid #000;
+      padding: 3px 6px;
+      text-align: center;
+    }
+
+    .tabla-promedios thead th {
+      background: var(--azul-claro);
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ===========================
+       ENCABEZADO NUEVO
+       =========================== -->
+  <table style="margin-bottom:10px;">
+    <tr>
+
+      <!-- ESCUDO -->
+      <td style="width:80px; text-align:left;">
+        <img src="{{ logo_url }}" style="height:70px;">
+      </td>
+
+      <!-- TITULO CENTRADO -->
+      <td style="text-align:center;">
+        <h1 style="margin:0; font-size:16px; font-weight:bold;">
+          CENTRO EDUCATIVO GIN GABI
+        </h1>
+        <p style="margin:0; font-size:10px;">
+          "EDUCAMOS CON AMOR A QUIENES CONSTRUIRÁN EL MAÑANA"
+        </p>
+        <p style="margin:0; font-size:9px;">
+          Resolución de aprobación N°1358 - 1240
+        </p>
+
+        <p style="margin:4px 0 0; font-size:13px; font-weight:bold; text-transform:uppercase;
+            background: yellow;
+            display:inline-block;
+            padding:2px 4px;
+        ">
+          {{ periodo.nombre }} – REGISTRO ESCOLAR VALORATIVO
+        </p>
+      </td>
+
+      <!-- FOTO DEL ESTUDIANTE -->
+      <td style="width:80px; text-align:right;">
+        {% if estudiante.foto %}
+          <img src="{{ estudiante.foto.url }}" style="height:80px; border:1px solid #000;">
+        {% else %}
+          <div style="height:80px; width:65px; border:1px solid #000; font-size:9px; text-align:center;">
+            Sin foto
+          </div>
+        {% endif %}
+      </td>
+
+    </tr>
+  </table>
+
+  <!-- ===========================
+       DATOS DEL ESTUDIANTE
+       =========================== -->
+  <table class="datos-alumno">
+    <tr>
+      <td class="datos-label">NOMBRE</td>
+      <td>{{ estudiante.nombres }} {{ estudiante.apellidos }}</td>
+      <td class="datos-label">DOCUMENTO</td>
+      <td>{{ estudiante.identificacion }}</td>
+    </tr>
+    <tr>
+      <td class="datos-label">GRADO</td>
+      <td>{{ curso.grado }} {{ curso.nombre }}</td>
+      <td class="datos-label">AÑO</td>
+      <td>{{ anio.nombre }}</td>
+    </tr>
+  </table>
+
+  <!-- ===========================
+       TABLA PRINCIPAL
+       =========================== -->
+  <table class="tabla-notas">
+    <thead>
+      <tr>
+        <th>AREA Y / O ASIGNATURA</th>
+        <th>COMPETENCIA Y DESEMPEÑO</th>
+        <th>CONSOLIDADO DE NOTAS POR TRIMESTRE / PROMEDIO</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      {% for area in areas %}
+        <tr class="area-row">
+          <td colspan="3">ÁREA: {{ area.nombre|upper }}</td>
+        </tr>
+
+        {% for fila in area.filas %}
+          {% with resumen=resumen_por_asig|get_item:fila.asignatura %}
+          <tr>
+
+            <!-- ASIGNATURA -->
+            <td>
+              <span class="asig-nombre">{{ fila.asignatura }}</span>
+            </td>
+
+            <!-- LOGROS -->
+            <td class="competencia-texto">
+              {% if fila.detalle %}
+                {% for d in fila.detalle %}
+                  • {{ d.titulo }}<br>
+                {% endfor %}
+              {% else %}
+                Sin logros configurados para este período.
+              {% endif %}
+            </td>
+
+            <!-- CONSOLIDADO -->
+            <td class="col-consolidado">
+              {% if resumen %}
+                <table class="tabla-consolidado-asig">
+                  <tr>
+                    <th class="titulo" colspan="6">
+                      CONSOLIDADO DE NOTAS POR TRIMESTRE
+                    </th>
+                    <th class="promedio" rowspan="2">
+                      PROMEDIO<br>
+                      {{ resumen.prom_final|default:"–" }}
+                    </th>
+                  </tr>
+                  <tr>
+                    <th class="periodo">I</th>
+                    <td class="nota">{{ resumen.p1|default:"–" }}</td>
+
+                    <th class="periodo">II</th>
+                    <td class="nota">{{ resumen.p2|default:"–" }}</td>
+
+                    <th class="periodo">III</th>
+                    <td class="nota">{{ resumen.p3|default:"–" }}</td>
+                  </tr>
+                </table>
+              {% else %}
+                –
+              {% endif %}
+            </td>
+          </tr>
+          {% endwith %}
+        {% endfor %}
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <!-- ===========================
+       OBSERVACIÓN GENERAL
+       =========================== -->
+  <div class="bloque-final">
+    <h2>OBSERVACIÓN GENERAL DEL PERÍODO</h2>
+    {% if obs_general and obs_general.texto %}
+      <p>{{ obs_general.texto }}</p>
+    {% else %}
+      <p>No hay observación registrada para este período.</p>
+    {% endif %}
+  </div>
+
+  <!-- ===========================
+       FALLAS
+       =========================== -->
+  <div class="bloque-final">
+    <table class="bloques-asistencia-escala">
+      <tr>
+        <!-- Columna izquierda: asistencia -->
+        <td style="width:60%;">
+          <div class="bloque-final">
+            <h2>RESUMEN DE ASISTENCIA DEL PERÍODO</h2>
+            <table class="tabla-asistencia">
+              <tr>
+                <th>Fallas registradas</th>
+                <td>{{ total_fallas_periodo|default:"0" }}</td>
+              </tr>
+              <tr>
+                <th>Tardanzas registradas</th>
+                <td>{{ total_tardanzas_periodo|default:"0" }}</td>
+              </tr>
+            </table>
+          </div>
+        </td>
+
+        <!-- Columna derecha: escala valorativa -->
+        <td style="width:40%;">
+          <div class="bloque-final">
+            <h2>ESCALA VALORATIVA</h2>
+
+            <table class="tabla-escala">
+              <tr>
+                <th colspan="2">
+                  ESCALA VALORATIVA
+                </th>
+              </tr>
+              <tr>
+                <td>S</td>
+                <td>4,6 A 5,0</td>
+              </tr>
+              <tr>
+                <td>A</td>
+                <td>4,1 A 4,5</td>
+              </tr>
+              <tr>
+                <td>B</td>
+                <td>3,5 A 4,0</td>
+              </tr>
+              <tr>
+                <td>BJ</td>
+                <td>1,0 A 3,4</td>
+              </tr>
+            </table>
+          </div>
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- ===========================
+       PROMEDIOS GLOBALES
+       =========================== -->
+  <div class="bloque-final">
+    <h2>PROMEDIOS GENERALES</h2>
+
+    <table class="tabla-promedios">
+      <thead>
+        <tr>
+          <th colspan="2">1 Trimestre</th>
+          <th colspan="2">2 Trimestre</th>
+          <th colspan="2">3 Trimestre</th>
+          <th colspan="2">Acumulado final</th>
+        </tr>
+        <tr>
+          <th>Promedio</th><th>Puesto</th>
+          <th>Promedio</th><th>Puesto</th>
+          <th>Promedio</th><th>Puesto</th>
+          <th>Promedio</th><th>Puesto</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>{{ promedios_trimestre.0|default:"N.A." }}</td>
+          <td>{{ puesto_p1|default:"N.A." }}</td>
+
+          <td>{{ promedios_trimestre.1|default:"N.A." }}</td>
+          <td>{{ puesto_p2|default:"N.A." }}</td>
+
+          <td>{{ promedios_trimestre.2|default:"N.A." }}</td>
+          <td>{{ puesto_p3|default:"N.A." }}</td>
+
+          <td>{{ promedio_anual|default:"N.A." }}</td>
+          <td>{{ puesto_final|default:"N.A." }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ===========================
+       FIRMAS + SELLO
+       =========================== -->
+  <table class="firmas" style="width:100%; margin-top:30px; font-size:10px; text-align:center;">
+    <tr>
+
+      <!-- DOCENTE -->
+      <td style="width:40%; position:relative;">
+        <strong style="display:block; margin-bottom:2px;">
+          {{ docente_nombre }}
+        </strong>
+
+        <div style="border-top:1px solid #000; width:100%; margin:0 auto 2px auto;"></div>
+
+        <small>DOCENTE</small>
+      </td>
+
+      <!-- SELLO CENTRO -->
+      <td style="width:20%; text-align:center;">
+        {% if sello_url %}
+          <img src="{{ sello_url }}" style="height:55px;">
+        {% endif %}
+      </td>
+
+      <!-- RECTOR -->
+      <td style="width:40%; position:relative;">
+        <strong style="display:block; margin-bottom:2px;">
+          {{ rector_nombre }}
+        </strong>
+
+        <div style="border-top:1px solid #000; width:100%; margin:0 auto 2px auto;"></div>
+
+        <small>RECTOR(A)</small>
+      </td>
+
+    </tr>
+  </table>
+
+</div>
+</body>
+</html>

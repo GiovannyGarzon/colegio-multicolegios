@@ -1,0 +1,42 @@
+{% extends "colegioapp/base.html" %}
+
+{% block title %}{% if editando %}Editar usuario{% else %}Crear usuario{% endif %}{% endblock %}
+
+{% block content %}
+<main>
+  <h2 style="text-align:center;margin-bottom:20px;">
+    {% if editando %}Editar usuario{% else %}Crear nuevo usuario{% endif %}
+  </h2>
+
+  <form method="post"
+      enctype="multipart/form-data">
+
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+
+    {% for field in form %}
+      <div style="text-align:left;">
+        <label style="font-weight:600;">{{ field.label }}:</label><br>
+        {{ field }}
+        {% if field.help_text %}
+          <div style="font-size:0.85em;color:#607d8b;">{{ field.help_text }}</div>
+        {% endif %}
+        {% for error in field.errors %}
+          <div style="color:#c62828; font-size:0.85em;">{{ error }}</div>
+        {% endfor %}
+      </div>
+    {% endfor %}
+
+    <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:10px;">
+      <a href="{% url 'cuentas:usuarios_list' %}"
+         style="padding:8px 14px;background:#90a4ae;color:#fff;text-decoration:none;border-radius:8px;">
+        Cancelar
+      </a>
+      <button type="submit"
+              style="padding:8px 14px;background:#00796B;color:white;border:none;border-radius:8px;cursor:pointer;">
+        Guardar
+      </button>
+    </div>
+  </form>
+</main>
+{% endblock %}

@@ -1,0 +1,73 @@
+{% extends "colegioapp/base.html" %}
+
+{% block title %}Asistencia · {{ curso }}{% endblock %}
+
+{% block content %}
+<main style="max-width:1000px;margin:0 auto;">
+  <h2>Asistencia - {{ curso.grado }} {{ curso.nombre }}</h2>
+  <p>
+    <strong>Año:</strong> {{ anio.nombre }} ·
+    <strong>Período:</strong> {{ periodo.nombre }} ·
+    <strong>Fecha:</strong> {{ fecha }}
+  </p>
+
+  <form method="post" style="margin-top:18px;">
+    {% csrf_token %}
+    <table style="width:100%;border-collapse:collapse;font-size:0.95rem;">
+      <thead>
+        <tr style="background:#e5e7eb;">
+          <th style="border:1px solid #cbd5e1;padding:6px 8px;text-align:left;">#</th>
+          <th style="border:1px solid #cbd5e1;padding:6px 8px;text-align:left;">Estudiante</th>
+          <th style="border:1px solid #cbd5e1;padding:6px 8px;text-align:center;">Estado</th>
+          <th style="border:1px solid #cbd5e1;padding:6px 8px;text-align:left;">Observación</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for fila in filas %}
+          <tr>
+            <td style="border:1px solid #e5e7eb;padding:4px 6px;text-align:center;">
+              {{ forloop.counter }}
+            </td>
+            <td style="border:1px solid #e5e7eb;padding:4px 6px;">
+              {{ fila.estudiante.apellidos }} {{ fila.estudiante.nombres }}
+            </td>
+            <td style="border:1px solid #e5e7eb;padding:4px 6px;text-align:center;">
+              <select name="estado_{{ fila.estudiante.id }}"
+                      style="padding:4px 6px;border-radius:6px;border:1px solid #cbd5e1;">
+                <option value="P" {% if fila.estado == "P" %}selected{% endif %}>Presente</option>
+                <option value="A" {% if fila.estado == "A" %}selected{% endif %}>Ausente</option>
+                <option value="J" {% if fila.estado == "J" %}selected{% endif %}>Justificada</option>
+                <option value="T" {% if fila.estado == "T" %}selected{% endif %}>Tardanza</option>
+              </select>
+            </td>
+            <td style="border:1px solid #e5e7eb;padding:4px 6px;">
+              <input type="text"
+                     name="obs_{{ fila.estudiante.id }}"
+                     value="{{ fila.observacion }}"
+                     style="width:100%;padding:4px 6px;border-radius:6px;border:1px solid #cbd5e1;font-size:0.9rem;">
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="4" style="text-align:center;padding:10px;">
+              No hay estudiantes registrados en este curso.
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <div style="text-align:right;margin-top:14px;display:flex;justify-content:space-between;align-items:center;">
+      <a href="{% url 'academico:asistencia_selector' %}"
+         style="text-decoration:none;padding:8px 14px;border-radius:8px;background:#9ca3af;color:#fff;">
+        ← Volver al selector
+      </a>
+
+      <button type="submit"
+              style="padding:8px 18px;border:none;border-radius:8px;background:#0f766e;color:#fff;cursor:pointer;">
+        Guardar asistencia
+      </button>
+    </div>
+  </form>
+</main>
+{% endblock %}

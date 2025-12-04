@@ -1,0 +1,69 @@
+{% extends "colegioapp/base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-3">Certificaciones</h2>
+    <p>Busca el estudiante y genera el certificado estudiantil o de notas.</p>
+
+    <!-- Buscador -->
+    <form method="get" class="row g-2 mb-4">
+        <div class="col-sm-8">
+            <input type="text"
+                   name="q"
+                   value="{{ q }}"
+                   class="form-control"
+                   placeholder="Buscar por nombre, apellido o identificación">
+        </div>
+        <div class="col-sm-4">
+            <button type="submit" class="btn btn-primary w-100">Buscar</button>
+        </div>
+    </form>
+
+    {% if estudiantes %}
+        <table class="table table-striped table-sm">
+            <thead>
+                <tr>
+                    <th>Identificación</th>
+                    <th>Estudiante</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for e in estudiantes %}
+                <tr>
+                    <td>{{ e.identificacion }}</td>
+                    <td>{{ e.nombres }} {{ e.apellidos }}</td>
+                    <td>
+                        <!-- Form para generar certificado -->
+                        <form method="post" class="d-flex gap-2">
+                            {% csrf_token %}
+                            <input type="hidden" name="estudiante_id" value="{{ e.id }}">
+
+                            <select name="tipo" class="form-select form-select-sm" required>
+                                <option value="">Tipo de certificado...</option>
+                                <option value="estudiantil">Certificado estudiantil</option>
+                                <option value="notas">Certificado de notas</option>
+                            </select>
+
+                            <input type="number"
+                                   name="anio"
+                                   class="form-control form-control-sm"
+                                   placeholder="Año"
+                                   value="{{ hoy.year|default:2025 }}">
+
+                            <button type="submit" class="btn btn-success btn-sm">
+                                Generar PDF
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <div class="alert alert-info">
+            No se encontraron estudiantes para la búsqueda actual.
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,20 @@
+{% extends "colegioapp/base.html" %}
+{% block title %}Archivo de noticias{% endblock %}
+{% block content %}
+<main>
+  <h2>Archivo de noticias</h2>
+  <table style="width:100%;border-collapse:collapse">
+    <tr><th style="text-align:left">Título</th><th>Activa</th><th>Fecha</th><th></th></tr>
+    {% for n in noticias %}
+      <tr style="border-top:1px solid #ddd">
+        <td>{{ n.titulo }}</td>
+        <td style="text-align:center">{{ n.activo|yesno:"Sí,No" }}</td>
+        <td style="text-align:center">{{ n.fecha_publicacion|date:"d/m/Y H:i" }}</td>
+        <td style="text-align:right">
+          <a href="{% url 'tablero:editar' n.pk %}">Editar</a>
+        </td>
+      </tr>
+    {% endfor %}
+  </table>
+</main>
+{% endblock %}

@@ -1,0 +1,19 @@
+{% extends "colegioapp/base.html" %}
+{% block title %}Eliminar asignatura | CEI GIN GABY{% endblock %}
+
+{% block content %}
+<main style="max-width:700px;margin:0 auto;text-align:left;">
+  <h2 style="color:#c62828;">Eliminar asignatura</h2>
+  <p>¿Seguro que deseas eliminar la asignatura <strong>{{ obj.nombre }}</strong>? Esta acción no se puede deshacer.</p>
+
+  <form method="post" style="margin-top:16px;">
+    {% csrf_token %}
+    <button type="submit" style="padding:10px 16px;background:#c62828;color:#fff;border:none;border-radius:8px;cursor:pointer;">
+      Sí, eliminar
+    </button>
+    <a href="{% url 'academico:asignaturas' %}" style="padding:10px 16px;background:#9e9e9e;color:#fff;border-radius:8px;text-decoration:none;margin-left:8px;">
+      Cancelar
+    </a>
+  </form>
+</main>
+{% endblock %}

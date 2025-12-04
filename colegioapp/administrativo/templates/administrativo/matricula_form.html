@@ -1,0 +1,110 @@
+{% extends "colegioapp/base.html" %}
+{% load static %}
+
+{% block title %}
+    {% if edit_mode %}Editar matrícula{% else %}Nueva matrícula{% endif %}
+{% endblock %}
+
+{% block content %}
+<main>
+
+  <h2>Matrículas</h2>
+
+  <!-- Botón volver -->
+  <div style="max-width:1000px; margin:10px auto 20px;">
+    <a href="{% url 'administrativo:matriculas' %}"
+       style="display:inline-block; background:#004d40; color:white;
+              padding:10px 16px; border-radius:8px; text-decoration:none;
+              transition:background .3s;">
+      ← Volver al listado
+    </a>
+  </div>
+
+  <!-- Contenedor centrado -->
+  <div style="max-width:1000px; margin:0 auto 40px;">
+
+    <!-- Tarjeta -->
+    <div style="
+        background:white;
+        padding:30px;
+        border-radius:12px;
+        box-shadow:0 4px 12px rgba(0,0,0,0.06);
+    ">
+
+      <h3 style="margin-bottom:10px;">
+        {% if edit_mode %}Editar matrícula{% else %}Nueva matrícula{% endif %}
+      </h3>
+      <p style="color:#607d8b; margin-top:0; margin-bottom:20px;">
+        Asigna un estudiante a un curso en un año lectivo específico.
+      </p>
+
+      <!-- Mensajes -->
+      {% if messages %}
+        {% for message in messages %}
+          <div style="padding:10px 14px; border-radius:8px; margin-bottom:12px;
+                      background:{% if message.tags == 'success' %}#e8f5e9
+                                 {% elif message.tags == 'error' %}#ffebee
+                                 {% else %}#eceff1{% endif %};
+                      color:#263238;">
+            {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+
+      <!-- FORMULARIO -->
+      <form method="post" style="margin-top:10px;">
+        {% csrf_token %}
+
+        <!-- Estudiante -->
+        <div style="margin-bottom:20px;">
+          <label class="form-label" style="font-weight:600;">Estudiante</label>
+          <!-- SOLO el campo, sin <select> extra -->
+          {{ form.estudiante }}
+        </div>
+
+        <div style="display:flex; gap:20px;">
+
+          <!-- Año lectivo -->
+          <div style="flex:1;">
+            <label class="form-label" style="font-weight:600;">Año lectivo</label>
+            {{ form.anio }}
+          </div>
+
+          <!-- Curso -->
+          <div style="flex:1;">
+            <label class="form-label" style="font-weight:600;">Curso</label>
+            {{ form.curso }}
+          </div>
+        </div>
+
+        <!-- Activo -->
+        <div style="margin-top:20px;">
+          <label style="display:flex; align-items:center; gap:8px;">
+            {{ form.activo }}
+            Matrícula activa
+          </label>
+        </div>
+
+        <hr style="margin:25px 0;">
+
+        <!-- Botones -->
+        <div style="display:flex; justify-content:flex-end; gap:12px;">
+          <button type="submit"
+                  style="padding:10px 20px; background:#00796B; color:white;
+                         border:none; border-radius:8px; cursor:pointer;">
+            Guardar matrícula
+          </button>
+
+          <a href="{% url 'administrativo:matriculas' %}"
+             style="padding:10px 20px; background:#cfd8dc; color:#000;
+                    border-radius:8px; text-decoration:none;">
+            Cancelar
+          </a>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+</main>
+{% endblock %}

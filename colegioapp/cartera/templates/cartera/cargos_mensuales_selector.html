@@ -1,0 +1,65 @@
+{% extends "colegioapp/base.html" %}
+{% block title %}Pensiones | Selector{% endblock %}
+
+{% block content %}
+<main style="max-width:900px;margin:0 auto;">
+
+    <h2>Generación de Cargos Mensuales</h2>
+    <p>Selecciona año económico, curso, concepto y mes para generar la planilla mensual.</p>
+
+    <form action="{% url 'cartera:cargos_mensuales_planilla' %}" method="get"
+          style="background:#fff;padding:20px;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,.1);">
+
+        <label><strong>Año económico</strong></label>
+        <select name="anio" required class="form-control">
+            <option value="">Seleccione...</option>
+            {% for a in anios %}
+                <option value="{{ a.id }}"
+                        {% if anio_selected == a.id|stringformat:"s" %}selected{% endif %}>
+                    {{ a.nombre }}
+                </option>
+            {% endfor %}
+        </select>
+        <br>
+
+        <label><strong>Curso</strong></label>
+        <select name="curso" required class="form-control">
+            <option value="">Seleccione...</option>
+            {% for c in cursos %}
+                <option value="{{ c.id }}"
+                        {% if curso_selected == c.id|stringformat:"s" %}selected{% endif %}>
+                    {{ c.grado }} {{ c.nombre }}
+                </option>
+            {% endfor %}
+        </select>
+        <br>
+
+        <label><strong>Concepto (pensión)</strong></label>
+        <select name="concepto" required class="form-control">
+            <option value="">Seleccione...</option>
+            {% for c in conceptos %}
+                <option value="{{ c.id }}"
+                        {% if concepto_selected == c.id|stringformat:"s" %}selected{% endif %}>
+                    {{ c.nombre }} ({{ c.valor }})
+                </option>
+            {% endfor %}
+        </select>
+        <br>
+
+        <!-- NUEVO: selector de mes -->
+        <label><strong>Mes</strong></label>
+        <select name="mes" required class="form-control">
+            <option value="">Seleccione...</option>
+            {% for num, nombre in meses %}
+                <option value="{{ num }}"
+                        {% if mes_selected == num|stringformat:"s" %}selected{% endif %}>
+                    {{ nombre }}
+                </option>
+            {% endfor %}
+        </select>
+        <br>
+
+        <button class="btn" style="margin-top:10px;">Continuar</button>
+    </form>
+</main>
+{% endblock %}

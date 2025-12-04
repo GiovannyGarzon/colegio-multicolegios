@@ -1,0 +1,247 @@
+{% extends "colegioapp/base.html" %}
+{% load humanize %}
+{% block title %}Tablero{% endblock %}
+
+{% block content %}
+<main class="dash">
+  <div class="dash__grid">
+    <!-- IZQUIERDA: Noticias -->
+    <section>
+      {% if user.is_staff or user.is_superuser %}
+        <div class="toolbar">
+          <a href="{% url 'tablero:crear' %}" class="btn">Nueva noticia</a>
+          <a href="{% url 'tablero:archivo' %}" class="btn btn--ghost">Ver todas</a>
+        </div>
+      {% endif %}
+
+      {% if noticia_destacada %}
+      <article class="news news--featured">
+        <header class="news__head">
+          <h2 class="news__title">{{ noticia_destacada.titulo }}</h2>
+          <span class="pill">Publicado {{ noticia_destacada.fecha_publicacion|naturaltime }}</span>
+        </header>
+
+        {% if noticia_destacada.imagen %}
+          <figure class="news__cover">
+            <img src="{{ noticia_destacada.imagen.url }}" alt="">
+          </figure>
+        {% endif %}
+
+        {% if noticia_destacada.resumen %}
+          <p class="news__summary">{{ noticia_destacada.resumen }}</p>
+        {% endif %}
+
+        <div class="news__body">
+          {{ noticia_destacada.cuerpo|linebreaks }}
+        </div>
+
+        {% if user.is_staff or user.is_superuser %}
+          <footer class="news__admin">
+            <a href="{% url 'tablero:editar' noticia_destacada.pk %}">Editar</a> ·
+            <a href="{% url 'tablero:eliminar' noticia_destacada.pk %}">Eliminar</a>
+          </footer>
+        {% endif %}
+      </article>
+      {% endif %}
+
+      {% for n in noticias %}
+      <article class="news">
+        <header class="news__head">
+          <h3 class="news__title news__title--sm">{{ n.titulo }}</h3>
+          <span class="pill">Publicado {{ n.fecha_publicacion|naturaltime }}</span>
+        </header>
+
+        {% if n.imagen %}
+        <figure class="news__cover">
+          <img src="{{ n.imagen.url }}" alt="">
+        </figure>
+        {% endif %}
+
+        {% if n.resumen %}
+          <p class="news__summary">{{ n.resumen }}</p>
+        {% elif n.cuerpo %}
+          <p class="news__summary">{{ n.cuerpo|striptags|truncatechars:220 }}</p>
+        {% endif %}
+
+        {% if user.is_staff or user.is_superuser %}
+          <footer class="news__admin">
+            <a href="{% url 'tablero:editar' n.pk %}">Editar</a> ·
+            <a href="{% url 'tablero:eliminar' n.pk %}">Eliminar</a>
+          </footer>
+        {% endif %}
+      </article>
+      {% empty %}
+        {% if not noticia_destacada %}
+          <p class="muted">No hay noticias por ahora.</p>
+        {% endif %}
+      {% endfor %}
+    </section>
+
+    <!-- DERECHA: Perfil + Resumen + Observador -->
+    <aside class="rcol">
+      <!-- Perfil -->
+      <section class="card">
+        <h3 class="card__title">Mi perfil</h3>
+
+        <div class="profile">
+          <div class="profile__name">{{ perfil.nombre }}</div>
+          <dl class="data">
+            <div><dt>Usuario</dt><dd>{{ perfil.usuario }}</dd></div>
+            {% if perfil.email %}<div><dt>Email</dt><dd>{{ perfil.email }}</dd></div>{% endif %}
+            {% if perfil.edad %}<div><dt>Edad</dt><dd>{{ perfil.edad }} años</dd></div>{% endif %}
+            {% if perfil.tipo == "estudiante" %}
+              <div><dt>Curso</dt><dd>{{ perfil.curso }}</dd></div>
+              <div><dt>Identificación</dt><dd>{{ perfil.identificacion }}</dd></div>
+            {% endif %}
+            {% if perfil.tipo == "docente" %}
+              <div><dt>Curso asignado</dt><dd>{{ perfil.curso_asignado|default:"—" }}</dd></div>
+            {% endif %}
+            {% if perfil.roles %}
+              <div><dt>Roles</dt><dd>
+                {% for r in perfil.roles %}{{ r }}{% if not forloop.last %}, {% endif %}{% endfor %}
+              </dd></div>
+            {% endif %}
+            {% if perfil.es_staff %}<div><dt>Permisos</dt><dd class="ok">Acceso administrativo</dd></div>{% endif %}
+          </dl>
+        </div>
+      </section>
+
+      <!-- Resumen académico (solo estudiantes) -->
+      {% if estudiante and promedios_tablero %}
+      <section class="card">
+        <div class="card__head">
+          <h3 class="card__title">Resumen académico</h3>
+          {% if anio_activo and periodo_actual %}
+            <small class="muted">
+              Año {{ anio_activo.nombre }} · P{{ periodo_actual.numero }}
+            </small>
+          {% endif %}
+        </div>
+
+        <table class="mini">
+          <thead>
+            <tr>
+              <th>Asignatura</th>
+              <th style="text-align:right;">Prom.</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for p in promedios_tablero %}
+            <tr>
+              <td>{{ p.asignatura }}</td>
+              <td style="text-align:right;">{{ p.promedio|floatformat:2 }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+
+        <div class="card__footer">
+          <a href="{% url 'academico:portal' %}" class="btn btn--ghost btn--sm">
+            Ver boletín completo
+          </a>
+        </div>
+      </section>
+      {% endif %}
+
+      <!-- Observador -->
+      {% if estudiante %}
+      <section class="card">
+        <div class="card__head">
+          <h3 class="card__title">Seguimientos (Observador)</h3>
+          <small class="muted">Últimos 5</small>
+        </div>
+
+        {% if seguimientos %}
+        <ul class="timeline">
+          {% for s in seguimientos %}
+            <li class="timeline__item">
+              <span class="timeline__dot"></span>
+              <div class="timeline__content">
+                <div class="timeline__meta">
+                  <span class="pill pill--light">{{ s.fecha|date:"d/m/Y" }}</span>
+                  <span class="muted">· {{ s.get_tipo_display }}</span>
+                </div>
+                <div class="timeline__text">{{ s.detalle|truncatechars:160 }}</div>
+              </div>
+            </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+          <p class="muted">No hay seguimientos recientes.</p>
+        {% endif %}
+      </section>
+      {% endif %}
+    </aside>
+  </div>
+</main>
+
+<style>
+/* ===== Base layout & type ===== */
+.dash{max-width:1100px;margin:0 auto;padding:10px}
+.dash__grid{display:grid;grid-template-columns:1.5fr 1fr;gap:18px;align-items:start}
+@media (max-width:980px){.dash__grid{grid-template-columns:1fr}}
+
+:where(.dash) {--ink:#0f3f39;--muted:#6b7b83;--line:#e9eef0;--card:#fff;--shadow:0 4px 12px rgba(0,0,0,.06);--brand:#00695c;}
+.dash *{letter-spacing:.2px}
+.muted{color:var(--muted)}
+.ok{color:#2e7d32}
+
+/* ===== Buttons / pills ===== */
+.toolbar{text-align:right;margin-bottom:10px}
+.btn{background:var(--brand);color:#fff;border:none;padding:8px 12px;border-radius:10px;text-decoration:none}
+.btn--ghost{background:#e0f2f1;color:#0f3f39}
+.btn--sm{padding:6px 10px;font-size:.85rem}
+.btn:hover{filter:brightness(1.05)}
+.pill{display:inline-block;font-size:.82rem;padding:3px 8px;border-radius:999px;background:#eef6f6;border:1px solid #cfe6e4;color:#0f3f39}
+.pill--light{background:#f6f7fa;border-color:#e6ebf1;color:#445057}
+
+/* ===== Cards ===== */
+.card{background:var(--card);border-radius:12px;box-shadow:var(--shadow);padding:14px}
+.card__title{margin:0 0 8px 0;font-size:1.06rem;color:var(--ink)}
+.card__head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.card__footer{margin-top:8px;text-align:right}
+
+/* ===== News ===== */
+.news{background:var(--card);border-radius:12px;box-shadow:var(--shadow);padding:14px;margin:12px 0}
+.news--featured{border-left:6px solid var(--brand)}
+.news__head{display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap;margin-bottom:6px}
+.news__title{margin:0;font-size:1.18rem;line-height:1.35;color:#1b3330}
+.news__title--sm{font-size:1.05rem}
+.news__cover{margin:10px 0}
+.news__cover img{width:100%;height:230px;object-fit:cover;border-radius:10px}
+.news__summary{margin:6px 0 8px 0;line-height:1.55;color:#223}
+.news__body{line-height:1.6;color:#223}
+.news__body p{margin:.6em 0}
+.news__admin{text-align:right;margin-top:6px}
+
+/* ===== Profile ===== */
+.profile__name{font-weight:700;color:#183532;margin:2px 0 6px 0}
+.data{display:grid;grid-template-columns:1fr;gap:6px;margin:0}
+.data > div{display:grid;grid-template-columns:120px 1fr;gap:10px;align-items:start;padding:6px 0;border-bottom:1px dashed var(--line)}
+.data > div:last-child{border-bottom:none}
+.data dt{font-size:.82rem;color:var(--muted)}
+.data dd{margin:0;color:#233}
+
+/* ===== Mini tabla de promedios ===== */
+.mini{width:100%;border-collapse:separate;border-spacing:0 4px;font-size:.9rem}
+.mini thead th{
+  text-align:left;
+  padding:4px 4px 6px;
+  color:#6b7b83;
+  font-weight:600;
+  border-bottom:1px solid #e3e8ec;
+}
+.mini tbody tr{background:#f7fafb}
+.mini tbody td{padding:6px 8px;border-radius:6px}
+
+/* ===== Observador timeline ===== */
+.timeline{list-style:none;margin:0;padding:0 0 0 12px;position:relative}
+.timeline:before{content:"";position:absolute;left:7px;top:0;bottom:0;width:2px;background:var(--line)}
+.timeline__item{position:relative;margin:10px 0 10px}
+.timeline__dot{position:absolute;left:-1px;top:7px;width:10px;height:10px;background:#26a69a;border-radius:50%}
+.timeline__content{margin-left:14px}
+.timeline__meta{font-size:.85rem;margin-bottom:4px}
+.timeline__text{line-height:1.55}
+.rcol{display:grid;gap:14px}
+</style>
+{% endblock %}

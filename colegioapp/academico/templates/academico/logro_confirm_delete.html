@@ -1,0 +1,13 @@
+{% extends "colegioapp/base.html" %}
+{% block title %}Eliminar Logro | CEI GIN GABY{% endblock %}
+{% block content %}
+<main style="max-width:720px;margin:0 auto;text-align:left;">
+  <h2 style="color:#c62828;">Eliminar logro</h2>
+  <p>¿Seguro que deseas eliminar el logro <strong>{{ obj.titulo }}</strong> de <strong>{{ obj.oferta.asignatura.nombre }}</strong> ({{ obj.oferta.anio.nombre }} | {{ obj.oferta.curso.grado }}-{{ obj.oferta.curso.nombre }}) en <strong>{{ obj.periodo.nombre }}</strong>?</p>
+  <form method="post" style="margin-top:16px;">
+    {% csrf_token %}
+    <button type="submit" style="padding:10px 16px;background:#c62828;color:#fff;border:none;border-radius:8px;cursor:pointer;">Sí, eliminar</button>
+    <a href="{% url 'academico:logros' %}" style="padding:10px 16px;background:#9e9e9e;color:#fff;border-radius:8px;text-decoration:none;margin-left:8px;">Cancelar</a>
+  </form>
+</main>
+{% endblock %}

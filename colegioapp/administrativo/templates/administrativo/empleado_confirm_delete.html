@@ -1,0 +1,19 @@
+{% extends "colegioapp/base.html" %}
+{% block title %}Eliminar Empleado | CEI GIN GABY{% endblock %}
+
+{% block content %}
+<main style="max-width:720px;margin:0 auto;">
+  <h2 style="color:#c62828;">Eliminar empleado</h2>
+  <p>¿Seguro deseas eliminar al empleado <strong>{{ obj.apellidos }} {{ obj.nombres }}</strong> ({{ obj.identificacion }})?</p>
+
+  <form method="post" style="margin-top:12px;">
+    {% csrf_token %}
+    <button type="submit" style="padding:10px 16px;background:#c62828;color:#fff;border:none;border-radius:8px;cursor:pointer;">
+      Sí, eliminar
+    </button>
+    <a href="{% url 'administrativo:empleados' %}" style="padding:10px 16px;background:#9e9e9e;color:#fff;border-radius:8px;text-decoration:none;margin-left:8px;">
+      Cancelar
+    </a>
+  </form>
+</main>
+{% endblock %}

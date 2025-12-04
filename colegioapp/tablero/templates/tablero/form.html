@@ -1,0 +1,12 @@
+{% extends "colegioapp/base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<main>
+  <h2>{{ title }}</h2>
+  <form method="post" enctype="multipart/form-data">{% csrf_token %}
+    {{ form.as_p }}
+    <button class="btn">Guardar</button>
+    <a href="{% url 'tablero:home' %}" class="btn-sec">Cancelar</a>
+  </form>
+</main>
+{% endblock %}

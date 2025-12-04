@@ -1,0 +1,25 @@
+{% extends "colegioapp/base.html" %}
+{% load static %}
+
+{% block title %}Detalle Estudiante | GIN GABY{% endblock %}
+
+{% block content %}
+<main>
+  <h2>Detalle del estudiante</h2>
+  <div style="max-width:800px;margin:0 auto;background:#fff;padding:16px;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.06);">
+    <p><strong>Nombre:</strong> {{ e.apellidos }} {{ e.nombres }}</p>
+    <p><strong>Identificación:</strong> {{ e.identificacion }}</p>
+    <p><strong>Fecha nacimiento:</strong> {{ e.fecha_nacimiento|date:"Y-m-d" }}</p>
+    <p><strong>Curso:</strong> {% if e.curso %}{{ e.curso.grado }} - {{ e.curso.nombre }}{% else %}—{% endif %}</p>
+    <p><strong>Acudiente:</strong> {{ e.acudiente|default:"" }}</p>
+    <p><strong>Teléfono:</strong> {{ e.telefono|default:"" }}</p>
+    <p><strong>Correo:</strong> {{ e.correo|default:"" }}</p>
+    <p><strong>Dirección:</strong> {{ e.direccion|default:"" }}</p>
+  </div>
+
+  <div style="margin-top:16px; display:flex; gap:8px; justify-content:center;">
+    <a href="{% url 'academico:estudiante_update' e.id %}" style="padding:10px 16px; background:#00796B; color:#fff; text-decoration:none; border-radius:8px;">Editar</a>
+    <a href="{% url 'academico:estudiantes' %}" style="padding:10px 16px; background:#004d40; color:#fff; text-decoration:none; border-radius:8px;">Volver</a>
+  </div>
+</main>
+{% endblock content %}

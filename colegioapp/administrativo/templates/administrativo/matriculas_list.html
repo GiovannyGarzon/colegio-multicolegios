@@ -1,0 +1,140 @@
+{% extends "colegioapp/base.html" %}
+{% load static %}
+
+{% block title %}Matrículas | Centro Educativo Infantil GIN GABY{% endblock %}
+
+{% block content %}
+<main>
+  <h2>Matrículas</h2>
+
+  <!-- Botón volver -->
+  <div style="max-width:1000px; margin:10px auto 20px;">
+    <a href="{% url 'administrativo:home' %}"
+       style="display:inline-block; background:#004d40; color:white;
+              padding:10px 16px; border-radius:8px; text-decoration:none;
+              transition:background 0.3s;">
+       ← Volver al módulo administrativo
+    </a>
+  </div>
+
+  <!-- Filtros -->
+  <form method="get"
+        style="max-width:1000px;margin:0 auto 20px;
+               display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+
+    <input
+      type="text" name="buscar" value="{{ buscar }}"
+      placeholder="Nombre, apellido o identificación"
+      style="flex:1;padding:10px 12px;border:1px solid #cfd8dc;border-radius:8px;"
+    />
+
+    <select name="anio" style="padding:10px 12px;border:1px solid #cfd8dc;border-radius:8px;">
+      <option value="">Todos los años</option>
+      {% for a in anios %}
+        <option value="{{ a }}" {% if anio_selected == a|stringformat:'s' %}selected{% endif %}>{{ a }}</option>
+      {% endfor %}
+    </select>
+
+    <select name="curso" style="padding:10px 12px;border:1px solid #cfd8dc;border-radius:8px;">
+      <option value="">Todos los cursos</option>
+      {% for c in cursos %}
+        <option value="{{ c.id }}"
+          {% if curso_selected == c.id|stringformat:'s' %}selected{% endif %}>
+          {{ c.grado }} - {{ c.nombre }}
+        </option>
+      {% endfor %}
+    </select>
+
+    <select name="estado" style="padding:10px 12px;border:1px solid #cfd8dc;border-radius:8px;">
+      <option value="">Todos</option>
+      <option value="1" {% if estado_selected == "1" %}selected{% endif %}>Activas</option>
+      <option value="0" {% if estado_selected == "0" %}selected{% endif %}>Inactivas</option>
+    </select>
+
+    <button type="submit"
+            style="padding:10px 16px; background:#00796B; color:white;
+                   border:none; border-radius:8px; cursor:pointer;">
+      Filtrar
+    </button>
+
+    <a href="{% url 'administrativo:matriculas' %}"
+       style="padding:10px 16px; background:#90a4ae; color:white;
+              border-radius:8px; text-decoration:none;">
+      Limpiar
+    </a>
+
+    <a href="{% url 'administrativo:matricula_create' %}"
+       style="padding:10px 16px; background:#00796B; color:white;
+              text-decoration:none; border-radius:8px;">
+      + Nueva matrícula
+    </a>
+    <a href="{% url 'administrativo:matriculas_promocionar' %}"
+       style="padding:10px 16px; background:#004d40; color:white;
+              text-decoration:none; border-radius:8px;">
+      ⇧ Promocionar matrículas
+    </a>
+  </form>
+
+  <!-- Tabla -->
+  <div style="max-width:1000px;margin:0 auto;">
+    <div style="overflow-x:auto; background:white; border-radius:12px;
+                box-shadow:0 4px 12px rgba(0,0,0,0.06);">
+
+      <table style="width:100%; border-collapse:collapse;">
+        <thead style="background:#e0f2f1;">
+          <tr>
+            <th style="padding:12px;text-align:left;">Estudiante</th>
+            <th style="padding:12px;text-align:left;">Identificación</th>
+            <th style="padding:12px;text-align:left;">Año</th>
+            <th style="padding:12px;text-align:left;">Curso</th>
+            <th style="padding:12px;text-align:left;">Fecha matrícula</th>
+            <th style="padding:12px;text-align:center;">Activo</th>
+            <th style="padding:12px;text-align:center;">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+
+        {% if matriculas %}
+          {% for m in matriculas %}
+          <tr style="border-top:1px solid #eceff1;">
+            <td style="padding:10px 12px;">{{ m.estudiante }}</td>
+            <td style="padding:10px 12px;">{{ m.estudiante.identificacion }}</td>
+            <td style="padding:10px 12px;">{{ m.anio }}</td>
+            <td style="padding:10px 12px;">
+              {% if m.curso %}{{ m.curso.grado }} - {{ m.curso.nombre }}{% endif %}
+            </td>
+            <td style="padding:10px 12px;">{{ m.fecha_matricula|date:"d/m/Y" }}</td>
+            <td style="padding:10px 12px; text-align:center;">
+              {% if m.activo %}
+                <span style="color:#2e7d32; font-weight:bold;">Sí</span>
+              {% else %}
+                <span style="color:#c62828; font-weight:bold;">No</span>
+              {% endif %}
+            </td>
+            <td style="padding:10px 12px; text-align:center; white-space:nowrap;">
+              <a href="{% url 'administrativo:matricula_update' m.id %}"
+                 style="margin-right:6px; text-decoration:none;">✎ Editar</a>
+
+              <a href="{% url 'administrativo:matricula_delete' m.id %}"
+                 onclick="return confirm('¿Seguro que deseas eliminar esta matrícula?');"
+                 style="color:#c62828; text-decoration:none;">
+                 🗑 Eliminar
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        {% else %}
+          <tr>
+            <td colspan="7" style="padding:14px;text-align:center;color:#607d8b;">
+              No se encontraron matrículas.
+            </td>
+          </tr>
+        {% endif %}
+
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</main>
+{% endblock %}

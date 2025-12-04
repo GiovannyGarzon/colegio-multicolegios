@@ -1,0 +1,230 @@
+{% extends "sitio/base_publico.html" %}
+{% load static %}
+{% block title %}Nosotros | CEI GIN GABY{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* --- HERO Y SLIDER --- */
+  .hero { padding: 32px 16px; background: linear-gradient(135deg,#e8f5e9,#e0f2f1); }
+  .wrap { max-width: 1100px; margin: 0 auto; }
+  .h2 { color:#00796B; margin:0 0 6px; }
+  .lead { color:#546e7a; margin:0; }
+
+  .slider {
+    position: relative;
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,.1);
+    margin-top: 20px;
+    width: 100%;
+    background: linear-gradient(135deg, #e8f5e9, #e0f2f1);
+  }
+  .slides {
+    display: flex;
+    transition: transform .8s ease-in-out;
+  }
+  .slide { flex: 0 0 100%; }
+  .slides img {
+    width:100%;
+    height: 500px;            /* altura dinámica del 60% de la ventana */
+    object-fit: cover;       /* muestra toda la imagen sin recortar */
+    display:block;
+    border-radius: 0;
+  }
+  .dots { position:absolute; bottom:12px; left:0; right:0; display:flex;
+          justify-content:center; gap:8px; }
+  .dot { width:10px; height:10px; border-radius:999px; background:#ffffffb3;
+         border:2px solid #fff; opacity:.7; cursor:pointer; }
+  .dot.active { background:#00796B; opacity:1; }
+
+  /* --- SECCIONES --- */
+  .section { padding:28px 16px; }
+  .card { background:#fff; border-radius:16px;
+          box-shadow:0 8px 24px rgba(0,0,0,.06); padding:22px; }
+  .twocol { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+  .pill { display:inline-block; background:#004d40; color:#fff; padding:6px 10px;
+          border-radius:999px; font-size:.85rem; margin-right:6px; }
+
+  /* --- EQUIPO --- */
+  .team { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
+  .member { background:#fff; border-radius:14px; padding:16px;
+            box-shadow:0 6px 16px rgba(0,0,0,.06); text-align:center; }
+  .avatar { width:84px; height:84px; border-radius:50%; object-fit:cover;
+            margin:0 auto 10px; border:3px solid #e0f2f1; }
+  .role { color:#00796B; font-weight:600; margin:2px 0 0; }
+  .small { color:#607d8b; font-size:.92rem; }
+
+  @media (max-width:980px){
+    .twocol{grid-template-columns:1fr}
+    .team{grid-template-columns:1fr 1fr}
+    .slides img{height:40vh;}
+  }
+  @media (max-width:640px){
+    .team{grid-template-columns:1fr}
+    .slides img{height:30vh;}
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- HERO CON SLIDER -->
+<section class="hero">
+  <div class="wrap">
+    <h2 class="h2">Conócenos</h2>
+    <p class="lead">Quiénes somos, nuestro propósito y el equipo que acompaña a las familias Gingabistas.</p>
+
+    <div class="slider" id="gg-slider" aria-roledescription="carousel">
+      <div class="slides" id="gg-slides">
+        <div class="slide">
+          <img src="{% static 'sitio/img/fachada.PNG' %}" alt="Fachada del CEI Gin Gaby" />
+        </div>
+        <div class="slide">
+          <img src="{% static 'sitio/img/Banda11.PNG' %}" alt="Fachada del CEI Gin Gaby" />
+        </div>
+        <div class="slide">
+          <img src="{% static 'sitio/img/Banda22.PNG' %}" alt="Presentación de banda escolar" />
+        </div>
+      </div>
+      <div class="dots" id="gg-dots" aria-label="Selector de imagen"></div>
+    </div>
+  </div>
+</section>
+
+<!-- MISIÓN / VISIÓN -->
+<section class="section">
+  <div class="wrap twocol">
+    <div class="card">
+      <span class="pill">Nuestra misión</span>
+      <h3 style="margin:10px 0 8px;color:#004d40;">Formar con amor, conocimiento y valores</h3>
+      <p style="line-height:1.7;">
+        El Centro Educativo Gin Gabi es un institución de educación de carácter privado que ofrece servicios de educación formal para los niveles
+        de Preescolar, Básica Primaria y Secundaria, caracterizados por su excelente calidad y la implementación de metodologías vivenciales en
+        áreas como artes, deportes, y humanidades, incentivando procesos de innovación ambiental, como estrategia para guiar a cada uno de los
+        estudiantes a la consolidación de un pensamiento crítico y consciente a la creación de hábitos de estudio y competencias sociales,
+        laborales y convivenciales que los lleve a una formación fundamentada en principios y valores, acorde a las demandas de nuestra sociedad
+        actual.
+      </p>
+    </div>
+
+    <div class="card">
+      <span class="pill" style="background:#00695c;">Nuestra visión</span>
+      <h3 style="margin:10px 0 8px;color:#004d40;">Un referente educativo en la ciudad</h3>
+      <p style="line-height:1.7;">
+        En el 2030 el CENTRO EDUCATIVO GIN GABI será reconocido como una institución líder en la educación de estudiantes como seres íntegros,
+        encaminados hacia excelencia humana y la formación en valores como el amor, la justicia, la paz; obteniendo un posicionamiento de la
+        institución, a nivel municipal y departamental, además del reconocimiento educativo y social, por sus procesos de transformación e
+        innovación pedagógica.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- HISTORIA -->
+<section class="section">
+  <div class="wrap">
+    <div class="card">
+      <span class="pill" style="background:#00897b;">Nuestra historia</span>
+      <h3 style="margin:10px 0 8px;color:#004d40;">Desde 2006, un sueño hecho realidad</h3>
+      <p style="line-height:1.8; margin-bottom:10px;">
+        El Centro Educativo Gin Gabi inició en 1996 en Soacha con el nombre Liceo Futuro y Progreso, ubicado en el
+        barrio El Silo y con una matrícula de unos 30 estudiantes.
+        En el año 2000 se trasladó al barrio La Fragua, lo que permitió un aumento progresivo en la matrícula,
+        alcanzando 65 estudiantes en 2001.
+        Gracias a la confianza de las familias, en 2013 la institución llegó a 150 estudiantes en preescolar y
+        básica primaria. Ese mismo año, la Secretaría de Educación reconoció como propietaria a Eocaris Castro
+        Canizales y aprobó el cambio de nombre a Centro  Educativo Gin Gabi, con el lema “Educamos al niño para
+        el hombre del futuro”, fundamentado en valores de  amor, honestidad y responsabilidad.
+        En 2014 se trasladó nuevamente dentro del barrio La Fragua a una sede más amplia, fortaleciendo su calidad
+        académica, ampliando su cobertura y consolidando su reconocimiento en la comunidad educativa.
+      </p>
+      <p style="line-height:1.8; margin-bottom:10px;">
+        Desde entonces, hemos trabajado con dedicación y pasión para brindar una educación integral, fomentando el
+        desarrollo emocional, social y cognitivo de nuestros estudiantes.
+      </p>
+      <p style="line-height:1.8;">
+        Hoy, con orgullo, seguimos formando generaciones de niños y niñas capaces, felices y con principios, que
+        reflejan el espíritu y la misión de nuestro colegio.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- EQUIPO -->
+<section class="section">
+  <div class="wrap">
+    <span class="pill" style="background:#009688;">Nuestro equipo</span>
+    <h3 style="margin:10px 0 16px;color:#004d40;">Personas que cuidan y potencian cada proceso</h3>
+
+    <div class="team">
+      <div class="member">
+        <img class="avatar" src="{% static 'img/logo.png' %}" alt="Eucaris Castro" />
+        <div class="role">Rectora</div>
+        <div class="small">Eucaris Castro (Fundadora)</div>
+      </div>
+      <div class="member">
+        <img class="avatar" src="{% static 'img/logo.png' %}" alt="Gabriela Moreno" />
+        <div class="role">Coordinación administrativa</div>
+        <div class="small">Gabriela Moreno</div>
+      </div>
+      <div class="member">
+        <img class="avatar" src="{% static 'img/logo.png' %}" alt="Secretaría" />
+        <div class="role">Secretaría</div>
+        <div class="small">Fulana Mahecha</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA FINAL -->
+<section class="section" style="padding-bottom:34px;">
+  <div class="wrap card" style="display:flex; gap:14px; align-items:center; flex-wrap:wrap; justify-content:space-between;">
+    <div>
+      <h3 style="margin:0 0 6px;color:#004d40;">¿Quieres conocernos mejor?</h3>
+      <p style="margin:0; color:#546e7a;">Visítanos en La Fragua o escríbenos. ¡Será un gusto recibirte!</p>
+    </div>
+    <div>
+      <a href="{% url 'sitio:admisiones' %}" style="display:inline-block;background:#00796B;color:#fff;padding:10px 16px;border-radius:10px;text-decoration:none;margin-right:8px;">Proceso de Admisiones</a>
+      <a href="{% url 'sitio:contacto' %}" style="display:inline-block;background:#e0f2f1;color:#00695c;padding:10px 16px;border-radius:10px;text-decoration:none;">Contacto</a>
+    </div>
+  </div>
+</section>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+  const slides = document.getElementById('gg-slides');
+  const dotsWrap = document.getElementById('gg-dots');
+  const total = slides.children.length;
+  let idx = 0, t;
+
+  for (let i = 0; i < total; i++) {
+    const b = document.createElement('button');
+    b.className = 'dot' + (i === 0 ? ' active' : '');
+    b.setAttribute('aria-label', 'Ir a imagen ' + (i + 1));
+    b.addEventListener('click', () => go(i, true));
+    dotsWrap.appendChild(b);
+  }
+
+  const dots = dotsWrap.querySelectorAll('.dot');
+
+  function go(n, pause) {
+    idx = (n + total) % total;
+    slides.style.transform = `translateX(${-idx * 100}%)`;
+    dots.forEach((d, i) => d.classList.toggle('active', i === idx));
+    if (pause) reset();
+  }
+
+  function next() { go(idx + 1); }
+
+  function reset() {
+    clearInterval(t);
+    t = setInterval(next, 5000);
+  }
+
+  reset();
+})();
+</script>
+{% endblock %}

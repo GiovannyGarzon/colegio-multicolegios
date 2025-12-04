@@ -1,0 +1,281 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Certificado estudiantil</title>
+
+    <style>
+        /* Párrafos amplios */
+        .texto {
+            text-align: justify;
+            margin: 0;              /* Quitamos margen normal */
+            padding-bottom: 22px;   /* ⭐ ESPACIO GRANDE ENTRE BLOQUES */
+            line-height: 1.7;
+        }
+
+        /* Bloque de detalles con espacio grande arriba y abajo */
+        .detalles-cert {
+            padding-top: 22px;      /* ⭐ ESPACIO ANTES DEL BLOQUE */
+            padding-bottom: 26px;   /* ⭐ ESPACIO DESPUÉS DEL BLOQUE */
+        }
+
+        .detalles-cert p {
+            margin: 0 0 8px;        /* ⭐ Espacio interno entre líneas */
+            line-height: 1.5;
+        }
+        /* Márgenes de la página para WeasyPrint */
+        @page {
+            size: A4;
+            margin: 8mm;
+        }
+
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: sans-serif;
+            font-size: 12px;
+        }
+
+        /* CONTENEDOR PRINCIPAL */
+        .contenedor {
+            box-sizing: border-box;
+            width: 100%;
+            height: 100%;
+            border: 4px double #000;
+            padding: 12mm 15mm 12mm;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* MARCA DE AGUA EN EL CENTRO */
+        .watermark {
+            position: absolute;
+            top: 55%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%;
+            opacity: 0.06;
+            z-index: 0;
+        }
+
+        .encabezado,
+        .cuerpo,
+        .footer-block {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ENCABEZADO INTERNO */
+        .encabezado {
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 8px;
+        }
+
+        .logo {
+            width: 120px;
+            height: auto;
+        }
+
+        .titulo {
+            text-align: center;
+            flex: 1;
+        }
+
+        .titulo-principal {
+            font-weight: 800;
+            font-size: 18px;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+        }
+
+        .titulo-sub {
+            font-weight: 700;
+            font-size: 12px;
+            margin-bottom: 8px;
+        }
+
+        .titulo-detalle {
+            font-weight: normal;
+            font-size: 10px;
+            margin: 2px 0;
+            line-height: 1.2;
+        }
+
+        /* CUERPO CENTRAL */
+        .cuerpo {
+            /* MÁS ABAJO PARA QUE QUEDE EN MEDIO DE LA HOJA */
+            margin-top: 45mm;
+        }
+
+        .titulo-cert {
+            text-align: center;
+            font-weight: bold;
+            /* MÁS ESPACIO DEBAJO DEL “CERTIFICAN QUE” */
+            margin-bottom: 26px;
+        }
+
+        .texto {
+            text-align: justify;
+            /* MÁS ESPACIO ENTRE PÁRRAFOS */
+            margin: 0 0 26px;
+            line-height: 1.6;
+        }
+
+        /* BLOQUE DE ÍTEMS (Calendario, Jornada, etc.) */
+        .detalles-cert {
+            /* MÁS AIRE ARRIBA Y ABAJO */
+            margin: 22px 0 30px;
+            text-align: left;
+        }
+
+        .detalles-cert p {
+            margin: 0 0 6px;
+            line-height: 1.5;
+        }
+
+        .detalles-cert strong {
+            font-weight: bold;
+        }
+
+        /* FOOTER ANCLADO ABAJO */
+        .footer-block {
+            position: absolute;
+            left: 15mm;
+            right: 15mm;
+            bottom: 12mm;
+            text-align: center;
+        }
+
+        .firma {
+            margin-bottom: 6px;
+        }
+
+        .pie {
+            font-size: 10px;
+        }
+
+        /* ENCABEZADO SUPERIOR (fuera del marco) */
+        .header-top {
+            font-size: 10px;
+            color: #333;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 5mm;
+            margin-bottom: 4px;
+            position: relative;
+            top: -4mm;
+        }
+
+        .header-top .enlace {
+            text-decoration: none;
+            color: #000;
+        }
+
+        .header-top .enlace:hover {
+            text-decoration: underline;
+        }
+
+        .sello {
+            position: absolute;
+            right: 20mm;
+            bottom: 20mm;
+            height: 55px;
+            z-index: 3;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Encabezado superior -->
+    <div class="header-top">
+        <span class="fecha">{{ hoy|date:"d/m/Y" }}</span>
+        <a href="http://127.0.0.1:8001/" class="enlace">gingabi.gdevsolution.com</a>
+    </div>
+
+    <div class="contenedor">
+
+        <!-- Marca de agua -->
+        <img src="{% static 'img/logo.png' %}" alt="Marca de agua" class="watermark">
+
+        <!-- Encabezado interno -->
+        <div class="encabezado">
+            <img src="{% static 'img/logo.png' %}" alt="Logo" class="logo">
+
+            <div class="titulo">
+                <div class="titulo-principal">CENTRO EDUCATIVO GIN GABI SAS</div>
+
+                <div class="titulo-sub">
+                    PREESCOLAR BASICA PRIMARIA Y BASICA SECUNDARIA
+                </div>
+
+                <p class="titulo-detalle">
+                    Resolución de Aprobación N° 1358 del 8 – junio del 2013 Primaria
+                </p>
+                <p class="titulo-detalle">
+                    Resolución de Aprobación N° 1490 del 9 – diciembre – 2020 Bachillerato
+                </p>
+                <p class="titulo-detalle">
+                    Secretaría de Educación Soacha
+                </p>
+                <p class="titulo-detalle">
+                    DANE 325754003649 / NIT 901272275-3
+                </p>
+            </div>
+        </div>
+
+        <!-- Cuerpo -->
+        <div class="cuerpo">
+            <p class="titulo-cert">CERTIFICAN QUE:</p>
+
+            <!-- Párrafo del estudiante con tipo de documento -->
+            <p class="texto">
+                {{ estudiante.nombres }} {{ estudiante.apellidos }}, con identificación No.
+                {% if tipo_id %}{{ tipo_id }} {% endif %}{{ estudiante.identificacion }}
+                se encuentra matriculado en esta institución educativa
+                en el grado {{ grado_texto }} en un horario de 7:00 a.m. a 2:00 p.m.
+            </p>
+
+            <!-- Ítems tipo lista -->
+            <div class="detalles-cert">
+                <p><strong>Calendario A</strong></p>
+                <p><strong>Jornada Única:</strong> lunes a viernes</p>
+                <p><strong>Durante Año Escolar:</strong> (10 meses)</p>
+                <p><strong>Intensidad Horaria:</strong> (32h/s)</p>
+            </div>
+
+            <!-- Párrafo final -->
+            <p class="texto">
+                La presente se expide a solicitud del interesado, en Soacha (Cund.) a los
+                {{ hoy.day }} días del mes de {{ hoy|date:"F" }} del año 20 {{ hoy|date:"y" }}.
+            </p>
+        </div>
+
+        <!-- Firma + pie -->
+        <div class="footer-block">
+            <div class="firma">
+                <div>Eocaris Castro</div>
+                <div>_______________________________</div>
+                <div>Rectora</div>
+            </div>
+
+            <div class="pie">
+                Calle 5 # 6B – 03 Barrio la Fragua &nbsp;&nbsp;|&nbsp;&nbsp;
+                c.egingabi@gmail.com &nbsp;&nbsp;|&nbsp;&nbsp; Cel: 3133144382
+            </div>
+        </div>
+
+    </div>
+</body>
+</html>

@@ -1,0 +1,109 @@
+{% extends "colegioapp/base.html" %}
+{% load static %}
+
+{% block title %}Usuarios | Centro Educativo Infantil GIN GABY{% endblock %}
+
+{% block content %}
+<main>
+  <h2>Usuarios del sistema</h2>
+
+  <!-- Botón volver (puedes cambiar la URL si quieres ir a otro módulo) -->
+  <div style="max-width:1000px; margin:10px auto 20px;">
+    <a href="{% url 'home' %}"
+       style="display:inline-block; background:#004d40; color:white;
+              padding:10px 16px; border-radius:8px; text-decoration:none;
+              transition:background 0.3s;">
+       ← Volver al inicio
+    </a>
+  </div>
+
+  <!-- Filtros -->
+  <form method="get"
+        style="max-width:1000px;margin:0 auto 18px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+    {# Si algún día quieres buscador, aquí puedes añadir un input como en docentes.html #}
+    <label style="font-weight:bold; color:#004d40;">Filtrar por grupo:</label>
+
+    <select name="grupo"
+            style="padding:10px 12px; border:1px solid #cfd8dc; border-radius:8px;">
+      <option value="">Todos</option>
+      {% for g in grupos %}
+        <option value="{{ g.id }}"
+                {% if g.id|stringformat:'s' == grupo_id %}selected{% endif %}>
+          {{ g.name }}
+        </option>
+      {% endfor %}
+    </select>
+
+    <button type="submit"
+            style="padding:10px 16px; background:#00796B; color:white;
+                   border:none; border-radius:8px; cursor:pointer;">
+      Aplicar
+    </button>
+
+    <a href="{% url 'cuentas:usuarios_list' %}"
+       style="padding:10px 16px; background:#90a4ae; color:white;
+              border-radius:8px; text-decoration:none;">
+      Limpiar
+    </a>
+
+    <a href="{% url 'cuentas:usuario_create' %}"
+       style="padding:10px 16px; background:#00796B; color:white;
+              text-decoration:none; border-radius:8px;">
+       + Nuevo usuario
+    </a>
+  </form>
+
+  <!-- Tabla -->
+  <div style="max-width:1000px;margin:0 auto;">
+    <div style="overflow-x:auto; background:white; border-radius:12px;
+                box-shadow:0 4px 12px rgba(0,0,0,0.06);">
+      <table style="width:100%; border-collapse:collapse;">
+        <thead style="background:#e0f2f1;">
+          <tr>
+            <th style="text-align:left; padding:12px;">Usuario</th>
+            <th style="text-align:left; padding:12px;">Nombre</th>
+            <th style="text-align:left; padding:12px;">Email</th>
+            <th style="text-align:left; padding:12px;">Grupos</th>
+            <th style="text-align:center; padding:12px;">Activo</th>
+            <th style="text-align:center; padding:12px;">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if usuarios %}
+            {% for u in usuarios %}
+            <tr style="border-top:1px solid #eceff1;">
+              <td style="padding:10px 12px;">{{ u.username }}</td>
+              <td style="padding:10px 12px;">{{ u.get_full_name }}</td>
+              <td style="padding:10px 12px;">{{ u.email }}</td>
+              <td style="padding:10px 12px;">
+                {% for g in u.groups.all %}
+                  <span>{{ g.name }}</span>{% if not forloop.last %}, {% endif %}
+                {% empty %}
+                  <em>—</em>
+                {% endfor %}
+              </td>
+              <td style="padding:10px 12px; text-align:center;">
+                {{ u.is_active|yesno:"Sí,No" }}
+              </td>
+              <td style="padding:10px 12px; text-align:center; white-space:nowrap;">
+                <a href="{% url 'cuentas:usuario_update' u.pk %}"
+                   style="margin-right:6px; text-decoration:none;">
+                  ✎ Editar
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          {% else %}
+            <tr>
+              <td colspan="6"
+                  style="padding:14px; text-align:center; color:#607d8b;">
+                No se encontraron usuarios.
+              </td>
+            </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</main>
+{% endblock %}

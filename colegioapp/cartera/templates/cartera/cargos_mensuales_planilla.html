@@ -1,0 +1,72 @@
+{% extends "colegioapp/base.html" %}
+{% block title %}Planilla Mensual{% endblock %}
+
+{% block content %}
+<main style="margin:0 auto;max-width:1200px;">
+
+    <h2>Planilla Mensual de Pensiones</h2>
+
+    <p>
+        <strong>Año económico:</strong> {{ anio.nombre }} <br>
+        <strong>Curso:</strong> {{ curso.grado }} {{ curso.nombre }} <br>
+        <strong>Concepto:</strong> {{ concepto.nombre }} ({{ concepto.valor }})<br>
+        <strong>Mes:</strong> {{ mes }}  <!-- opcional: mostrar nombre bonito -->
+    </p>
+
+    <form action="" method="post">
+        {% csrf_token %}
+
+        <p>
+            <strong>Fecha de vencimiento por defecto:</strong> {{ fecha_vencimiento_defecto }}<br>
+            <strong>Valor por estudiante:</strong> {{ valor_defecto }}
+        </p>
+
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Seleccionar</th>
+                    <th>Estudiante</th>
+                    <th>Estado</th>
+                    <th>Acción</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for fila in filas %}
+                    <tr>
+                        <td>
+                            {% if not fila.cuenta %}
+                                <input type="checkbox" name="estudiantes" value="{{ fila.estudiante.id }}">
+                            {% else %}
+                                <!-- Ya tiene cuenta, no se marca -->
+                            {% endif %}
+                        </td>
+                        <td>{{ fila.estudiante.apellidos }} {{ fila.estudiante.nombres }}</td>
+
+                        {% if not fila.cuenta %}
+                            <td style="color:orange;font-weight:bold;">SIN CUENTA</td>
+                            <td>-</td>
+                        {% else %}
+                            {% if fila.estado == "pagada" %}
+                                <td style="color:green;font-weight:bold;">PAGADA</td>
+                            {% else %}
+                                <td style="color:red;font-weight:bold;">PENDIENTE</td>
+                            {% endif %}
+                            <td>
+                                <a href="{% url 'cartera:cuentas' %}?q={{ fila.estudiante.identificacion }}"
+                                   class="btn btn-sm">
+                                    Ver cuenta
+                                </a>
+                            </td>
+                        {% endif %}
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <button class="btn btn-primary" type="submit">
+            Generar cargos para seleccionados
+        </button>
+    </form>
+
+</main>
+{% endblock %}

@@ -1,0 +1,33 @@
+{% extends "colegioapp/base.html" %}
+{% load humanize %}
+
+{% block title %}Reporte: Ingresos por Medio de Pago | Cartera{% endblock %}
+
+{% block content %}
+<main>
+  <h2>Ingresos por Medio de Pago</h2>
+
+  <table style="width:600px; margin:10px auto; border-collapse:collapse; background:#fff;">
+    <thead style="background:#e0f2f1;">
+      <tr>
+        <th style="padding:10px; text-align:left;">Medio</th>
+        <th style="padding:10px; text-align:right;">Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in resumen %}
+      <tr style="border-top:1px solid #eceff1;">
+        <td style="padding:8px 10px;">{{ r.medio_pago|default:"(Sin especificar)" }}</td>
+        <td style="padding:8px 10px; text-align:right;">${{ r.total|floatformat:0|intcomma }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="2" style="padding:10px; text-align:center;">Sin datos</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div style="text-align:center; margin-top:16px;">
+    <a href="{% url 'cartera:reportes' %}" style="padding:10px 16px; background:#004d40; color:#fff; text-decoration:none; border-radius:8px;">⬅ Volver a Reportes</a>
+  </div>
+</main>
+{% endblock content %}

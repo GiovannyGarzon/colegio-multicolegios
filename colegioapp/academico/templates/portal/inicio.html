@@ -1,0 +1,333 @@
+{% extends "colegioapp/base.html" %}
+{% load extras %}
+{% block title %}Mi portal{% endblock %}
+
+{% block navbar %}
+  {{ block.super }}
+  <nav style="background:#004d40; padding:10px 0;">
+    <ul style="list-style:none; display:flex; justify-content:center; gap:18px; margin:0; padding:0;">
+      <li><a href="{% url 'academico:portal' %}" style="color:white; text-decoration:none;">🏠 Inicio</a></li>
+      <li><a href="#boletin" onclick="document.getElementById('boletinForm').scrollIntoView({behavior:'smooth'});" style="color:white; text-decoration:none;">📊 Ver boletín</a></li>
+      <li><a href="{% url 'logout' %}" style="color:white; text-decoration:none;">🔒 Salir</a></li>
+    </ul>
+  </nav>
+{% endblock %}
+
+{% block content %}
+<main class="portal-wrap">
+  <!-- Header amigable -->
+  <section class="hero">
+    <h2>Hola, <span class="hl">{{ est.nombres }} {{ est.apellidos }}</span></h2>
+    {% if anio %}
+      <p class="meta">
+        Año lectivo: <strong>{{ anio.nombre }}</strong>
+        <span class="dot">•</span>
+        Curso: <strong>{{ est.curso }}</strong>
+      </p>
+    {% else %}
+      <p class="no-year">No hay año lectivo activo.</p>
+    {% endif %}
+  </section>
+
+  <!-- Layout principal -->
+  <section class="grid">
+    <!-- Columna izquierda: tarjetas resumen -->
+    <div class="col">
+      <!-- Tarjeta: Consultar boletín -->
+      <div class="card">
+        <div class="card-head">
+          <span class="chip chip-info">📊 Boletín</span>
+          <h3 id="boletin">Consultar mi boletín</h3>
+        </div>
+
+        {% if anio %}
+          <form id="boletinForm" method="get" action="{% url 'academico:portal_boletin' %}" class="toolbar">
+            <input type="hidden" name="anio" value="{{ anio.id }}">
+            <input type="hidden" name="curso" value="{{ est.curso.id }}">
+            <input type="hidden" name="estudiante" value="{{ est.id }}">
+
+            <label for="periodo">Período</label>
+            <select id="periodo" name="periodo" required>
+              <option value="">— Selecciona —</option>
+              {% for per in periodos %}
+                <option value="{{ per.id }}">P{{ per.numero }} — {{ per.nombre }}</option>
+              {% endfor %}
+            </select>
+
+            <button type="submit" class="btn">Ver mi boletín</button>
+            <button class="btn btn-ghost" id="btnPdf">Descargar PDF</button>
+          </form>
+          <small class="muted">El PDF se descarga por curso y período. Asegúrate de seleccionar un período.</small>
+        {% else %}
+          <p class="muted">Activa primero un año lectivo para consultar tu boletín.</p>
+        {% endif %}
+      </div>
+
+      <!-- Tarjeta: Promedios -->
+      <div class="card">
+        <div class="card-head">
+          <span class="chip chip-good">⭐ Promedios</span>
+          <h3>Promedios por asignatura (0–5)</h3>
+        </div>
+
+        {% if promedios %}
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Asignatura</th>
+                <th style="text-align:right;">Promedio</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for p in promedios %}
+                <tr>
+                  <td>{{ p.asignatura }}</td>
+                  <td style="text-align:right;">
+                    <span class="promedio-chip {{ p.promedio|prom_color }}">
+                      {{ p.promedio|floatformat:2 }}
+                    </span>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% else %}
+          <p class="empty">Aún no hay promedios para mostrar.</p>
+        {% endif %}
+      </div>
+
+      <!-- 🔹 Tarjeta: Asistencia (fallas y retardos) -->
+      <div class="card">
+        <div class="card-head">
+          <span class="chip chip-warn">📅 Asistencia</span>
+          <h3>Resumen de asistencia del año</h3>
+        </div>
+
+        {% if anio %}
+          <p class="text-row">
+            <span class="label">Fallas:</span>
+            <span class="value-strong">{{ fallas_anio|default:"0" }}</span>
+          </p>
+          <p class="text-row">
+            <span class="label">Retardos:</span>
+            <span class="value-strong">{{ tardanzas_anio|default:"0" }}</span>
+          </p>
+          <small class="muted">Contabilizado con base en los pases de lista del año lectivo actual.</small>
+        {% else %}
+          <p class="empty">No es posible calcular asistencia sin año lectivo activo.</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Columna derecha: observaciones + horario -->
+    <div class="col">
+      <!-- Observaciones -->
+      <div class="card">
+        <div class="card-head">
+          <span class="chip chip-warn">📝 Observaciones</span>
+          <h3>Observaciones recientes</h3>
+        </div>
+
+        {% if observaciones %}
+          <ul class="timeline">
+            {% for o in observaciones %}
+              <li class="timeline-item">
+                <div class="timeline-dot"></div>
+                <div class="timeline-content">
+                  <div class="timeline-date">{{ o.fecha }}</div>
+                  <div class="timeline-title">{{ o.get_tipo_display }}</div>
+                  <div class="timeline-text">{{ o.detalle }}</div>
+                </div>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="empty">No tienes observaciones recientes.</p>
+        {% endif %}
+      </div>
+
+      <!-- Horario compacto por nivel -->
+      <div class="card card-horario-simple">
+        <div class="card-head">
+          <span class="chip chip-info">⏰ Horario</span>
+          <h3>Horario de la jornada</h3>
+        </div>
+
+        <div class="horario-simple">
+          {% for key, data in horarios_nivel.items %}
+            <div class="horario-line {% if key == nivel_horario %}horario-line-activo{% endif %}">
+              <div class="horario-nivel">{{ data.titulo }}</div>
+              <div class="horario-horas">
+                {{ data.inicio }} – {{ data.fin }}
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<style>
+/* ===== Layout ===== */
+.portal-wrap{ max-width:1100px; margin:0 auto; padding:28px 18px; }
+.hero{ text-align:center; margin-bottom:18px; }
+.hero h2{ color:#00695c; font-size:28px; margin:0; }
+.hero .hl{ color:#004d40; }
+.meta{ color:#607d8b; margin:6px 0 0; }
+.meta .dot{ margin:0 6px; }
+.no-year{ color:#b71c1c; font-weight:600; }
+
+.grid{ display:grid; grid-template-columns: 1.2fr 1fr; gap:18px; }
+@media (max-width: 980px){ .grid{ grid-template-columns: 1fr; } }
+
+.col{ display:flex; flex-direction:column; gap:18px; }
+
+/* ===== Cards ===== */
+.card{
+  background:#fff; border-radius:14px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+  padding:16px 18px;
+}
+.card-head{ display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+.card-head h3{ margin:0; color:#004d40; font-size:18px; }
+
+/* Chips */
+.chip{ font-size:12px; padding:4px 8px; border-radius:999px; font-weight:600; }
+.chip-info{ background:#e1f5fe; color:#0277bd; }
+.chip-good{ background:#e8f5e9; color:#2e7d32; }
+.chip-warn{ background:#fff8e1; color:#8d6e63; }
+
+/* ===== Toolbar (boletín) ===== */
+.toolbar{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin:8px 0 6px; }
+.toolbar label{ color:#455a64; font-weight:600; }
+select{
+  padding:8px 10px; border-radius:10px; border:1px solid #cfd8dc; background:#fafafa;
+}
+.btn{
+  background:#004d40; color:#fff; border:none; border-radius:10px;
+  padding:8px 14px; cursor:pointer;
+}
+.btn:hover{ filter:brightness(1.05); }
+.btn-ghost{
+  background:#e0f2f1; color:#004d40;
+}
+
+/* ===== Table ===== */
+.table{ width:100%; border-collapse:separate; border-spacing:0 8px; }
+.table thead th{ text-align:left; color:#607d8b; font-weight:600; font-size:13px; }
+.table tbody tr{ background:#f7fbfb; }
+.table tbody tr td{ padding:10px 12px; border-top:1px solid #e0f2f1; border-bottom:1px solid #e0f2f1; }
+.table tbody tr td:first-child{ border-left:1px solid #e0f2f1; border-top-left-radius:8px; border-bottom-left-radius:8px; }
+.table tbody tr td:last-child{ border-right:1px solid #e0f2f1; border-top-right-radius:8px; border-bottom-right-radius:8px; }
+
+/* ===== Timeline ===== */
+.timeline{ list-style:none; margin:6px 0 0; padding:0 0 0 8px; position:relative; }
+.timeline:before{
+  content:""; position:absolute; left:12px; top:0; bottom:0; width:2px; background:#e0f2f1;
+}
+.timeline-item{ display:flex; position:relative; margin:10px 0 10px 0; }
+.timeline-dot{
+  width:12px; height:12px; background:#26a69a; border-radius:50%;
+  position:absolute; left:7px; top:8px;
+}
+.timeline-content{ margin-left:26px; }
+.timeline-date{ font-size:12px; color:#78909c; }
+.timeline-title{ font-weight:700; color:#37474f; margin:2px 0; }
+.timeline-text{ color:#455a64; }
+
+/* Empty/muted */
+.empty{ color:#90a4ae; margin:6px 0; }
+.muted{ color:#78909c; }
+
+/* Texto en la card de asistencia */
+.text-row{
+  display:flex;
+  justify-content:space-between;
+  margin:4px 0;
+  font-size:14px;
+}
+.text-row .label{ color:#455a64; }
+.text-row .value-strong{
+  font-weight:700;
+  color:#004d40;
+}
+
+/* Promedios chips */
+.promedio-chip{
+  padding:4px 10px;
+  border-radius:8px;
+  font-weight:700;
+  display:inline-block;
+  min-width:55px;
+}
+
+/* COLORES SEGÚN LOS RANGOS */
+.prom-rojo{
+  background:#ffebee;
+  color:#c62828;
+  border:1px solid #ef9a9a;
+}
+.prom-amarillo{
+  background:#fffde7;
+  color:#f9a825;
+  border:1px solid #fdd835;
+}
+.prom-naranja{
+  background:#fff3e0;
+  color:#ef6c00;
+  border:1px solid #ffb74d;
+}
+.prom-verde{
+  background:#e8f5e9;
+  color:#2e7d32;
+  border:1px solid #81c784;
+}
+
+/* ===== Horario ===== */
+.card-horario{
+  max-height:540px;
+  overflow-y:auto;
+}
+.horario-dia{
+  font-weight:700;
+  color:#004d40;
+  padding:10px 12px 4px;
+  font-size:14px;
+}
+.horario-tag-receso{
+  display:inline-block;
+  padding:2px 8px;
+  border-radius:999px;
+  font-size:12px;
+  background:#fff3e0;
+  color:#ef6c00;
+  border:1px solid #ffcc80;
+}
+.horario-desc{
+  font-size:12px;
+  color:#607d8b;
+  margin-left:2px;
+}
+</style>
+
+<script>
+  // Espera a que cargue el DOM y activa el botón PDF
+  document.addEventListener('DOMContentLoaded', function () {
+    const btn = document.getElementById('btnPdf');
+    const sel = document.getElementById('periodo');
+    if (btn && sel) {
+      btn.addEventListener('click', function (ev) {
+        ev.preventDefault();
+        const per = sel.value;
+        if (!per) {
+          alert('Selecciona un período para descargar el PDF.');
+          return;
+        }
+        const url = "{% url 'academico:portal_boletin_pdf' %}" + "?periodo=" + per;
+        window.location = url;
+      });
+    }
+  });
+</script>
+{% endblock %}

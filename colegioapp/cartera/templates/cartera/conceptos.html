@@ -1,0 +1,143 @@
+{% extends "colegioapp/base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Conceptos de Pago | Centro Educativo Infantil GIN GABY{% endblock %}
+
+{% block content %}
+<main>
+  <h2>Conceptos de Pago</h2>
+
+  <!-- Filtros -->
+  <form method="get" style="max-width:1000px;margin:0 auto 18px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+    <input
+      type="text" name="q" value="{{ q }}"
+      placeholder="Buscar por nombre o descripción"
+      style="flex:1; padding:10px 12px; border:1px solid #cfd8dc; border-radius:8px;"
+    />
+
+    <select name="anio" style="padding:10px 12px; border:1px solid #cfd8dc; border-radius:8px;">
+      <option value="">Todos los años</option>
+      {% for a in anios %}
+        <option value="{{ a.id }}" {% if anio_selected == a.id|stringformat:'s' %}selected{% endif %}>
+          {{ a.nombre }} {% if a.activo %} (vigente){% endif %}
+        </option>
+      {% endfor %}
+    </select>
+
+    <select name="recurrente" style="padding:10px 12px; border:1px solid #cfd8dc; border-radius:8px;">
+      <option value="">Recurrente: Todos</option>
+      <option value="1" {% if recurrente == '1' %}selected{% endif %}>Sí</option>
+      <option value="0" {% if recurrente == '0' %}selected{% endif %}>No</option>
+    </select>
+
+    <select name="activo" style="padding:10px 12px; border:1px solid #cfd8dc; border-radius:8px;">
+      <option value="">Estado: Todos</option>
+      <option value="1" {% if activo == '1' %}selected{% endif %}>Activos</option>
+      <option value="0" {% if activo == '0' %}selected{% endif %}>Inactivos</option>
+    </select>
+
+    <button type="submit" style="padding:10px 16px; background:#00796B; color:white; border:none; border-radius:8px; cursor:pointer;">
+      Filtrar
+    </button>
+    <a href="{% url 'cartera:conceptos' %}" style="padding:10px 16px; background:#90a4ae; color:white; border-radius:8px; text-decoration:none;">
+      Limpiar
+    </a>
+    <a href="{% url 'cartera:concepto_create' %}" style="background:#004d40;color:#fff;padding:8px 12px;border-radius:8px;text-decoration:none;">
+      + Nuevo concepto
+    </a>
+  </form>
+
+  <!-- Tabla -->
+  <div style="max-width:1000px;margin:0 auto;">
+    <div style="overflow-x:auto; background:white; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.06);">
+      <table style="width:100%; border-collapse:collapse;">
+        <thead style="background:#e0f2f1;">
+          <tr>
+            <th style="text-align:left; padding:12px;">Nombre</th>
+            <th style="text-align:left; padding:12px;">Año</th>
+            <th style="text-align:right; padding:12px;">Valor</th>
+            <th style="text-align:center; padding:12px;">Recurrente</th>
+            <th style="text-align:center; padding:12px;">Activo</th>
+            <th style="text-align:left; padding:12px;">Descripción</th>
+            <th style="text-align:center; padding:12px;">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if page_obj.object_list %}
+            {% for c in page_obj.object_list %}
+              <tr style="border-top:1px solid #eceff1;">
+                <td style="padding:10px 12px;">{{ c.nombre }}</td>
+                <td style="padding:10px 12px;">{{ c.anio.nombre }}</td>
+                <td style="padding:10px 12px; text-align:right;">
+                  ${{ c.valor|floatformat:0|intcomma }}
+                </td>
+                <td style="padding:10px 12px; text-align:center;">
+                  {% if c.recurrente %}
+                    <span style="background:#e8f5e9;color:#2e7d32;padding:4px 8px;border-radius:12px;">Sí</span>
+                  {% else %}
+                    <span style="background:#fff3e0;color:#ef6c00;padding:4px 8px;border-radius:12px;">No</span>
+                  {% endif %}
+                </td>
+                <td style="padding:10px 12px; text-align:center;">
+                  {% if c.activo %}
+                    <span style="background:#e8f5e9;color:#2e7d32;padding:4px 8px;border-radius:12px;">Activo</span>
+                  {% else %}
+                    <span style="background:#ffebee;color:#c62828;padding:4px 8px;border-radius:12px;">Inactivo</span>
+                  {% endif %}
+                </td>
+                <td style="padding:10px 12px;">{{ c.descripcion|default:"—" }}</td>
+                <td style="padding:10px 12px; text-align:center;">
+                  <a href="{% url 'cartera:concepto_update' c.id %}"
+                     style="background:#0288d1; color:white; padding:6px 10px; border-radius:8px; text-decoration:none; margin-right:4px;">
+                    ✏️
+                  </a>
+                  <a href="{% url 'cartera:concepto_delete' c.id %}"
+                     style="background:#c62828; color:white; padding:6px 10px; border-radius:8px; text-decoration:none;"
+                     onclick="return confirm('¿Seguro que deseas eliminar este concepto?');">
+                    🗑️
+                  </a>
+                </td>
+              </tr>
+            {% endfor %}
+          {% else %}
+            <tr>
+              <td colspan="6" style="padding:14px; text-align:center; color:#607d8b;">No se encontraron conceptos.</td>
+            </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Paginación -->
+    {% if page_obj.paginator.num_pages > 1 %}
+    <div style="display:flex; justify-content:center; gap:6px; margin:18px 0;">
+      {% if page_obj.has_previous %}
+        <a href="?page=1{% if querystring %}&{{ querystring }}{% endif %}"
+           style="padding:8px 10px; border:1px solid #cfd8dc; border-radius:8px; text-decoration:none;">« Primero</a>
+        <a href="?page={{ page_obj.previous_page_number }}{% if querystring %}&{{ querystring }}{% endif %}"
+           style="padding:8px 10px; border:1px solid #cfd8dc; border-radius:8px; text-decoration:none;">‹ Anterior</a>
+      {% endif %}
+
+      <span style="padding:8px 10px; border:1px solid #cfd8dc; border-radius:8px; background:#f5f5f5;">
+        Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+      </span>
+
+      {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}{% if querystring %}&{{ querystring }}{% endif %}"
+           style="padding:8px 10px; border:1px solid #cfd8dc; border-radius:8px; text-decoration:none;">Siguiente ›</a>
+        <a href="?page={{ page_obj.paginator.num_pages }}{% if querystring %}&{{ querystring }}{% endif %}"
+           style="padding:8px 10px; border:1px solid #cfd8dc; border-radius:8px; text-decoration:none;">Última »</a>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Botón volver -->
+    <div style="text-align:center; margin-top:20px;">
+      <a href="{% url 'cartera:home' %}" style="padding:10px 18px; background:#004d40; color:white; text-decoration:none; border-radius:8px;">
+        ⬅ Volver al módulo Cartera
+      </a>
+    </div>
+  </div>
+</main>
+{% endblock content %}

@@ -1,0 +1,93 @@
+{% extends "colegioapp/base.html" %}
+{% block title %}Buscar persona{% endblock %}
+
+{% block content %}
+<main style="max-width:1000px;margin:0 auto;padding:20px;">
+  <h2>Buscar persona</h2>
+
+  <form method="get" action="" style="margin-bottom:16px;">
+    <input type="text"
+           name="q"
+           value="{{ q }}"
+           placeholder="Nombre, apellido, identificación, usuario..."
+           style="padding:6px 10px; border-radius:8px; border:1px solid #b0bec5; width:260px;">
+    <button type="submit"
+            style="padding:6px 12px; border-radius:8px; border:none; background:#00695c; color:#fff; cursor:pointer;">
+      Buscar
+    </button>
+  </form>
+
+  {% if q %}
+    <p>Resultados para: <strong>{{ q }}</strong></p>
+  {% endif %}
+
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:10px;">
+    <!-- Estudiantes -->
+    <section style="background:#fff;border-radius:10px;padding:12px;box-shadow:0 2px 6px rgba(0,0,0,0.08);">
+      <h3>Estudiantes</h3>
+      {% if estudiantes %}
+        <ul style="list-style:none;padding:0;margin:0;">
+          {% for e in estudiantes %}
+            <li style="padding:6px 0; border-bottom:1px solid #eceff1;">
+              <div><strong>{{ e.apellidos }} {{ e.nombres }}</strong></div>
+              <div style="font-size:0.85rem;color:#607d8b;">
+                ID: {{ e.identificacion }}<br>
+                Curso: {{ e.curso|default:"Sin curso" }}
+              </div>
+              <div style="margin-top:4px;">
+                <a href="{% url 'academico:estudiante_detail' e.id %}"
+                   style="font-size:0.8rem; margin-right:8px;">Ver ficha</a>
+              </div>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p style="font-size:0.9rem;color:#90a4ae;">Sin resultados de estudiantes.</p>
+      {% endif %}
+    </section>
+
+    <!-- Docentes / Usuarios -->
+    <section style="display:flex;flex-direction:column;gap:12px;">
+
+      <div style="background:#fff;border-radius:10px;padding:12px;box-shadow:0 2px 6px rgba(0,0,0,0.08);">
+        <h3>Docentes</h3>
+        {% if docentes %}
+          <ul style="list-style:none;padding:0;margin:0;">
+            {% for d in docentes %}
+              <li style="padding:6px 0; border-bottom:1px solid #eceff1;">
+                <div><strong>{{ d.apellidos }} {{ d.nombres }}</strong></div>
+                <div style="font-size:0.85rem;color:#607d8b;">
+                  ID: {{ d.identificacion }}<br>
+                  Curso asignado: {{ d.curso_asignado|default:"—" }}
+                </div>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p style="font-size:0.9rem;color:#90a4ae;">Sin resultados de docentes.</p>
+        {% endif %}
+      </div>
+
+      <div style="background:#fff;border-radius:10px;padding:12px;box-shadow:0 2px 6px rgba(0,0,0,0.08);">
+        <h3>Usuarios del sistema</h3>
+        {% if usuarios %}
+          <ul style="list-style:none;padding:0;margin:0;">
+            {% for u in usuarios %}
+              <li style="padding:6px 0; border-bottom:1px solid #eceff1;">
+                <div><strong>{{ u.get_full_name|default:u.username }}</strong></div>
+                <div style="font-size:0.85rem;color:#607d8b;">
+                  Usuario: {{ u.username }}<br>
+                  Email: {{ u.email|default:"—" }}
+                </div>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p style="font-size:0.9rem;color:#90a4ae;">Sin resultados de usuarios.</p>
+        {% endif %}
+      </div>
+
+    </section>
+  </div>
+</main>
+{% endblock %}

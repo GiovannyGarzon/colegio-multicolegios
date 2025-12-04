@@ -1,0 +1,30 @@
+{% extends "colegioapp/base.html" %}
+{% block title %}{% if edit_mode %}Editar{% else %}Nueva{% endif %} Oferta | CEI GIN GABY{% endblock %}
+
+{% block content %}
+<main style="max-width:700px;margin:0 auto;text-align:left;">
+  <h2 style="color:#00796B;">{% if edit_mode %}Editar{% else %}Registrar nueva{% endif %} oferta</h2>
+
+  <form method="post" style="background:#fff;padding:25px;border-radius:12px;box-shadow:0 4px 10px rgba(0,0,0,0.1);">
+    {% csrf_token %}
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <label style="font-weight:bold;">Año lectivo</label> {{ form.anio }}
+      <label style="font-weight:bold;">Curso</label> {{ form.curso }}
+      <label style="font-weight:bold;">Asignatura</label> {{ form.asignatura }}
+      <label style="font-weight:bold;">Docente (opcional)</label> {{ form.docente }}
+      <label style="font-weight:bold;">Intensidad horaria (horas/semana)</label> {{ form.intensidad_horaria }}
+    </div>
+
+    {% if form.non_field_errors %}
+      <div style="color:#c62828;margin-top:10px;">{{ form.non_field_errors }}</div>
+    {% endif %}
+
+    <div style="margin-top:20px;display:flex;gap:10px;">
+      <button type="submit" style="padding:10px 16px;background:#00796B;color:#fff;border:none;border-radius:8px;cursor:pointer;">
+        {% if edit_mode %}Actualizar{% else %}Guardar{% endif %}
+      </button>
+      <a href="{% url 'academico:ofertas' %}" style="padding:10px 16px;background:#9e9e9e;color:#fff;border-radius:8px;text-decoration:none;">Cancelar</a>
+    </div>
+  </form>
+</main>
+{% endblock %}

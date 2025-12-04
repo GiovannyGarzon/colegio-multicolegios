@@ -1,0 +1,106 @@
+{% extends "colegioapp/base.html" %}
+{% load roles %}
+{% block title %}Gestión Académica Avanzada | CEI GIN GABY{% endblock %}
+
+{% block content %}
+<main>
+  <h2>Gestión Académica Avanzada</h2>
+  <p>
+    Desde este panel podrás configurar el año lectivo, asignaturas ofertadas por curso,
+    definir logros por periodo, registrar calificaciones y generar boletines.
+  </p>
+
+  <!-- Nav interno del hub -->
+  <nav style="display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin:16px 0;">
+    {% if user.is_staff or user.is_superuser or user|has_group:"Coordinador" or user|has_group:"Rector" %}
+      <a href="{% url 'academico:asignaturas' %}" class="btn">Asignaturas (Catálogo)</a>
+      <a href="{% url 'academico:ofertas' %}" class="btn">Oferta por curso/año</a>
+      <a href="{% url 'academico:periodos' %}" class="btn">Periodos del año</a>
+    {% endif %}
+
+    {# Docentes, coordinador, rector y admin pueden usar notas / boletines / asistencia #}
+    {% if user.is_staff or user.is_superuser or user|has_group:"Coordinador" or user|has_group:"Rector" or user|has_group:"Docente" %}
+      <a href="{% url 'academico:notas_selector' %}" class="btn">Captura de notas</a>
+      <a href="{% url 'academico:boletin_selector' %}" class="btn">Boletines</a>
+      <a href="{% url 'academico:asistencia_selector' %}" class="btn">Asistencia (pase de lista)</a>
+    {% endif %}
+  </nav>
+
+  <section class="banner-mision-vision">
+    <div class="container">
+
+      {# 🔹 Zona de configuración solo para rector/coordinador/staff #}
+      {% if user.is_staff or user.is_superuser or user|has_group:"Coordinador" or user|has_group:"Rector" %}
+        <div class="banner-item">
+          <h3>
+            <a href="{% url 'academico:asignaturas' %}" style="text-decoration:none; color:#00796B;">
+              Asignaturas (Catálogo)
+            </a>
+          </h3>
+          <p>Lista global de materias (Matemáticas, Lengua…). No dependen del curso ni del año.</p>
+        </div>
+        <div class="banner-item">
+          <h3>
+            <a href="{% url 'academico:asistencia_selector' %}" style="text-decoration:none; color:#00796B;">
+              Asistencia (pase de lista)
+            </a>
+          </h3>
+          <p>
+            Registra la asistencia diaria de cada curso (presentes, ausentes, tardanzas y justificadas)
+            para llevar el control por trimestre.
+          </p>
+        </div>
+
+        <div class="banner-item">
+          <h3>
+            <a href="{% url 'academico:ofertas' %}" style="text-decoration:none; color:#00796B;">
+              Oferta académica
+            </a>
+          </h3>
+          <p>Asigna qué asignaturas ve cada <strong>curso</strong> en un <strong>año lectivo</strong>, y su docente.</p>
+        </div>
+
+        <div class="banner-item">
+          <h3>
+            <a href="{% url 'academico:periodos' %}" style="text-decoration:none; color:#00796B;">
+              Periodos y logros
+            </a>
+          </h3>
+          <p>Define 4 periodos por año y los logros (con peso) por asignatura/curso/periodo.</p>
+        </div>
+      {% endif %}
+
+      {# 🔹 Notas y Boletines: rector, coordinador, docente (y admin) #}
+      {% if user.is_staff or user.is_superuser or user|has_group:"Coordinador" or user|has_group:"Rector" or user|has_group:"Docente" %}
+        <div class="banner-item">
+          <h3>
+            <a href="{% url 'academico:notas_selector' %}" style="text-decoration:none; color:#00796B;">
+              Captura de notas
+            </a>
+          </h3>
+          <p>Registra calificaciones por logro y periodo para los estudiantes del curso.</p>
+        </div>
+
+        <div class="banner-item">
+          <h3>
+            <a href="{% url 'academico:boletin_selector' %}" style="text-decoration:none; color:#00796B;">
+              Boletines
+            </a>
+          </h3>
+          <p>Genera boletines por estudiante con promedios por periodo y promedio anual.</p>
+        </div>
+      {% endif %}
+
+    </div>
+  </section>
+
+  <div style="display:flex;justify-content:center;margin-top:18px;">
+    <a href="{% url 'academico:home' %}" class="btn-sec">← Volver a Académico</a>
+  </div>
+</main>
+
+<style>
+  .btn{ text-decoration:none; background:#004d40; color:#fff; padding:10px 16px; border-radius:10px; }
+  .btn-sec{ text-decoration:none; background:#9e9e9e; color:#fff; padding:10px 16px; border-radius:10px; }
+</style>
+{% endblock %}

@@ -1,0 +1,151 @@
+{% extends "colegioapp/base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Pagos | Centro Educativo Infantil GIN GABY{% endblock %}
+
+{% block content %}
+<main>
+  <h2>Pagos</h2>
+
+  <!-- Resumen -->
+  <div style="max-width:1100px;margin:0 auto 10px;display:flex;justify-content:space-between;align-items:center;">
+    <div style="color:#607d8b;">
+      Resultados: {{ page_obj.paginator.count|intcomma }}
+    </div>
+    <div style="font-weight:600;">
+      Total filtrado: ${{ total_filtrado|default:0|floatformat:0|intcomma }}
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <form method="get" style="max-width:1100px;margin:0 auto 18px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+    <input
+      type="text" name="q" value="{{ q }}"
+      placeholder="Buscar por estudiante, identificación o concepto"
+      style="flex:1; padding:10px 12px; border:1px solid #cfd8dc; border-radius:8px;"
+    />
+
+    <select name="anio" style="padding:10px 12px; border:1px solid #cfd8dc; border-radius:8px;">
+      <option value="">Todos los años</option>
+      {% for a in anios %}
+        <option value="{{ a.id }}" {% if anio_selected == a.id|stringformat:'s' %}selected{% endif %}>
+          {{ a.nombre }}{% if a.activo %} (vigente){% endif %}
+        </option>
+      {% endfor %}
+    </select>
+
+    <select name="concepto" style="padding:10px 12px; border:1px solid #cfd8dc; border-radius:8px;">
+      <option value="">Todos los conceptos</option>
+      {% for c in conceptos %}
+        <option value="{{ c.id }}" {% if concepto_selected == c.id|stringformat:'s' %}selected{% endif %}>
+          {{ c.nombre }} - {{ c.anio.nombre }}
+        </option>
+      {% endfor %}
+    </select>
+
+    <input type="date" name="desde" value="{{ desde }}" style="padding:10px 12px; border:1px solid #cfd8dc; border-radius:8px;">
+    <input type="date" name="hasta" value="{{ hasta }}" style="padding:10px 12px; border:1px solid #cfd8dc; border-radius:8px;">
+
+    <input
+      type="text" name="medio" value="{{ medio }}"
+      placeholder="Medio de pago (efectivo, transferencia...)"
+      style="padding:10px 12px; border:1px solid #cfd8dc; border-radius:8px;"
+    />
+
+    <button type="submit" style="padding:10px 16px; background:#00796B; color:white; border:none; border-radius:8px; cursor:pointer;">
+      Filtrar
+    </button>
+    <a href="{% url 'cartera:pagos' %}" style="padding:10px 16px; background:#90a4ae; color:white; border-radius:8px; text-decoration:none;">
+      Limpiar
+    </a>
+    <a href="{% url 'cartera:pago_create' %}"
+       style="padding:10px 14px;background:#00796B;color:#fff;border-radius:8px;text-decoration:none;">
+      + Nuevo pago
+    </a>
+  </form>
+
+  <!-- Tabla -->
+  <div style="max-width:1100px;margin:0 auto;">
+    <div style="overflow-x:auto; background:white; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.06);">
+      <table style="width:100%; border-collapse:collapse;">
+        <thead style="background:#e0f2f1;">
+          <tr>
+            <th style="text-align:left; padding:12px;">Fecha</th>
+            <th style="text-align:left; padding:12px;">Estudiante</th>
+            <th style="text-align:left; padding:12px;">Concepto</th>
+            <th style="text-align:left; padding:12px;">Año</th>
+            <th style="text-align:left; padding:12px;">Medio</th>
+            <th style="text-align:right; padding:12px;">Valor pagado</th>
+            <th style="text-align:left; padding:12px;">Observaciones</th>
+            <th style="text-align:center; padding:12px;">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if page_obj.object_list %}
+            {% for p in page_obj.object_list %}
+              <tr style="border-top:1px solid #eceff1;">
+                <td style="padding:10px 12px;">{{ p.fecha_pago|date:"Y-m-d" }}</td>
+                <td style="padding:10px 12px;">
+                  {{ p.cuenta.estudiante.apellidos }} {{ p.cuenta.estudiante.nombres }}
+                  <small style="color:#78909c;">({{ p.cuenta.estudiante.identificacion }})</small>
+                </td>
+                <td style="padding:10px 12px;">{{ p.cuenta.concepto.nombre }}</td>
+                <td style="padding:10px 12px;">{{ p.cuenta.concepto.anio.nombre }}</td>
+                <td style="padding:10px 12px;">{{ p.medio_pago }}</td>
+                <td style="padding:10px 12px; text-align:right;">
+                  ${{ p.valor_pagado|floatformat:0|intcomma }}
+                </td>
+                <td style="padding:10px 12px;">
+                  {{ p.observaciones|default:"" }}
+                </td>
+                <td style="padding:10px 12px; text-align:center; white-space:nowrap;">
+                  <a href="{% url 'cartera:pago_update' p.id %}"
+                     style="padding:6px 10px;background:#0277bd;color:#fff;border-radius:6px;text-decoration:none;margin-right:6px;">
+                    Editar
+                  </a>
+                  <a href="{% url 'cartera:pago_delete' p.id %}"
+                     style="padding:6px 10px;background:#c62828;color:#fff;border-radius:6px;text-decoration:none;"
+                     onclick="return confirm('¿Deseas eliminar este pago? Se revertirá el saldo de la cuenta.');">
+                    Eliminar
+                  </a>
+                </td>
+              </tr>
+            {% endfor %}
+          {% else %}
+            <tr>
+              <td colspan="7" style="padding:14px; text-align:center; color:#607d8b;">No se encontraron pagos.</td>
+            </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Paginación -->
+    {% if page_obj.paginator.num_pages > 1 %}
+    <div style="display:flex; justify-content:center; gap:6px; margin:18px 0;">
+      {% if page_obj.has_previous %}
+        <a href="?page=1{% if querystring %}&{{ querystring }}{% endif %}" style="padding:8px 10px; border:1px solid #cfd8dc; border-radius:8px; text-decoration:none;">« Primero</a>
+        <a href="?page={{ page_obj.previous_page_number }}{% if querystring %}&{{ querystring }}{% endif %}" style="padding:8px 10px; border:1px solid #cfd8dc; border-radius:8px; text-decoration:none;">‹ Anterior</a>
+      {% endif %}
+
+      <span style="padding:8px 10px; border:1px solid #cfd8dc; border-radius:8px; background:#f5f5f5;">
+        Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+      </span>
+
+      {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}{% if querystring %}&{{ querystring }}{% endif %}" style="padding:8px 10px; border:1px solid #cfd8dc; border-radius:8px; text-decoration:none;">Siguiente ›</a>
+        <a href="?page={{ page_obj.paginator.num_pages }}{% if querystring %}&{{ querystring }}{% endif %}" style="padding:8px 10px; border:1px solid #cfd8dc; border-radius:8px; text-decoration:none;">Última »</a>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Botón volver -->
+    <div style="text-align:center; margin-top:20px;">
+      <a href="{% url 'cartera:home' %}" style="padding:10px 18px; background:#004d40; color:white; text-decoration:none; border-radius:8px;">
+        ⬅ Volver al módulo Cartera
+      </a>
+    </div>
+  </div>
+</main>
+{% endblock content %}

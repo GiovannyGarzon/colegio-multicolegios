@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}Eliminar matrícula{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+
+    <h2 class="mb-3">Eliminar matrícula</h2>
+
+    <div class="alert alert-warning">
+        <p>
+            ¿Seguro que deseas eliminar la matrícula de
+            <strong>{{ obj.estudiante.nombres }} {{ obj.estudiante.apellidos }}</strong>
+            para el año <strong>{{ obj.anio.nombre }}</strong>
+            en el curso <strong>{{ obj.curso.grado }} - {{ obj.curso.nombre }}</strong>?
+        </p>
+        <p class="mb-0">
+            Esta acción no se puede deshacer.
+        </p>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">
+            Sí, eliminar
+        </button>
+        <a href="{% url 'administrativo:matriculas' %}" class="btn btn-secondary">
+            Cancelar
+        </a>
+    </form>
+
+</div>
+{% endblock %}

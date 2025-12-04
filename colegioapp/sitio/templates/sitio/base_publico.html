@@ -1,0 +1,125 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}CE GIN GABI | Sitio oficial{% endblock %}</title>
+
+  <style>
+    /* --- Layout básico + sticky footer --- */
+    html, body { height: 100%; margin: 0; padding: 0; }
+    body { font-family: "Segoe UI", Arial, sans-serif; background:#f7faf9; color:#233; }
+    .page-container { min-height: 100vh; display: flex; flex-direction: column; }
+    .content-wrap { flex: 1; } /* empuja el footer al fondo */
+
+    /* Header / nav / footer */
+    header{
+      background:linear-gradient(90deg,#0077B6,#009688);
+      color:#fff; padding:16px 24px; display:flex; gap:16px; align-items:center;
+    }
+    header img{ width:70px; height:auto; }
+    header h1{ margin:0; font-size:1.4rem; }
+    nav{ background:#004d40; display:flex; gap:14px; align-items:center; padding:10px 16px; }
+    nav a{ color:#fff; text-decoration:none; }
+    nav a:hover{ color:#80cbc4; }
+    .spacer{ flex:1; }
+    .btn{ background:#00796B; color:#fff; padding:8px 12px; border-radius:8px; text-decoration:none; }
+
+    footer{
+      background:#004d40; color:#c8e6c9; text-align:center; padding:12px 10px;
+      font-size:0.9rem;
+    }
+
+    /* Utilidades comunes para páginas */
+    .hero{ background:#e0f2f1; padding:42px 16px; text-align:center; }
+    .grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+           gap:16px; max-width:1100px; margin:0 auto; }
+    .card{ background:#fff; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,.06); padding:18px; }
+    footer {
+    background: #004d40;
+    color: #c8e6c9;
+    text-align: center;
+    padding: 18px 10px;
+    font-size: 0.9rem;
+  }
+
+  .footer-content {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  .footer-social {
+    margin-bottom: 12px;
+  }
+
+  .footer-social a {
+    display: inline-block;
+    margin: 0 10px;
+  }
+
+  .footer-social img {
+    width: 32px;
+    height: 32px;
+    filter: brightness(0) invert(1); /* mantiene iconos blancos si lo deseas */
+    transition: 0.3s ease;
+  }
+
+  .footer-social img:hover {
+    transform: scale(1.15);
+    filter: brightness(1.2);
+  }
+  </style>
+
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+  <div class="page-container">
+    <header>
+      <img src="{% static 'img/logo.png' %}" alt="Logo CEI GIN GABY" />
+      <div>
+        <h1>CENTRO EDUCATIVO GIN GABI</h1>
+        <small>Formando con amor, conocimiento y valores</small>
+      </div>
+    </header>
+
+    <nav>
+      <a href="{% url 'sitio:home_publico' %}">Inicio</a>
+      <a href="{% url 'sitio:nosotros' %}">Nosotros</a>
+      <a href="{% url 'sitio:admisiones' %}">Admisiones</a>
+      <a href="{% url 'sitio:noticias' %}">Noticias</a>
+      <a href="{% url 'sitio:contacto' %}">Contacto</a>
+      <div class="spacer"></div>
+      <a class="btn" href="{% url 'login' %}">Ingresar al sistema</a>
+    </nav>
+
+    <!-- 👇 Aquí va SIEMPRE el contenido de cada página -->
+    <main class="content-wrap">
+      {% block content %}{% endblock %}
+    </main>
+
+    <footer class="footer">
+  <div class="footer-content">
+
+    <div class="footer-social">
+      <a href="https://www.facebook.com/share/1A7etNj4vG/?mibextid=wwXIfr" target="_blank" rel="noopener">
+        <img src="{% static 'img/social/facebook.svg' %}" alt="Facebook">
+      </a>
+
+      <a href="https://instagram.com/centroeducativogingabi" target="_blank" rel="noopener">
+        <img src="{% static 'img/social/instagram.svg' %}" alt="Instagram">
+      </a>
+
+      <a href="https://www.youtube.com/watch?v=-rqPxO4G2yk" target="_blank" rel="noopener">
+        <img src="{% static 'img/social/youtube.svg' %}" alt="YouTube">
+      </a>
+    </div>
+
+    <p>&copy; {% now "Y" %} CE GIN GABI · Todos los derechos reservados.</p>
+  </div>
+</footer>
+  </div>
+
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

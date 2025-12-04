@@ -1,0 +1,35 @@
+{% extends "colegioapp/base.html" %}
+
+{% block title %}Eliminar año lectivo | Centro Educativo Infantil GIN GABY{% endblock %}
+
+{% block content %}
+<main>
+  <h2>Eliminar año lectivo</h2>
+
+  <div style="max-width:600px; margin:20px auto;">
+    <div style="background:white; padding:24px; border-radius:12px;
+                box-shadow:0 4px 12px rgba(0,0,0,0.06);">
+      <p>
+        ¿Seguro que deseas eliminar el año lectivo
+        <strong>{{ obj.nombre }}</strong> ({{ obj.fecha_inicio|date:'d/m/Y' }} - {{ obj.fecha_fin|date:'d/m/Y' }})?
+      </p>
+
+      <form method="post">
+        {% csrf_token %}
+        <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
+          <button type="submit"
+                  style="padding:8px 16px; background:#c62828; color:white;
+                         border:none; border-radius:8px; cursor:pointer;">
+            Sí, eliminar
+          </button>
+          <a href="{% url 'academico:anios_lectivos' %}"
+             style="padding:8px 16px; background:#cfd8dc; color:#000;
+                    border-radius:8px; text-decoration:none;">
+            Cancelar
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
+</main>
+{% endblock %}

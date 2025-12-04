@@ -1,0 +1,113 @@
+{% extends "colegioapp/base.html" %}
+{% load static %}
+
+{% block title %}Años Económicos | Centro Educativo Infantil GIN GABY{% endblock %}
+
+{% block content %}
+<main>
+  <h2>Gestión de Años Económicos</h2>
+
+  <!-- Filtros -->
+  <form method="get" style="max-width:800px;margin:0 auto 20px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+    <input
+      type="text" name="q" value="{{ q }}"
+      placeholder="Buscar por nombre o año (ej: 2025)"
+      style="flex:1; padding:10px 12px; border:1px solid #cfd8dc; border-radius:8px;"
+    />
+
+    <select name="estado" style="padding:10px 12px; border:1px solid #cfd8dc; border-radius:8px;">
+      <option value="">Todos</option>
+      <option value="activo" {% if estado == "activo" %}selected{% endif %}>Activos</option>
+      <option value="inactivo" {% if estado == "inactivo" %}selected{% endif %}>Inactivos</option>
+    </select>
+
+    <button type="submit" style="padding:10px 16px; background:#00796B; color:white; border:none; border-radius:8px; cursor:pointer;">
+      Filtrar
+    </button>
+
+    <a href="{% url 'cartera:anios' %}" style="padding:10px 16px; background:#90a4ae; color:white; border-radius:8px; text-decoration:none;">
+      Limpiar
+    </a>
+    <a href="{% url 'cartera:anio_create' %}"
+       style="display:inline-block;background:#00796B;color:#fff;
+              padding:10px 14px;border-radius:8px;text-decoration:none;">
+       + Nuevo año económico
+    </a>
+  </form>
+
+  <!-- Tabla -->
+  <div style="max-width:900px;margin:0 auto;">
+    <div style="overflow-x:auto; background:white; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.06);">
+      <table style="width:100%; border-collapse:collapse;">
+        <thead style="background:#e0f2f1;">
+          <tr>
+            <th style="padding:12px; text-align:left;">Nombre</th>
+            <th style="padding:12px; text-align:left;">Fecha Inicio</th>
+            <th style="padding:12px; text-align:left;">Fecha Fin</th>
+            <th style="padding:12px; text-align:center;">Activo</th>
+            <th style="padding:12px; text-align:center;">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if page_obj.object_list %}
+            {% for anio in page_obj.object_list %}
+              <tr style="border-top:1px solid #eceff1;">
+                <td style="padding:10px 12px;">{{ anio.nombre }}</td>
+                <td style="padding:10px 12px;">{{ anio.fecha_inicio|date:"d/m/Y" }}</td>
+                <td style="padding:10px 12px;">{{ anio.fecha_fin|date:"d/m/Y" }}</td>
+                <td style="padding:10px 12px; text-align:center;">
+                  {% if anio.activo %}
+                    <span style="color:#2e7d32; font-weight:bold;">✔</span>
+                  {% else %}
+                    <span style="color:#c62828; font-weight:bold;">✖</span>
+                  {% endif %}
+                </td>
+                <td style="padding:10px 12px; text-align:center; white-space:nowrap;">
+                  {% if not anio.activo %}
+                    <a href="{% url 'cartera:anio_set_activo' anio.id %}"
+                       style="text-decoration:none; margin-right:8px;">✅ Activar</a>
+                  {% else %}
+                    <span style="opacity:.7; margin-right:8px;">(Activo)</span>
+                  {% endif %}
+                  <a href="{% url 'cartera:anio_update' anio.id %}" style="text-decoration:none; margin-right:8px;">✏️ Editar</a>
+                  <a href="{% url 'cartera:anio_delete' anio.id %}" style="text-decoration:none; color:#c62828;">🗑 Eliminar</a>
+                </td>
+              </tr>
+            {% endfor %}
+          {% else %}
+            <tr>
+              <td colspan="4" style="padding:14px; text-align:center; color:#607d8b;">No se encontraron registros.</td>
+            </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Paginación -->
+    {% if page_obj.paginator.num_pages > 1 %}
+    <div style="display:flex; justify-content:center; gap:6px; margin:18px 0;">
+      {% if page_obj.has_previous %}
+        <a href="?page=1{% if querystring %}&{{ querystring }}{% endif %}" style="padding:8px 10px; border:1px solid #cfd8dc; border-radius:8px; text-decoration:none;">« Primero</a>
+        <a href="?page={{ page_obj.previous_page_number }}{% if querystring %}&{{ querystring }}{% endif %}" style="padding:8px 10px; border:1px solid #cfd8dc; border-radius:8px; text-decoration:none;">‹ Anterior</a>
+      {% endif %}
+
+      <span style="padding:8px 10px; border:1px solid #cfd8dc; border-radius:8px; background:#f5f5f5;">
+        Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+      </span>
+
+      {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}{% if querystring %}&{{ querystring }}{% endif %}" style="padding:8px 10px; border:1px solid #cfd8dc; border-radius:8px; text-decoration:none;">Siguiente ›</a>
+        <a href="?page={{ page_obj.paginator.num_pages }}{% if querystring %}&{{ querystring }}{% endif %}" style="padding:8px 10px; border:1px solid #cfd8dc; border-radius:8px; text-decoration:none;">Última »</a>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Botón volver -->
+  <div style="text-align:center; margin-top:25px;">
+    <a href="{% url 'cartera:home' %}" style="padding:10px 18px; background:#004d40; color:white; text-decoration:none; border-radius:8px;">
+      ← Volver al módulo Cartera
+    </a>
+  </div>
+</main>
+{% endblock content %}

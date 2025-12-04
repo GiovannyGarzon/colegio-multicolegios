@@ -1,0 +1,72 @@
+{% extends "colegioapp/base.html" %}
+
+{% block title %}Administrativo | Centro Educativo Infantil GIN GABY{% endblock %}
+
+{% block content %}
+<main>
+    <h2>Gestión Administrativa</h2>
+    <p>
+        Bienvenido al módulo administrativo del sistema. Desde aquí podrás gestionar la información
+        relacionada con personal, inventarios, pagos, y la organización general del colegio.
+    </p>
+
+    <section class="banner-mision-vision">
+        <div class="container">
+            <!-- Personal administrativo -->
+            <div class="banner-item">
+                <h3><a href="{% url 'administrativo:cargos' %}" style="text-decoration:none; color:#00796B;">Cargos</a></h3>
+                <p>
+                    Consulta y administra la información del personal administrativo,
+                    asignaciones, cargos y datos de contacto.
+                </p>
+            </div>
+
+            <!-- Nómina -->
+            <div class="banner-item">
+                <h3>
+                  <a href="{% url 'administrativo:empleados' %}" style="text-decoration:none; color:#00796B;">
+                    Empleados
+                  </a>
+                </h3>
+                <p>
+                    Gestiona la nómina del personal, pagos, deducciones y beneficios
+                    correspondientes a cada empleado.
+                </p>
+            </div>
+
+            <!-- Inventarios -->
+            <div class="banner-item">
+                <h3><a href="{% url 'administrativo:proveedores' %}" style="text-decoration:none; color:#00796B;">Proveedores</a></h3>
+                <p>
+                    Administra el inventario del colegio, materiales, útiles, mobiliario
+                    y demás recursos institucionales.
+                </p>
+            </div>
+
+            <!-- Pagos y servicios -->
+            <div class="banner-item">
+                <h3><a href="{% url 'administrativo:contratos' %}" style="text-decoration:none; color:#00796B;">Contratos</a></h3>
+                <p>
+                    Controla los pagos generales, facturas y servicios institucionales
+                    de forma clara y organizada.
+                </p>
+            </div>
+            <!-- Matrículas (NUEVO) -->
+            <div class="banner-item">
+                <h3>
+                    <a href="{% url 'administrativo:matriculas' %}" style="text-decoration:none; color:#00796B;">
+                        Matrículas
+                    </a>
+                </h3>
+                <p>
+                    Gestiona la matrícula de estudiantes por año lectivo y curso.
+                </p>
+            </div>
+            <div class="banner-item">
+                <h3><a href="{% url 'administrativo:certificaciones' %}" style="text-decoration:none; color:#00796B;">Certificaciones</a></h3>
+                <p>Genera certificados estudiantiles y de notas.</p>
+            </div>
+        </div>
+    </section>
+</main>
+{% endblock content %}

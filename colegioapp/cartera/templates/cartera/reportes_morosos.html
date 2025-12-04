@@ -1,0 +1,44 @@
+{% extends "colegioapp/base.html" %}
+{% load humanize %}
+
+{% block title %}Reporte: Morosidad | Cartera{% endblock %}
+
+{% block content %}
+<main>
+  <h2>Morosidad</h2>
+
+  <table style="width:1100px; margin:10px auto; border-collapse:collapse; background:#fff;">
+    <thead style="background:#e0f2f1;">
+      <tr>
+        <th style="padding:10px; text-align:left;">Estudiante</th>
+        <th style="padding:10px; text-align:left;">Concepto (Año)</th>
+        <th style="padding:10px; text-align:left;">Vencimiento</th>
+        <th style="padding:10px; text-align:right;">Saldo</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for c in morosos %}
+      <tr style="border-top:1px solid #eceff1;">
+        <td style="padding:8px 10px;">
+          {{ c.estudiante.apellidos }} {{ c.estudiante.nombres }}
+          <small style="color:#78909c;">({{ c.estudiante.identificacion }})</small>
+        </td>
+        <td style="padding:8px 10px;">{{ c.concepto.nombre }} ({{ c.concepto.anio.nombre }})</td>
+        <td style="padding:8px 10px;">{{ c.fecha_vencimiento|date:"Y-m-d"|default:"—" }}</td>
+        <td style="padding:8px 10px; text-align:right;">${{ c.saldo_pendiente|floatformat:0|intcomma }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="4" style="padding:10px; text-align:center;">Sin morosidad</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div style="text-align:center; margin-top:16px;">
+    <a href="{% url 'cartera:reportes' %}" style="padding:10px 16px; background:#004d40; color:#fff; text-decoration:none; border-radius:8px;">⬅ Volver a Reportes</a>
+  </div>
+
+  <div style="max-width:1100px; margin:12px auto; text-align:right;">
+    <strong>Total pendiente: ${{ total_pendiente|floatformat:0|intcomma }}</strong>
+  </div>
+</main>
+{% endblock content %}
