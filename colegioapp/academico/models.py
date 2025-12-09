@@ -114,14 +114,28 @@ class AsignaturaOferta(models.Model):
     def __str__(self):
         return f"{self.anio} | {self.curso} | {self.asignatura}"
 
-
 class Logro(models.Model):
-    """
-    Logros evaluables por Periodo dentro de la AsignaturaOferta.
-    Cada logro tiene un peso: la suma de pesos de los logros de la misma asignatura/periodo debería ser 100%.
-    """
+    TIPO_HACER = "HACER"
+    TIPO_SER = "SER"
+    TIPO_SABER = "SABER"
+
+    TIPO_CHOICES = [
+        (TIPO_HACER, "Saber hacer"),
+        (TIPO_SER, "Saber ser"),
+        (TIPO_SABER, "Saber"),
+    ]
+
     oferta = models.ForeignKey(AsignaturaOferta, on_delete=models.CASCADE, related_name="logros")
     periodo = models.ForeignKey(Periodo, on_delete=models.CASCADE, related_name="logros")
+
+    # 👇 NUEVO
+    tipo = models.CharField(
+        max_length=10,
+        choices=TIPO_CHOICES,
+        default=TIPO_HACER,
+        help_text="Clasificación: saber hacer / saber ser / saber."
+    )
+
     titulo = models.CharField(max_length=200)
     descripcion = models.TextField(blank=True, null=True)
     peso = models.DecimalField(
@@ -129,14 +143,6 @@ class Logro(models.Model):
         validators=[MinValueValidator(Decimal("0.00")), MaxValueValidator(Decimal("100.00"))],
         help_text="Porcentaje dentro del periodo. La suma por periodo debe ser 100%."
     )
-
-    class Meta:
-        unique_together = ("oferta", "periodo", "titulo")
-        ordering = ["oferta__anio__nombre", "oferta__curso__grado", "oferta__asignatura__nombre", "periodo__numero", "titulo"]
-
-    def __str__(self):
-        return f"{self.oferta} | {self.periodo.nombre} | {self.titulo} ({self.peso}%)"
-
 
 class CalificacionLogro(models.Model):
     """
@@ -341,3 +347,62 @@ class BloqueHorario(models.Model):
 
     def __str__(self):
         return f"{self.get_dia_semana_display()} {self.hora_inicio}-{self.hora_fin} ({self.curso})"
+
+class Actividad(models.Model):
+    logro = models.ForeignKey(
+        Logro,
+        on_delete=models.CASCADE,
+        related_name="actividades"
+    )
+    titulo = models.CharField(max_length=200)
+    descripcion = models.TextField(blank=True)
+    fecha = models.DateField(null=True, blank=True)
+    peso = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=Decimal("0"),
+        help_text="Porcentaje dentro del logro. Lo normal es que las actividades sumen 100%."
+    )
+
+    class Meta:
+        ordering = ["id"]
+
+    def __str__(self):
+        return f"{self.titulo} ({self.logro})"
+
+
+class CalificacionActividad(models.Model):
+    actividad = models.ForeignKey(
+        Actividad,
+        on_delete=models.CASCADE,
+        related_name="calificaciones"
+    )
+    estudiante = models.ForeignKey(Estudiante, on_delete=models.CASCADE)
+    nota = models.DecimalField(max_digits=4, decimal_places=2, null=True, blank=True)
+
+    class Meta:
+        unique_together = ("actividad", "estudiante")
+
+    def __str__(self):
+        return f"{self.estudiante} - {self.actividad} : {self.nota}"
+
+
+class SaberSer(models.Model):
+    estudiante = models.ForeignKey(Estudiante, on_delete=models.CASCADE)
+    anio = models.ForeignKey(AnioLectivo, on_delete=models.CASCADE)
+    periodo = models.ForeignKey(Periodo, on_delete=models.CASCADE)
+    asignatura_oferta = models.ForeignKey(AsignaturaOferta, on_delete=models.CASCADE)
+
+    # 🔹 Nota FINAL (se sigue usando para los cálculos)
+    nota = models.DecimalField(max_digits=4, decimal_places=2, null=True, blank=True)
+
+    # 🔹 Detalle por dimensión
+    nota_comportamiento = models.DecimalField(max_digits=4, decimal_places=2, null=True, blank=True)
+    nota_responsabilidad = models.DecimalField(max_digits=4, decimal_places=2, null=True, blank=True)
+    nota_autoevaluacion = models.DecimalField(max_digits=4, decimal_places=2, null=True, blank=True)
+
+    observacion = models.TextField(blank=True, null=True)
+    fecha_registro = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("estudiante", "periodo", "asignatura_oferta")

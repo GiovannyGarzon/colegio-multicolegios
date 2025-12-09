@@ -61,11 +61,16 @@ urlpatterns = [
     # Notas
     path("notas/selector/", views.notas_selector, name="notas_selector"),
     path("notas/capturar/", views.notas_capturar, name="notas_capturar"),
+    path("logro/<int:logro_id>/actividades/", views.actividades_list, name="actividades"),
+    path("logro/<int:logro_id>/actividad/nueva/", views.actividad_create, name="actividad_create"),
+    path("actividad/<int:actividad_id>/notas/", views.notas_actividades_capturar, name="actividad_notas"),
+    path("oferta/<int:oferta_id>/periodo/<int:periodo_id>/saber-ser/", views.saber_ser_capturar, name="saber_ser_capturar"),
 
     # Boletines
     path("boletines/selector/", views.boletin_selector, name="boletin_selector"),
     path("boletines/generar/", views.boletin_generar, name="boletin_generar"),
     path("boletines/estudiante/", views.boletin_estudiante, name="boletin_estudiante"),
+    path("boletines/masivos/", views.boletines_masivos, name="boletines_masivos"),
 
     #Asistencia
     path("asistencia/", views.asistencia_selector, name="asistencia_selector"),

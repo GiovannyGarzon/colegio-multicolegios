@@ -4,80 +4,179 @@
 
 {% block extra_css %}
 <style>
-  .admisiones-hero {
-    background: linear-gradient(120deg, #e0f2f1, #f1f8e9);
-    padding: 40px 20px;
-    text-align: center;
-  }
-  .admisiones-hero h2 {
-    color: #004d40;
-    font-size: 2rem;
-    margin-bottom: 8px;
-  }
-  .admisiones-hero p { color: #455a64; font-size: 1.05rem; }
+/* === HERO CON VIDEO === */
+.hero-video-container {
+  position: relative;
+  width: 100%;
+  height: 80vh;
+  overflow: hidden;
+}
 
-  .info-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit,minmax(320px,1fr));
-    gap: 24px;
-    max-width: 1100px;
-    margin: 30px auto;
-    padding: 0 16px;
-  }
+.hero-video-container video {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  min-width: 100%;
+  min-height: 100%;
+  transform: translate(-50%, -50%);
+  object-fit: cover;
+  filter: brightness(0.45);
+}
 
-  .card {
-    background: #fff;
-    border-radius: 14px;
-    box-shadow: 0 4px 14px rgba(0,0,0,.08);
-    padding: 20px;
-  }
-  .card h3 { color: #00796B; margin-bottom: 10px; font-size: 1.3rem; }
-  .card ul { padding-left: 20px; margin: 0; line-height: 1.6; color: #37474f; }
-  .card li { margin-bottom: 4px; }
+.hero-video-content {
+  position: absolute;
+  z-index: 2;
+  width: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  text-align: center;
+  color: #fff;
+  padding: 0 20px;
+}
 
-  .contacto-box {
-    background: #004d40;
-    color: #fff;
-    border-radius: 14px;
-    padding: 24px 20px;
-    text-align: center;
-    margin: 40px auto;
-    max-width: 900px;
-  }
-  .contacto-box a { color: #e0f7fa; font-weight: 600; text-decoration: none; }
-  .contacto-box a:hover { text-decoration: underline; }
+.hero-video-content h2 {
+  font-size: 2.4rem;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
 
-  .boton-info {
-    display: inline-block;
-    background: #00796B;
-    color: #fff;
-    padding: 10px 16px;
-    border-radius: 8px;
-    text-decoration: none;
-    margin-top: 12px;
-    font-weight: 600;
+.hero-video-content p {
+  font-size: 1.2rem;
+  margin-bottom: 5px;
+}
+
+@media (max-width: 768px) {
+  .hero-video-container {
+    height: 45vh;
   }
+  .hero-video-content h2 { font-size: 1.7rem; }
+  .hero-video-content p { font-size: 1rem; }
+}
+
+/* === SECCIÓN BAJO EL VIDEO === */
+.admisiones-hero {
+  background: linear-gradient(120deg, #e0f2f1, #f1f8e9);
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.admisiones-hero h2 {
+  color: #004d40;
+  font-size: 2rem;
+  margin-bottom: 10px;
+}
+
+.admisiones-hero p {
+  color: #455a64;
+  font-size: 1.05rem;
+}
+
+/* === TARJETAS DE INFORMACIÓN === */
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 24px;
+  max-width: 1100px;
+  margin: 30px auto;
+  padding: 0 16px;
+}
+
+.card {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 4px 14px rgba(0,0,0,.08);
+  padding: 20px;
+}
+
+.card h3 {
+  color: #00796B;
+  margin-bottom: 10px;
+  font-size: 1.3rem;
+}
+
+.card ul {
+  padding-left: 20px;
+  margin: 0;
+  line-height: 1.6;
+  color: #37474f;
+}
+
+.card li { margin-bottom: 4px; }
+
+/* === CONTACTO === */
+.contacto-box {
+  background: #004d40;
+  color: #fff;
+  border-radius: 14px;
+  padding: 24px 20px;
+  text-align: center;
+  margin: 40px auto;
+  max-width: 900px;
+}
+
+.contacto-box a {
+  color: #e0f7fa;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.contacto-box a:hover {
+  text-decoration: underline;
+}
+
+.boton-info {
+  display: inline-block;
+  background: #00796B;
+  color: #fff;
+  padding: 10px 16px;
+  border-radius: 8px;
+  text-decoration: none;
+  margin-top: 12px;
+  font-weight: 600;
+}
 </style>
-{% endblock %}
+{% endblock extra_css %}
 
 {% block content %}
+
+<!-- ========================= -->
+<!--   HERO CON VIDEO          -->
+<!-- ========================= -->
+<section class="hero-video-container">
+
+  <video autoplay muted loop playsinline>
+    <source src="{% static 'sitio/video/Admisiones.mp4' %}" type="video/mp4">
+  </video>
+
+  <div class="hero-video-content">
+    <h2>Bienvenidos al proceso de Admisiones 2025–2026</h2>
+    <p>Formamos niños felices, seguros y con grandes valores.</p>
+    <p>Conoce cómo ser parte del Centro Educativo Infantil Gin Gaby.</p>
+  </div>
+
+</section>
+
+<!-- SECCIÓN BAJA DEL VIDEO -->
 <section class="admisiones-hero">
   <h2>Admisiones 2025–2026</h2>
   <p>Conoce nuestro proceso de admisión y sé parte de la familia del Centro Educativo Infantil GIN GABY.</p>
+
   <img src="{% static 'sitio/img/inscripciones-2025-2026.png' %}"
        alt="Inscripciones abiertas 2025–2026"
        style="max-width:700px; border-radius:12px; margin-top:15px;">
 </section>
 
+<!-- TARJETAS DE INFORMACIÓN -->
 <section class="info-grid">
+
   <div class="card">
     <h3>🎓 Valores agregados</h3>
     <ul>
-      <li>Grupos con número reducido de estudiantes por aula.</li>
-      <li>Ambiente lúdico y de aprendizaje significativo.</li>
+      <li>Grupos con número reducido de estudiantes.</li>
+      <li>Ambiente lúdico y aprendizaje significativo.</li>
       <li>Actividades artísticas, deportivas y culturales.</li>
-      <li>Programa de desarrollo de habilidades socioemocionales.</li>
-      <li>Acompañamiento personalizado al estudiante y la familia.</li>
+      <li>Desarrollo de habilidades socioemocionales.</li>
+      <li>Acompañamiento personalizado a familias.</li>
     </ul>
   </div>
 
@@ -85,10 +184,10 @@
     <h3>🕒 Información general</h3>
     <ul>
       <li>Calendario académico: Enero – Noviembre.</li>
-      <li>Horarios: Lunes a Viernes, 7:00 a.m. – 3:30 p.m.</li>
+      <li>Horario: 7:00 a.m. – 3:30 p.m.</li>
       <li>Uniformes: Diario y Educación Física.</li>
-      <li>Escuela de padres y actividades institucionales familiares.</li>
-      <li>El costo de matrícula incluye carné de estudiante, agenda escolar y seguro contra accidentes.</li>
+      <li>Escuela de padres y actividades institucionales.</li>
+      <li>Matrícula incluye carné, agenda y seguro escolar.</li>
     </ul>
   </div>
 
@@ -97,20 +196,26 @@
     <ul>
       <li>Transporte escolar.</li>
       <li>Alimentación balanceada.</li>
+      <li>Apoyo psicopedagógico.</li>
       <li>Actividades lúdicas y recreativas.</li>
-      <li>Apoyo psicopedagógico y orientación familiar.</li>
     </ul>
   </div>
+
 </section>
 
+<!-- CONTACTO -->
 <section class="contacto-box">
   <h3>📞 Contáctanos para más información</h3>
   <p>Secretaría: Lunes a Viernes, 8:00 a 12:00 y 2:00 a 5:00 p.m.</p>
   <p>Teléfono / WhatsApp: <a href="https://wa.me/573133144382" target="_blank">313 314 4382</a></p>
+
   <p>Redes Sociales:</p>
-        <a href="https://facebook.com/centroeducativogingabi" target="_blank" rel="noopener">Facebook: centroeducativogingabi</a><br>
-        <a href="https://instagram.com/centroeducativogingabi" target="_blank" rel="noopener">Instagram: centroeducativogingabi</a>
+  <a href="https://facebook.com/centroeducativogingabi" target="_blank">Facebook: centroeducativogingabi</a><br>
+  <a href="https://instagram.com/centroeducativogingabi" target="_blank">Instagram: centroeducativogingabi</a>
+
   <p>Dirección: Calle 5 n.º 6B-03, barrio La Fragua.</p>
+
   <a href="{% url 'sitio:contacto' %}" class="boton-info">Ir a la página de contacto</a>
 </section>
-{% endblock %}
+
+{% endblock content %}

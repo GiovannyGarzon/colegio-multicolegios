@@ -315,11 +315,12 @@ class PeriodoForm(forms.ModelForm):
 class LogroForm(forms.ModelForm):
     class Meta:
         model = Logro
-        fields = ["oferta", "periodo", "titulo", "descripcion", "peso"]
+        fields = ["oferta", "periodo", "tipo", "titulo", "descripcion", "peso"]
         widgets = {
             "oferta": forms.Select(attrs={"class": "form-select"}),
             "periodo": forms.Select(attrs={"class": "form-select"}),
-            "titulo": forms.TextInput(attrs={"class": "form-input", "placeholder": "Comprende la suma y resta..." }),
+            "tipo": forms.Select(attrs={"class": "form-select"}),   # 👈 nuevo
+            "titulo": forms.TextInput(attrs={"class": "form-input"}),
             "descripcion": forms.Textarea(attrs={"class": "form-input", "rows": 3}),
             "peso": forms.NumberInput(attrs={"class": "form-input", "step": "0.01"}),
         }

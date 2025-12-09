@@ -1,0 +1,33 @@
+<h2>Boletín bloqueado por cartera</h2>
+<p>
+  El estudiante {{ estudiante }} no puede visualizar el boletín
+  del {{ trimestre }}º trimestre porque presenta obligaciones económicas pendientes.
+</p>
+
+<p>Fecha límite del trimestre: {{ deadline|date:"d/m/Y" }}</p>
+
+{% if deudas_trimestre %}
+  <h3>Deudas del trimestre</h3>
+  <ul>
+    {% for cta in deudas_trimestre %}
+      <li>
+        {{ cta.concepto.nombre }} - mes {{ cta.mes }}:
+        ${{ cta.saldo_pendiente }}
+      </li>
+    {% endfor %}
+  </ul>
+{% endif %}
+
+{% if deudas_otros %}
+  <h3>Otros conceptos pendientes en el año</h3>
+  <ul>
+    {% for cta in deudas_otros %}
+      <li>
+        {{ cta.concepto.nombre }}{% if cta.mes %} (mes {{ cta.mes }}){% endif %}:
+        ${{ cta.saldo_pendiente }}
+      </li>
+    {% endfor %}
+  </ul>
+{% endif %}
+
+<p><strong>Total pendiente:</strong> ${{ total_pendiente }}</p>

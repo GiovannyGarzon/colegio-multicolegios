@@ -1,410 +1,660 @@
 {% extends "colegioapp/base.html" %}
+{% load static %}
+{% load extras %}
 {% block title %}Boletín académico{% endblock %}
 
 {% block content %}
-<main id="boletin" class="sheet">
-  <!-- Acciones -->
-  <div class="actions">
+<main class="boletin-page">
+
+  <!-- Barra superior de acciones -->
+  <div class="boletin-actions">
     <a href="javascript:history.back()" class="btn-sec">← Volver</a>
 
-    {# Nuevo botón: ver / descargar PDF #}
-    <a
-      href="{% url 'academico:boletin_estudiante_pdf' %}?anio={{ anio.id }}&curso={{ curso.id }}&periodo={{ periodo.id }}&estudiante={{ estudiante.id }}"
-      class="btn"
-      style="margin-right:8px;"
-    >
-      Ver PDF
-    </a>
-
-    <button onclick="window.print()" class="btn">Imprimir</button>
+    <div class="boletin-actions-right">
+      <a
+        href="{% url 'academico:boletin_estudiante_pdf' %}?anio={{ anio.id }}&curso={{ curso.id }}&periodo={{ periodo.id }}&estudiante={{ estudiante.id }}"
+        class="btn-primary"
+      >
+        Ver PDF
+      </a>
+      <button onclick="window.print()" class="btn-primary btn-outline-print">
+        Imprimir
+      </button>
+    </div>
   </div>
 
-  <!-- Título -->
-  <h1 class="title">Boletín académico</h1>
+  <!-- Tarjeta principal que simula el PDF pero en web -->
+  <section class="boletin-card">
 
-  <!-- Encabezado con datos -->
-  <section class="meta-horizontal">
-    <div class="meta-datos">
-      <div class="meta-item">
-        <strong>Estudiante:</strong>
-        <span>{{ estudiante.apellidos|upper }}, {{ estudiante.nombres|upper }}</span>
+    <!-- ENCABEZADO INSTITUCIONAL -->
+    <header class="boletin-header">
+      <div class="boletin-header-left">
+        <!-- logo del colegio si quieres (opcional) -->
+        {% comment %}
+          Si tuvieras un logo estático:
+          <img src="{% static 'img/logo.png' %}" alt="Logo" class="logo-colegio">
+        {% endcomment %}
       </div>
-      <div class="meta-item">
-        <strong>Año:</strong>
-        <span>{{ anio.nombre }}</span>
+
+      <div class="boletin-header-center">
+        <h1>CENTRO EDUCATIVO GIN GABI</h1>
+        <p class="slogan">"EDUCAMOS CON AMOR A QUIENES CONSTRUIRÁN EL MAÑANA"</p>
+        <p class="subinfo">Resolución de aprobación N°1358 - 1240</p>
+
+        <p class="periodo-pill">
+          {{ periodo.nombre }} – Registro escolar valorativo
+        </p>
       </div>
-      <div class="meta-item">
-        <strong>Curso:</strong>
-        <span>{{ curso.grado }} {{ curso.nombre }}</span>
+
+      <div class="boletin-header-right">
+        {% if estudiante.foto %}
+          <img src="{{ estudiante.foto.url }}" alt="Foto del estudiante" class="foto-estudiante">
+        {% else %}
+          <div class="foto-placeholder">Sin foto</div>
+        {% endif %}
       </div>
-      <div class="meta-item">
-        <strong>Periodo:</strong>
-        <span>{{ periodo.nombre }}</span>
-      </div>
-    </div>
+    </header>
 
-    <div class="meta-foto">
-      {% if estudiante.foto %}
-        <img src="{{ estudiante.foto.url }}" alt="Foto del estudiante">
-      {% else %}
-        <div class="foto-placeholder">Sin foto</div>
-      {% endif %}
-    </div>
-  </section>
+    <div class="header-divider"></div>
 
-  <hr class="meta-divider">
-
-  {% if resumen_asignaturas %}
-  <section class="resumen-trimestres">
-    <h2>Resumen de calificaciones por trimestre</h2>
-    <table class="tabla">
-      <thead>
-        <tr>
-          <th>Asignatura</th>
-          <th class="center">I</th>
-          <th class="center">II</th>
-          <th class="center">III</th>
-          <th class="center">Promedio</th>
-          <th class="center">Escala</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for r in resumen_asignaturas %}
-        <tr>
-          <td>{{ r.asignatura }}</td>
-          <td class="center">{{ r.p1|default:"" }}</td>
-          <td class="center">{{ r.p2|default:"" }}</td>
-          <td class="center">{{ r.p3|default:"" }}</td>
-          <td class="center">{{ r.prom_final|default:"" }}</td>
-          <td class="center">{{ r.letra_final }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-
-    <div class="resumen-promedios">
-      <p><strong>Promedio I:</strong> {{ promedios_trimestre.0|default:"N.A." }}</p>
-      <p><strong>Promedio II:</strong> {{ promedios_trimestre.1|default:"N.A." }}</p>
-      <p><strong>Promedio III:</strong> {{ promedios_trimestre.2|default:"N.A." }}</p>
-      <p><strong>Promedio anual:</strong> {{ promedio_anual|default:"N.A." }}</p>
-    </div>
-  </section>
-  <hr class="meta-divider">
-  {% endif %}
-
-  <!-- ===== ÁREAS Y ASIGNATURAS ===== -->
-  {% if areas %}
-    {% for area in areas %}
-      <section class="bloque-area">
-        <!-- Cabecera de área -->
-        <header class="area-header">
-          <h2>{{ area.nombre }}</h2>
-        </header>
-
-        <!-- Asignaturas de esta área -->
-        {% for fila in area.filas %}
-          <section class="area">
-            <details open>
-              <summary class="area-head">
-                <div class="area-name">{{ fila.asignatura }}</div>
-                <div class="area-right">
-                  <span class="docente">Docente: <em>{{ fila.docente }}</em></span>
-                  <span class="badge-num">
-                    {{ fila.promedio|default:"N.A." }}
-                  </span>
-                  <span class="badge-letra">{{ fila.letra }}</span>
-                </div>
-              </summary>
-
-              {% if fila.detalle %}
-                <table class="tabla">
-                  <thead>
-                    <tr>
-                      <th style="width:auto; text-align:left;">Logro</th>
-                      <th style="width:90px;">Peso %</th>
-                      <th style="width:110px;">Nota (0–5)</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {% for d in fila.detalle %}
-                      <tr>
-                        <td class="logro">{{ d.titulo }}</td>
-                        <td class="center">{{ d.peso }}</td>
-                        <td class="center nota {% if d.nota and d.nota|floatformat:2 < 3.0 %}bad{% endif %}">
-                          {{ d.nota|default:"—" }}
-                        </td>
-                      </tr>
-                    {% endfor %}
-                  </tbody>
-                </table>
-              {% else %}
-                <p class="muted">Sin logros configurados para este período.</p>
-              {% endif %}
-            </details>
-          </section>
-        {% endfor %}
-      </section>
-    {% endfor %}
-  {% else %}
-    <p><em>No hay asignaturas configuradas para este curso en el año seleccionado.</em></p>
-  {% endif %}
-
-  <!-- ===== OBSERVACIÓN GENERAL DEL PERÍODO ===== -->
-  <section class="obs-block">
-    <h2>Observación general del período</h2>
-
-    {% if puede_editar_observacion %}
-      <!-- Vista docente / gestión: puede escribir y guardar -->
-      <form method="post">
-        {% csrf_token %}
-        <textarea name="observacion_boletin"
-                  rows="4"
-                  class="obs-textarea"
-                  placeholder="Escribe aquí la observación general del boletín...">{{ obs_general.texto|default_if_none:"" }}</textarea>
-        <div style="text-align:right;margin-top:8px;">
-          <button type="submit" class="btn">Guardar observación</button>
+    <!-- DATOS DEL ESTUDIANTE -->
+    <section class="datos-card">
+      <div class="fila-datos">
+        <div class="dato">
+          <span class="label">Nombre</span>
+          <span class="valor">{{ estudiante.nombres }} {{ estudiante.apellidos }}</span>
         </div>
-      </form>
-    {% else %}
-      <!-- Vista estudiante: solo lectura -->
-      {% if obs_general %}
-        <p class="obs-text">{{ obs_general.texto }}</p>
+        <div class="dato">
+          <span class="label">Documento</span>
+          <span class="valor">{{ estudiante.identificacion|default:"—" }}</span>
+        </div>
+      </div>
+      <div class="fila-datos">
+        <div class="dato">
+          <span class="label">Grado</span>
+          <span class="valor">{{ curso.grado }} {{ curso.nombre }}</span>
+        </div>
+        <div class="dato">
+          <span class="label">Año</span>
+          <span class="valor">{{ anio.nombre }}</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- TABLA PRINCIPAL: ÁREA / LOGROS / CONSOLIDADO -->
+    <section class="bloque">
+      <h2>Áreas, competencias y consolidado de notas</h2>
+
+      {% if areas %}
+        <div class="tabla-wrapper">
+          <table class="tabla-notas-web">
+            <thead>
+              <tr>
+                <th style="width:22%;">Área y asignatura</th>
+                <th style="width:48%;">Competencias y desempeños (logros)</th>
+                <th style="width:30%;">Consolidado de notas por trimestre / promedio</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for area in areas %}
+                <!-- Fila de área -->
+                <tr class="fila-area">
+                  <td colspan="3">ÁREA: {{ area.nombre|upper }}</td>
+                </tr>
+
+                {% for fila in area.filas %}
+                  {% with resumen=resumen_por_asig|get_item:fila.asignatura %}
+                  <tr class="fila-asignatura">
+                    <!-- Col 1: asignatura -->
+                    <td class="col-asignatura">
+                      <span class="asig-chip">{{ fila.asignatura }}</span>
+                      <div class="docente">
+                        Docente: <em>{{ fila.docente }}</em>
+                      </div>
+                    </td>
+
+                    <!-- Col 2: logros -->
+                    <td class="col-logros">
+                      {% if fila.detalle %}
+                        {% for d in fila.detalle %}
+                          <p>• {{ d.titulo }}</p>
+                        {% endfor %}
+                      {% else %}
+                        <p class="muted">Sin logros configurados para este período.</p>
+                      {% endif %}
+                    </td>
+
+                    <!-- Col 3: consolidado (I, II, III, Promedio) -->
+                    <td class="col-consolidado">
+                      {% if resumen %}
+                        <table class="tabla-consolidado-mini">
+                          <tr>
+                            <th colspan="6" class="titulo">CONSOLIDADO POR TRIMESTRE</th>
+                            <th rowspan="2" class="promedio">
+                              Promedio<br>
+                              <span class="promedio-num">
+                                {{ resumen.prom_final|default:"–" }}
+                              </span>
+                            </th>
+                          </tr>
+                          <tr>
+                            <th>I</th>
+                            <td>{{ resumen.p1|default:"–" }}</td>
+                            <th>II</th>
+                            <td>{{ resumen.p2|default:"–" }}</td>
+                            <th>III</th>
+                            <td>{{ resumen.p3|default:"–" }}</td>
+                          </tr>
+                        </table>
+                      {% else %}
+                        <span class="muted">Sin consolidado disponible.</span>
+                      {% endif %}
+                    </td>
+                  </tr>
+                  {% endwith %}
+                {% endfor %}
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
       {% else %}
-        <p class="muted">No hay observación registrada para este período.</p>
+        <p class="muted">No hay asignaturas configuradas para este curso en el año seleccionado.</p>
       {% endif %}
-    {% endif %}
-  </section>
+    </section>
 
-  <!-- ===== FALLAS DEL PERÍODO ===== -->
-  <section class="obs-block">
-    <h2>Fallas del período</h2>
-    <table class="tabla tabla-fallas">
-      <thead>
-        <tr>
-          <th class="center">Fallas</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td class="center">{{ total_fallas_periodo|default:"" }}</td>
-        </tr>
-      </tbody>
-    </table>
-  </section>
+    <!-- PROMEDIOS GENERALES -->
+    <section class="bloque">
+      <h2>Promedios generales</h2>
 
-  {% if es_docente %}
-    <div style="text-align:center; margin-top:20px;">
-      <a href="{% url 'academico:observacion_nueva' %}?estudiante={{ estudiante.id }}&periodo={{ periodo.id }}"
-         class="btn"
-         style="padding: 8px 16px; border-radius: 8px; background:#0f766e; color:#fff;">
-          ➕ Agregar observación del periodo
-      </a>
-    </div>
-  {% endif %}
+      <div class="tabla-wrapper">
+        <table class="tabla-promedios-web">
+          <thead>
+            <tr>
+              <th colspan="2">1.º Trimestre</th>
+              <th colspan="2">2.º Trimestre</th>
+              <th colspan="2">3.º Trimestre</th>
+              <th colspan="2">Acumulado final</th>
+            </tr>
+            <tr>
+              <th>Promedio</th><th>Puesto</th>
+              <th>Promedio</th><th>Puesto</th>
+              <th>Promedio</th><th>Puesto</th>
+              <th>Promedio</th><th>Puesto</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>{{ promedios_trimestre.0|default:"N.A." }}</td>
+              <td>{{ puesto_p1|default:"N.A." }}</td>
+              <td>{{ promedios_trimestre.1|default:"N.A." }}</td>
+              <td>{{ puesto_p2|default:"N.A." }}</td>
+              <td>{{ promedios_trimestre.2|default:"N.A." }}</td>
+              <td>{{ puesto_p3|default:"N.A." }}</td>
+              <td>{{ promedio_anual|default:"N.A." }}</td>
+              <td>{{ puesto_final|default:"N.A." }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- OBSERVACIÓN GENERAL -->
+    <section class="bloque">
+      <div class="bloque-flex">
+        <div class="bloque-col">
+          <h2>Observación general del período</h2>
+          {% if obs_general and obs_general.texto %}
+            <p class="obs-text">{{ obs_general.texto }}</p>
+          {% else %}
+            <p class="muted">No hay observación registrada para este período.</p>
+          {% endif %}
+
+          {% if es_docente %}
+            <a href="{% url 'academico:observacion_nueva' %}?estudiante={{ estudiante.id }}&periodo={{ periodo.id }}"
+               class="btn-sec btn-small">
+              ➕ Agregar / editar observación
+            </a>
+          {% endif %}
+        </div>
+
+        <!-- ASISTENCIA + ESCALA -->
+        <div class="bloque-col">
+          <h2>Asistencia y escala valorativa</h2>
+
+          <div class="subbloque">
+            <h3>Resumen de asistencia del período</h3>
+            <table class="tabla-asistencia-web">
+              <tr>
+                <th>Fallas registradas</th>
+                <td>{{ total_fallas_periodo|default:"0" }}</td>
+              </tr>
+              <tr>
+                <th>Tardanzas registradas</th>
+                <td>{{ total_tardanzas_periodo|default:"0" }}</td>
+              </tr>
+            </table>
+          </div>
+
+          <div class="subbloque">
+            <h3>Escala valorativa</h3>
+            <table class="tabla-escala-web">
+              <tr>
+                <th>Escala</th>
+                <th>Rango</th>
+              </tr>
+              <tr>
+                <td>S</td>
+                <td>4,6 a 5,0</td>
+              </tr>
+              <tr>
+                <td>A</td>
+                <td>4,1 a 4,5</td>
+              </tr>
+              <tr>
+                <td>B</td>
+                <td>3,5 a 4,0</td>
+              </tr>
+              <tr>
+                <td>BJ</td>
+                <td>1,0 a 3,4</td>
+              </tr>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </section>  {# fin .boletin-card #}
 </main>
 
 <style>
-/* ===== Layout hoja ===== */
-main.sheet{
-  width: 100%;
-  max-width: 1400px !important;  /* ocupa casi todo el ancho disponible */
-  margin: 0 auto;
-  background: #fff;
-  padding: 18px 22px 26px;
-  border-radius: 10px;
-  box-shadow: 0 6px 18px rgba(0,0,0,.08);
-}
+  :root{
+    --verde: #00796B;
+    --verde-oscuro: #005f54;
+    --azul-claro: #d7e3ff;
+    --gris-claro: #f3f4f6;
+    --borde: #d1d5db;
+  }
 
-.tabla td.logro,
-.tabla th:first-child {
-    width: 100%;
-    text-align: left;
-}
+  .boletin-page{
+    padding: 16px 10px 24px;
+    background: #f1f5f9;
+  }
 
-/* Acciones */
-.actions{ display:flex; justify-content:flex-end; gap:8px; margin-bottom:10px; }
-.btn{
-  background:#0f766e; color:#fff; border:none;
-  padding:8px 14px; border-radius:8px; cursor:pointer;
-}
-.btn-sec{
-  background:#9e9e9e; color:#fff; text-decoration:none;
-  padding:8px 12px; border-radius:8px;
-}
-.btn:hover, .btn-sec:hover{ filter:brightness(1.05); }
+  .boletin-card{
+    max-width: 1100px;
+    margin: 0 auto;
+    background: #ffffff;
+    border-radius: 14px;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+    padding: 16px 20px 24px;
+  }
 
-/* Título / meta */
-.title{ font-size:22px; text-align:left; margin:0 0 12px 0; }
+  .boletin-actions{
+    max-width: 1100px;
+    margin: 0 auto 10px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:8px;
+  }
+  .boletin-actions-right{
+    display:flex;
+    gap:8px;
+  }
 
-.meta-horizontal{
-  display:flex;
-  justify-content:space-between;
-  align-items:flex-start;
-  flex-wrap:wrap;
-  gap:20px;
-  margin-bottom:8px;
-}
-.meta-datos{
-  display:flex;
-  flex-wrap:wrap;
-  gap:30px;
-}
-.meta-item{
-  font-size:15px;
-  color:#374151;
-  line-height:1.4;
-}
-.meta-item strong{
-  display:block;
-  color:#0f766e;
-  font-weight:700;
-  font-size:14px;
-  margin-bottom:2px;
-}
-.meta-divider{
-  border:none;
-  border-bottom:1px solid #e0e0e0;
-  margin:12px 0 18px;
-}
+  .btn-primary,
+  .btn-sec{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:8px 14px;
+    border-radius:8px;
+    border:none;
+    text-decoration:none;
+    font-size:14px;
+    cursor:pointer;
+    transition: all .15s ease;
+  }
+  .btn-primary{
+    background:var(--verde);
+    color:#fff;
+  }
+  .btn-primary:hover{
+    background:var(--verde-oscuro);
+  }
+  .btn-outline-print{
+    background: #ffffff;
+    color: var(--verde);
+    border:1px solid var(--verde);
+  }
+  .btn-outline-print:hover{
+    background:#ecfdf5;
+  }
+  .btn-sec{
+    background:#9ca3af;
+    color:#fff;
+  }
+  .btn-sec:hover{
+    background:#6b7280;
+  }
+  .btn-small{
+    font-size:13px;
+    padding:6px 10px;
+    margin-top:4px;
+  }
 
-/* Foto */
-.meta-foto img{
-  width:90px;
-  height:110px;
-  object-fit:cover;
-  border-radius:6px;
-  border:1px solid #d1d5db;
-}
-.foto-placeholder{
-  width:90px;
-  height:110px;
-  border-radius:6px;
-  border:1px dashed #d1d5db;
-  font-size:11px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  color:#9ca3af;
-}
+  /* ENCABEZADO */
+  .boletin-header{
+    display:grid;
+    grid-template-columns:80px 1fr 80px;
+    gap:10px;
+    align-items:center;
+  }
+  .boletin-header-center{
+    text-align:center;
+  }
+  .boletin-header-center h1{
+    margin:0;
+    font-size:18px;
+    font-weight:700;
+  }
+  .slogan{
+    margin:0;
+    font-size:11px;
+  }
+  .subinfo{
+    margin:0;
+    font-size:10px;
+  }
+  .periodo-pill{
+    margin-top:6px;
+    display:inline-block;
+    padding:3px 8px;
+    background: #facc15;
+    border-radius: 999px;
+    font-size:11px;
+    font-weight:600;
+    text-transform:uppercase;
+  }
 
-/* ===== Bloques de área ===== */
-.bloque-area{ margin:8px 0 14px; }
-.area-header h2{
-  font-size:17px;
-  margin:0 0 4px;
-  color:#111827;
-  padding:4px 0;
-  border-bottom:2px solid #e5e7eb;
-}
+  .foto-estudiante{
+    width:80px;
+    height:90px;
+    object-fit:cover;
+    border-radius:8px;
+    border:1px solid #00000022;
+  }
+  .foto-placeholder{
+    width:80px;
+    height:90px;
+    border-radius:8px;
+    border:1px dashed #9ca3af;
+    font-size:11px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:#9ca3af;
+  }
 
-/* Asignatura */
-.area{ margin:8px 0; }
-.area-head{
-  list-style:none;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding:6px 0;
-  border-bottom:1px dashed #e3e3e3;
-  cursor:pointer;
-}
-.area-head::-webkit-details-marker{ display:none; }
-.area-name{ font-weight:700; font-size:15px; }
-.area-right{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  color:#5f6a72;
-  font-size:14px;
-}
-.docente{ margin-right:8px; }
-.badge-num{
-  display:inline-block; min-width:42px; text-align:center;
-  background:#eef7f6; color:#0f766e; border:1px solid #bfe3df;
-  border-radius:6px; padding:2px 8px; font-weight:700;
-}
-.badge-letra{
-  display:inline-block; min-width:26px; text-align:center;
-  background:#f1f5f9; color:#334155; border:1px solid #dbe2ea;
-  border-radius:6px; padding:2px 8px; font-weight:700;
-}
+  .header-divider{
+    margin:8px 0 10px;
+    height:4px;
+    border-radius:999px;
+    background:var(--verde);
+  }
 
-/* Tabla general */
-.tabla{
-  width:100%;
-  border-collapse:separate;
-  border-spacing:0;
-  margin-top:8px;
-}
-.tabla thead th{
-  background:#f7f9fb;
-  color:#5f6a72;
-  font-weight:600;
-  font-size:13px;
-  padding:8px 10px;
-  border-top:1px solid #e6edf3;
-  border-bottom:1px solid #e6edf3;
-}
-.tabla tbody td{
-  padding:8px 10px;
-  border-bottom:1px solid #eef2f5;
-  vertical-align:top;
-}
-.center{ text-align:center; }
-.logro{ color:#374151; }
-.nota.bad{ color:#b91c1c; font-weight:700; }
+  /* DATOS DEL ESTUDIANTE */
+  .datos-card{
+    border:1px solid var(--borde);
+    border-radius:10px;
+    padding:8px 10px;
+    background:#f9fafb;
+    margin-bottom:10px;
+  }
+  .fila-datos{
+    display:flex;
+    flex-wrap:wrap;
+    gap:18px;
+    margin-bottom:4px;
+  }
+  .fila-datos:last-child{ margin-bottom:0; }
+  .dato{
+    min-width: 180px;
+  }
+  .dato .label{
+    display:block;
+    font-size:11px;
+    font-weight:700;
+    text-transform:uppercase;
+    color:#4b5563;
+  }
+  .dato .valor{
+    font-size:13px;
+    color:#111827;
+  }
 
-.muted{ color:#9ca3af; }
+  /* BLOQUES */
+  .bloque{
+    margin-top:14px;
+  }
+  .bloque h2{
+    font-size:14px;
+    margin:0 0 6px;
+    text-transform:uppercase;
+    color:#111827;
+    border-bottom: 1px solid #e5e7eb;
+    padding-bottom:4px;
+  }
 
-/* Tabla de fallas */
-.tabla-fallas{
-  max-width:260px;
-  margin-top:6px;
-}
+  .tabla-wrapper{
+    width:100%;
+    overflow-x:auto;
+  }
 
-/* ===== Observación general / fallas ===== */
-.obs-block{
-  margin-top:22px;
-  padding-top:10px;
-  border-top:2px solid #e5e7eb;
-}
-.obs-block h2{
-  margin:0 0 8px;
-  font-size:17px;
-  color:#111827;
-}
-.obs-textarea{
-  width:100%;
-  border-radius:8px;
-  border:1px solid #d1d5db;
-  padding:8px 10px;
-  font-size:14px;
-  resize:vertical;
-}
-.obs-text{
-  margin:4px 0 0;
-  font-size:14px;
-  color:#374151;
-}
+  /* TABLA PRINCIPAL */
+  .tabla-notas-web{
+    width:100%;
+    border-collapse:collapse;
+    font-size:12px;
+  }
+  .tabla-notas-web thead th{
+    background:var(--azul-claro);
+    border:1px solid #cbd5e1;
+    padding:6px 8px;
+    text-align:center;
+    font-weight:600;
+    text-transform:uppercase;
+    font-size:11px;
+  }
+  .tabla-notas-web tbody td{
+    border:1px solid #e2e8f0;
+    padding:6px 8px;
+    vertical-align:top;
+  }
 
-/* Resumen promedios */
-.resumen-trimestres h2{
-  font-size:16px;
-  margin:4px 0 6px;
-}
-.resumen-promedios{
-  margin-top:6px;
-  font-size:13px;
-  display:flex;
-  flex-wrap:wrap;
-  gap:16px;
-}
+  .fila-area td{
+    background:#eff6ff;
+    font-weight:700;
+    text-transform:uppercase;
+    font-size:11px;
+  }
 
-/* Impresión */
-@media print{
-  header, nav, footer, .actions{ display:none !important; }
-  .sheet{ box-shadow:none; padding:0; border-radius:0; }
-  @page{ size:A4; margin:12mm; }
-}
+  .col-asignatura{
+    width:22%;
+  }
+  .asig-chip{
+    display:inline-block;
+    padding:2px 6px;
+    background:var(--azul-claro);
+    border-radius:4px;
+    font-weight:600;
+    border:1px solid #9fb6ff;
+    margin-bottom:2px;
+    font-size:11px;
+  }
+  .docente{
+    font-size:11px;
+    color:#4b5563;
+  }
+
+  .col-logros p{
+    margin:0 0 2px;
+    text-align:justify;
+  }
+  .col-logros p:last-child{ margin-bottom:0; }
+
+  .col-consolidado{
+    width:30%;
+  }
+  .tabla-consolidado-mini{
+    width:100%;
+    border-collapse:collapse;
+    font-size:10px;
+  }
+  .tabla-consolidado-mini th,
+  .tabla-consolidado-mini td{
+    border:1px solid #cbd5e1;
+    padding:2px 3px;
+    text-align:center;
+  }
+  .tabla-consolidado-mini .titulo{
+    background:#e2e8f0;
+    font-weight:600;
+  }
+  .tabla-consolidado-mini .promedio{
+    width:24%;
+    font-weight:600;
+  }
+  .promedio-num{
+    display:inline-block;
+    margin-top:2px;
+    padding:1px 5px;
+    border-radius:999px;
+    background:#ecfdf5;
+    color:#065f46;
+    font-size:10px;
+  }
+
+  .muted{
+    color:#9ca3af;
+    font-size:11px;
+  }
+
+  /* PROMEDIOS GENERALES */
+  .tabla-promedios-web{
+    width:100%;
+    border-collapse:collapse;
+    font-size:11px;
+  }
+  .tabla-promedios-web th,
+  .tabla-promedios-web td{
+    border:1px solid #cbd5e1;
+    padding:4px 6px;
+    text-align:center;
+  }
+  .tabla-promedios-web thead th{
+    background:#e5e7eb;
+    font-weight:600;
+  }
+
+  /* BLOQUE OBS + ASISTENCIA + ESCALA */
+  .bloque-flex{
+    display:flex;
+    flex-wrap:wrap;
+    gap:20px;
+  }
+  .bloque-col{
+    flex:1 1 260px;
+  }
+  .obs-text{
+    font-size:13px;
+    color:#374151;
+  }
+  .subbloque{
+    margin-top:6px;
+  }
+  .subbloque h3{
+    margin:0 0 4px;
+    font-size:12px;
+    text-transform:uppercase;
+    color:#111827;
+  }
+
+  .tabla-asistencia-web{
+    width:100%;
+    border-collapse:collapse;
+    font-size:11px;
+  }
+  .tabla-asistencia-web th,
+  .tabla-asistencia-web td{
+    border:1px solid #cbd5e1;
+    padding:3px 5px;
+  }
+  .tabla-asistencia-web th{
+    background:#e5e7eb;
+    text-align:left;
+    font-weight:600;
+  }
+  .tabla-asistencia-web td{
+    text-align:center;
+  }
+
+  .tabla-escala-web{
+    width:100%;
+    max-width:260px;
+    border-collapse:collapse;
+    font-size:11px;
+  }
+  .tabla-escala-web th,
+  .tabla-escala-web td{
+    border:1px solid #cbd5e1;
+    padding:3px 5px;
+    text-align:center;
+  }
+  .tabla-escala-web th{
+    background:#e5e7eb;
+    font-weight:600;
+  }
+  .tabla-escala-web td:first-child{
+    font-weight:600;
+  }
+
+  /* IMPRESIÓN: mantenemos algo limpio */
+  @media print{
+    header, nav, footer, .boletin-actions{ display:none !important; }
+    .boletin-page{
+      padding:0;
+      background:#fff;
+    }
+    .boletin-card{
+      max-width:none;
+      margin:0;
+      box-shadow:none;
+      border-radius:0;
+      border:none;
+      padding:0;
+    }
+  }
+
+  @media (max-width: 768px){
+    .boletin-header{
+      grid-template-columns:1fr;
+      text-align:center;
+    }
+    .boletin-header-left,
+    .boletin-header-right{
+      justify-self:center;
+    }
+    .boletin-actions{
+      flex-direction:column;
+      align-items:flex-start;
+    }
+    .boletin-actions-right{
+      width:100%;
+      justify-content:flex-end;
+    }
+  }
 </style>
 {% endblock %}

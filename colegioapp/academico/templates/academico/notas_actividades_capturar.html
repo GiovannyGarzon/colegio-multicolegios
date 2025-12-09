@@ -1,0 +1,115 @@
+{% extends "colegioapp/base.html" %}
+{% load l10n %}
+{% block title %}Notas de Actividad | CEI GIN GABY{% endblock %}
+
+{% block content %}
+<main>
+  <h2>Notas de Actividad</h2>
+
+  <!-- Encabezado con info de la actividad -->
+  <div style="
+      max-width:1100px;
+      margin:0 auto 16px;
+      background:#ffffff;
+      border-radius:12px;
+      box-shadow:0 4px 12px rgba(0,0,0,0.06);
+      padding:16px 20px;
+  ">
+    <p style="margin:0 0 6px 0;">
+      <strong>Actividad:</strong> {{ actividad.titulo }} &nbsp;•&nbsp;
+      <strong>Peso en el logro:</strong> {{ actividad.peso }}%
+    </p>
+
+    <p style="margin:0 0 4px 0;color:#37474f;">
+      <strong>Logro:</strong> {{ logro.titulo }}
+    </p>
+
+    {% if actividad.descripcion %}
+      <p style="margin:0;color:#546e7a;font-size:0.95rem;">
+        <strong>Descripción de la actividad:</strong>
+        {{ actividad.descripcion }}
+      </p>
+    {% endif %}
+  </div>
+
+  <!-- Leyenda de escala -->
+  <div style="
+      background:#e3f2fd;
+      padding:10px 14px;
+      border-radius:8px;
+      margin:0 auto 18px;
+      max-width:1100px;
+      color:#0d47a1;
+  ">
+    <strong>Nota:</strong> Registra las calificaciones de esta actividad en una escala de
+    <strong>0.00 a 5.00</strong>.
+    <br>Ejemplo: 3.50 (Aprobado), 4.50 (Sobresaliente), 2.50 (En proceso).
+  </div>
+
+  <form method="post" style="max-width:1100px;margin:0 auto;">
+    {% csrf_token %}
+
+    <div style="
+        overflow-x:auto;
+        background:#ffffff;
+        border-radius:12px;
+        box-shadow:0 4px 12px rgba(0,0,0,0.06);
+    ">
+      <table style="width:100%;border-collapse:collapse;">
+        <thead style="background:#e0f2f1;">
+          <tr>
+            <th style="padding:12px;text-align:left;white-space:nowrap;">Estudiante</th>
+            <th style="padding:12px;text-align:center;min-width:140px;">Nota de la actividad</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for e in estudiantes %}
+          <tr style="border-top:1px solid #eceff1;">
+            <td style="padding:10px 12px;white-space:nowrap;">
+              {{ e.apellidos }} {{ e.nombres }}
+            </td>
+            <td style="padding:8px 10px;text-align:center;">
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                max="5"
+                name="nota_{{ e.id }}"
+                {% if e.nota_actividad != None %}
+                  {% localize off %}value="{{ e.nota_actividad }}"{% endlocalize %}
+                {% endif %}
+                style="
+                  width:120px;
+                  padding:8px;
+                  border:1px solid #cfd8dc;
+                  border-radius:8px;
+                  text-align:center;
+                "
+              >
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="2" style="padding:16px;text-align:center;color:#607d8b;">
+              No hay estudiantes matriculados en este curso.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div style="display:flex;justify-content:space-between;margin-top:14px;">
+      <a href="{% url 'academico:actividades' logro.id %}"
+         style="padding:10px 16px;background:#9e9e9e;color:#fff;border-radius:8px;text-decoration:none;">
+        ← Volver a actividades del logro
+      </a>
+
+      <button type="submit"
+              style="padding:10px 16px;background:#00796B;color:#fff;border:none;border-radius:8px;cursor:pointer;">
+        Guardar notas de la actividad
+      </button>
+    </div>
+  </form>
+</main>
+{% endblock %}

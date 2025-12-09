@@ -1,0 +1,76 @@
+{% extends "colegioapp/base.html" %}
+{% block title %}Actividades del Logro | CEI GIN GABY{% endblock %}
+
+{% block content %}
+<main>
+
+  <h2>Actividades del Logro</h2>
+
+  <p style="margin-top:-6px;">
+    <strong>Asignatura:</strong> {{ logro.oferta.asignatura.nombre }} &nbsp;•&nbsp;
+    <strong>Curso:</strong> {{ logro.oferta.curso.grado }} - {{ logro.oferta.curso.nombre }} &nbsp;•&nbsp;
+    <strong>Periodo:</strong> {{ logro.periodo.nombre }}
+  </p>
+
+  <div style="background:#e3f2fd;padding:10px;border-radius:8px;margin:10px 0;">
+    <strong>Logro:</strong> {{ logro.titulo }}
+    <br>
+    <small>{{ logro.descripcion }}</small>
+  </div>
+
+  <div style="margin: 15px 0;">
+    <a href="{% url 'academico:actividad_create' logro.id %}"
+       style="background:#00796b;color:white;padding:8px 12px;border-radius:8px;text-decoration:none;">
+      + Nueva actividad
+    </a>
+
+    <a href="{% url 'academico:notas_selector' %}"
+       style="background:#757575;color:white;padding:8px 12px;border-radius:8px;text-decoration:none;margin-left:8px;">
+      ← Volver
+    </a>
+  </div>
+
+  {% if actividades %}
+  <table style="width:100%;border-collapse:collapse;background:white;border-radius:10px;overflow:hidden;">
+    <thead style="background:#e0f2f1;">
+      <tr>
+        <th style="padding:12px;">Título</th>
+        <th style="padding:12px;">Peso (%)</th>
+        <th style="padding:12px;">Fecha</th>
+        <th style="padding:12px;">Acciones</th>
+      </tr>
+    </thead>
+
+    <tbody>
+    {% for a in actividades %}
+      <tr style="border-top:1px solid #e0e0e0;">
+        <td style="padding:10px;">{{ a.titulo }}</td>
+        <td style="padding:10px;text-align:center;">{{ a.peso }}</td>
+        <td style="padding:10px;text-align:center;">{{ a.fecha|default:"—" }}</td>
+        <td style="padding:10px;text-align:center;">
+
+          {% if a.total_notas %}
+            <div style="font-size:11px;color:#2e7d32;margin-bottom:4px;">
+              ✔ Ya tiene {{ a.total_notas }} nota{{ a.total_notas|pluralize:",s" }}
+            </div>
+          {% else %}
+            <div style="font-size:11px;color:#ff8f00;margin-bottom:4px;">
+              ✎ Aún sin calificaciones
+            </div>
+          {% endif %}
+
+          <a href="{% url 'academico:actividad_notas' a.id %}"
+             style="background:#0288d1;color:white;padding:6px 10px;border-radius:6px;text-decoration:none;">
+            Calificar
+          </a>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+    <p>No hay actividades registradas para este logro.</p>
+  {% endif %}
+
+</main>
+{% endblock %}

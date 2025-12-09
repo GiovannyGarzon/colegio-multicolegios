@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from urllib.parse import urlencode
-from django.db.models import Q, Prefetch, Sum, Avg
+from django.db.models import Q, Prefetch, Sum, Avg, Count
 from django.urls import reverse
 from django.contrib import messages
 from decimal import Decimal, InvalidOperation
@@ -12,9 +12,10 @@ from weasyprint import HTML
 from django.templatetags.static import static
 from django.contrib.auth.models import User, Group
 from django.db import transaction
+from academico.utils_notas import recalcular_nota_logro_desde_actividades
 from django.conf import settings
 import os
-from cartera.utils import estudiante_tiene_deuda_bloqueante
+from cartera.utils import estudiante_tiene_deuda_bloqueante, resumen_cartera_para_boletin
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image
 from reportlab.lib import colors
@@ -22,7 +23,8 @@ from reportlab.lib.styles import getSampleStyleSheet
 from datetime import date
 from .models import (
     Estudiante, Curso, Docente, AnioLectivo, Periodo,
-    Logro, AsignaturaOferta, AsignaturaCatalogo, CalificacionLogro, Observador, ObservacionBoletin, PaseLista, AsistenciaDetalle, BloqueHorario
+    Logro, AsignaturaOferta, AsignaturaCatalogo, CalificacionLogro, Observador, ObservacionBoletin, PaseLista,
+    AsistenciaDetalle, BloqueHorario, Actividad, CalificacionActividad, SaberSer
 )
 from .forms import (
     EstudianteForm, DocenteForm, CursoForm,
@@ -32,6 +34,14 @@ from .forms import (
 from django.contrib.auth.decorators import login_required, user_passes_test
 from academico.utils import ranking_curso_periodo, ranking_curso_anual, _promedio_asignatura_periodo
 from collections import defaultdict
+import io
+import zipfile
+from weasyprint import HTML
+
+from cartera.models import AnioEconomico
+
+SABER_SER_PESO = Decimal("0.10")  # 10%
+LOGROS_PESO    = Decimal("0.90")  # 90%
 
 @transaction.atomic
 def crear_usuario_estudiante(estudiante):
@@ -1333,86 +1343,228 @@ def notas_capturar(request):
         AsignaturaOferta.objects.select_related("anio", "curso", "asignatura"),
         pk=oferta_id, anio_id=anio_id, curso_id=curso_id
     )
-    periodo = get_object_or_404(Periodo.objects.select_related("anio"), pk=periodo_id, anio_id=anio_id)
+    periodo = get_object_or_404(
+        Periodo.objects.select_related("anio"),
+        pk=periodo_id,
+        anio_id=anio_id
+    )
 
     if oferta.anio_id != periodo.anio_id:
         messages.error(request, "La oferta y el periodo pertenecen a años diferentes.")
         return redirect("academico:notas_selector")
 
-    estudiantes = Estudiante.objects.filter(curso_id=curso_id).order_by("apellidos", "nombres")
-    logros = Logro.objects.filter(oferta_id=oferta.id, periodo_id=periodo.id).order_by("titulo")
+    estudiantes = Estudiante.objects.filter(
+        curso_id=curso_id
+    ).order_by("apellidos", "nombres")
+
+    logros = Logro.objects.filter(
+        oferta_id=oferta.id,
+        periodo_id=periodo.id
+    ).order_by("titulo")
 
     if not estudiantes.exists():
         messages.warning(request, "Este curso no tiene estudiantes. Primero registra estudiantes.")
         return redirect("academico:notas_selector")
 
-    total_peso = logros.aggregate(s=Sum("peso"))["s"] or 0
-    if total_peso != 100:
-        messages.warning(
-            request,
-            f"La suma de pesos para esta oferta/periodo es {total_peso}%. "
-            "Puedes capturar, pero es recomendable que sea exactamente 100%."
-        )
+    # ───────────── actividades por logro ─────────────
+    actividades_por_logro = {
+        lg.id: list(Actividad.objects.filter(logro=lg).order_by("id"))
+        for lg in logros
+    }
 
-    # 🔹 Notas ya existentes
+    # ───────────── notas finales de logro (tabla CalificacionLogro) ─────────────
     existentes = {
         (c.estudiante_id, c.logro_id): c.nota
         for c in CalificacionLogro.objects.filter(
-            logro__in=logros, estudiante__in=estudiantes
-        ).select_related("logro", "estudiante")
+            logro__in=logros,
+            estudiante__in=estudiantes
+        )
     }
-    existentes_str = {f"{k[0]}_{k[1]}": v for k, v in existentes.items()}
 
-    # 👉 Flag para saber si YA hay notas guardadas en esta combinación
-    ya_hay_notas = bool(existentes)
+    # 🔹 Reorganizamos a diccionario anidado: notas[est_id][logro_id] = nota
+    notas_por_estudiante_logro = {}
+    for (est_id, logro_id), nota in existentes.items():
+        notas_por_estudiante_logro.setdefault(est_id, {})[logro_id] = nota
 
-    if request.method == "POST":
-        guardados = 0
-        errores = 0
-        for est in estudiantes:
-            for lg in logros:
-                field_name = f"nota_{est.id}_{lg.id}"
-                raw = (request.POST.get(field_name) or "").strip()
-                if raw == "":
-                    if (est.id, lg.id) in existentes:
-                        CalificacionLogro.objects.filter(estudiante_id=est.id, logro_id=lg.id).delete()
-                        guardados += 1
-                    continue
-                try:
-                    val = Decimal(raw.replace(",", "."))
-                except InvalidOperation:
-                    errores += 1
-                    continue
-                if val < Decimal("0") or val > Decimal("5"):
-                    errores += 1
-                    continue
-
-                CalificacionLogro.objects.update_or_create(
-                    estudiante_id=est.id, logro_id=lg.id,
-                    defaults={"nota": val}
-                )
-                guardados += 1
-
-        if errores:
-            messages.warning(
-                request,
-                f"Se guardaron {guardados} registros. {errores} valor(es) inválido(s) fueron ignorados (rango permitido 0–5)."
-            )
-        else:
-            messages.success(request, f"¡Notas guardadas! Registros procesados: {guardados}.")
-
-        return redirect(f"{request.path}?anio={anio_id}&curso={curso_id}&oferta={oferta_id}&periodo={periodo_id}")
+    # (puedes dejar o quitar estos prints si quieres)
+    print("\n======= DEBUG NOTAS CAPTURAR =======")
+    print("Logros cargados (IDs):", [lg.id for lg in logros])
+    print("Estudiantes cargados (IDs):", [e.id for e in estudiantes])
+    print("\nActividades por logro:")
+    for lg_id, acts in actividades_por_logro.items():
+        print(f"  Logro {lg_id}: {len(acts)} actividades")
+    print("\nNotas por estudiante/logro:")
+    print(notas_por_estudiante_logro)
+    print("======= FIN DEBUG =======\n")
 
     ctx = {
         "oferta": oferta,
         "periodo": periodo,
         "estudiantes": estudiantes,
         "logros": logros,
-        "existentes_str": existentes_str,
-        "ya_hay_notas": ya_hay_notas,   # 🔹 lo mandamos al template
+        "actividades_por_logro": actividades_por_logro,
+        "notas_por_estudiante_logro": notas_por_estudiante_logro,
+        "ya_hay_notas": bool(existentes),
         "nav_active": "academico",
     }
     return render(request, "academico/notas_capturar.html", ctx)
+
+
+
+@requiere_gestion
+def actividad_create(request, logro_id):
+    logro = get_object_or_404(Logro, pk=logro_id)
+
+    if request.method == "POST":
+        titulo = request.POST.get("titulo")
+        peso = request.POST.get("peso") or "0"
+        Actividad.objects.create(
+            logro=logro,
+            titulo=titulo,
+            peso=Decimal(peso)
+        )
+        messages.success(request, "Actividad creada.")
+        return redirect("academico:actividades", logro_id=logro.id)
+
+    return render(request, "academico/actividad_form.html", {"logro": logro})
+
+@requiere_gestion
+def notas_actividades_capturar(request, actividad_id):
+    actividad = get_object_or_404(Actividad, pk=actividad_id)
+    logro = actividad.logro
+    estudiantes = list(
+        Estudiante.objects
+        .filter(curso=logro.oferta.curso)
+        .order_by("apellidos", "nombres")
+    )
+
+    existentes = {
+        c.estudiante_id: c.nota
+        for c in CalificacionActividad.objects.filter(actividad=actividad)
+    }
+
+    if request.method == "POST":
+        guardados = 0
+        for est in estudiantes:
+            raw = (request.POST.get(f"nota_{est.id}", "")).strip()
+            if raw == "":
+                CalificacionActividad.objects.filter(
+                    actividad=actividad,
+                    estudiante=est
+                ).delete()
+                continue
+
+            try:
+                val = Decimal(raw.replace(",", "."))
+            except:
+                continue
+
+            CalificacionActividad.objects.update_or_create(
+                actividad=actividad,
+                estudiante=est,
+                defaults={"nota": val}
+            )
+            guardados += 1
+            recalcular_nota_logro_desde_actividades(est, logro)
+
+        messages.success(request, "Notas de actividades guardadas.")
+        return redirect("academico:actividades", logro_id=logro.id)
+
+    # 👉 aquí “inyectamos” la nota existente en cada estudiante
+    for est in estudiantes:
+        est.nota_actividad = existentes.get(est.id)
+
+    return render(request, "academico/notas_actividades_capturar.html", {
+        "actividad": actividad,
+        "logro": logro,
+        "estudiantes": estudiantes,
+        "nav_active": "academico",
+    })
+
+@requiere_gestion
+def saber_ser_capturar(request, oferta_id, periodo_id):
+    oferta = get_object_or_404(AsignaturaOferta, pk=oferta_id)
+    periodo = get_object_or_404(Periodo, pk=periodo_id)
+
+    estudiantes = list(
+        Estudiante.objects
+        .filter(curso=oferta.curso)
+        .order_by("apellidos", "nombres")
+    )
+
+    # Traemos TODOS los registros existentes
+    existentes = {
+        ss.estudiante_id: ss
+        for ss in SaberSer.objects.filter(
+            asignatura_oferta=oferta,
+            periodo=periodo
+        )
+    }
+
+    def _parse_decimal(raw):
+        raw = (raw or "").strip()
+        if not raw:
+            return None
+        try:
+            return Decimal(raw.replace(",", "."))
+        except:
+            return None
+
+    if request.method == "POST":
+        guardados = 0
+
+        for est in estudiantes:
+            raw_comp = request.POST.get(f"comp_{est.id}", "")
+            raw_resp = request.POST.get(f"resp_{est.id}", "")
+            raw_auto = request.POST.get(f"auto_{est.id}", "")
+
+            val_comp = _parse_decimal(raw_comp)
+            val_resp = _parse_decimal(raw_resp)
+            val_auto = _parse_decimal(raw_auto)
+
+            # Si las tres vienen vacías → borramos registro (si existe) y pasamos al siguiente
+            if val_comp is None and val_resp is None and val_auto is None:
+                SaberSer.objects.filter(
+                    estudiante=est,
+                    asignatura_oferta=oferta,
+                    periodo=periodo,
+                ).delete()
+                continue
+
+            SaberSer.objects.update_or_create(
+                estudiante=est,
+                asignatura_oferta=oferta,
+                periodo=periodo,
+                defaults={
+                    "anio": oferta.anio,
+                    "nota_comportamiento": val_comp,
+                    "nota_responsabilidad": val_resp,
+                    "nota_autoevaluacion": val_auto,
+                }
+            )
+            guardados += 1
+
+        messages.success(request, f"Notas de Saber Ser guardadas ({guardados} registros).")
+        return redirect("academico:notas_selector")
+
+    # GET: inyectamos las 3 notas existentes a cada estudiante
+    for est in estudiantes:
+        ss = existentes.get(est.id)
+        if ss:
+            est.nota_saber_ser_comp = ss.nota_comportamiento
+            est.nota_saber_ser_resp = ss.nota_responsabilidad
+            est.nota_saber_ser_auto = ss.nota_autoevaluacion
+        else:
+            est.nota_saber_ser_comp = None
+            est.nota_saber_ser_resp = None
+            est.nota_saber_ser_auto = None
+
+    return render(request, "academico/saber_ser_capturar.html", {
+        "oferta": oferta,
+        "periodo": periodo,
+        "estudiantes": estudiantes,
+        "nav_active": "academico",
+    })
 
 # ----------------- Boletines -----------------
 
@@ -1425,40 +1577,132 @@ def _concepto_letra(n):
     if n >= Decimal("3.00"): return "B"
     return "D"
 
+def _contexto_boletin(anio, curso, periodo, est):
+    """
+    Copia aquí la parte de tu vista 'boletin_estudiante_pdf' que arma el ctx:
+    areas, promedios, obs_general, etc.
+    """
+    # TODO: este es solo un esquema; tú llenas el contexto real
+    # return ctx
+    ...
+
+def _boletin_pdf_bytes(request, anio, curso, periodo, est):
+    ctx = _contexto_boletin(anio, curso, periodo, est)
+    html = render_to_string("academico/boletin_estudiante_pdf.html", ctx)
+    pdf_bytes = HTML(string=html, base_url=request.build_absolute_uri('/')).write_pdf()
+    return pdf_bytes
+
+
+@requiere_gestion
+def boletines_masivos(request):
+    # protección básica
+    if not (request.user.is_superuser or request.user.is_staff):
+        messages.error(request, "No tiene permisos para descargar boletines masivos.")
+        return redirect("academico:boletin_selector")
+
+    if request.method != "POST":
+        return redirect("academico:boletin_selector")
+
+    anio_id    = request.POST.get("anio")
+    curso_id   = request.POST.get("curso")
+    periodo_id = request.POST.get("periodo")
+    est_ids    = request.POST.getlist("estudiantes")
+
+    if not (anio_id and curso_id and periodo_id):
+        messages.error(request, "Faltan parámetros (año, curso, periodo).")
+        return redirect("academico:boletin_selector")
+
+    if not est_ids:
+        messages.warning(request, "No seleccionó ningún estudiante.")
+        url = f"{reverse('academico:boletin_selector')}?anio={anio_id}&curso={curso_id}&periodo={periodo_id}"
+        return redirect(url)
+
+    anio    = get_object_or_404(AnioLectivo, pk=anio_id)
+    curso   = get_object_or_404(Curso, pk=curso_id)
+    periodo = get_object_or_404(Periodo, pk=periodo_id, anio=anio)
+
+    estudiantes = (
+        Estudiante.objects
+        .filter(id__in=est_ids, curso=curso)
+        .order_by("apellidos", "nombres")
+    )
+
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
+        for est in estudiantes:
+            pdf_bytes = _boletin_pdf_bytes(request, anio, curso, periodo, est)
+            filename = f"Boletin_{est.apellidos}_{est.nombres}_{periodo.nombre}.pdf"
+            zip_file.writestr(filename, pdf_bytes)
+
+    buffer.seek(0)
+    filename_zip = f"Boletines_{curso.grado}_{curso.nombre}_{periodo.nombre}.zip"
+    response = HttpResponse(buffer.getvalue(), content_type="application/zip")
+    response["Content-Disposition"] = f'attachment; filename=\"{filename_zip}\"'
+    return response
+
+def boletin_trimestral(request, estudiante_id, anio_id, trimestre):
+    estudiante = get_object_or_404(Estudiante, pk=estudiante_id)
+    anio = get_object_or_404(AnioEconomico, pk=anio_id)
+
+    resumen = resumen_cartera_para_boletin(estudiante, anio, int(trimestre))
+
+    if not resumen["puede_ver"]:
+        # Vista bloqueada
+        return render(
+            request,
+            "academico/boletin_bloqueado_cartera.html",
+            {
+                "estudiante": estudiante,
+                "trimestre": trimestre,
+                **resumen,
+            },
+        )
+    return render(
+        request,
+        "academico/boletin_trimestral.html",
+        {
+            "estudiante": estudiante,
+            "trimestre": trimestre,
+            "anio": anio,
+
+        },
+    )
+
 @requiere_gestion
 def boletin_selector(request):
     anio_id = (request.GET.get("anio") or "").strip()
     curso_id = (request.GET.get("curso") or "").strip()
     periodo_id = (request.GET.get("periodo") or "").strip()
 
-    # Siempre mostramos todos los años
     anios = AnioLectivo.objects.all().order_by("-activo", "-nombre")
 
-    # Si ya escogieron año, filtramos cursos y periodos por ese año
     if anio_id:
-        # Cursos que tienen ofertas en ese año lectivo
         cursos = (
             Curso.objects
-            .filter(ofertas__anio_id=anio_id)  # FK desde AsignaturaOferta a Curso con related_name="ofertas"
+            .filter(ofertas__anio_id=anio_id)
             .distinct()
             .order_by("grado", "nombre")
         )
-
-        # Periodos solo de ese año
         periodos = (
             Periodo.objects
             .filter(anio_id=anio_id)
             .order_by("numero")
         )
     else:
-        # Sin año seleccionado: mostramos todo (para no dejar el combo vacío)
         cursos = Curso.objects.all().order_by("grado", "nombre")
         periodos = Periodo.objects.select_related("anio").all().order_by("anio__nombre", "numero")
 
-    # Estudiantes del curso (el año no afecta directamente porque el Curso es "reutilizado" cada año)
     estudiantes = []
     if curso_id:
         estudiantes = Estudiante.objects.filter(curso_id=curso_id).order_by("apellidos", "nombres")
+
+    # 👉 aquí defines quién puede descargar masivo
+    tiene_permiso_masivo = (
+        request.user.is_superuser
+        or request.user.is_staff   # o cambia por tu lógica de rector / coordinador
+        # or getattr(request.user, "es_rector", False)
+        # or getattr(request.user, "es_coordinador", False)
+    )
 
     ctx = {
         "anios": anios,
@@ -1468,6 +1712,7 @@ def boletin_selector(request):
         "curso_selected": curso_id,
         "periodo_selected": periodo_id,
         "estudiantes": estudiantes,
+        "tiene_permiso_masivo": tiene_permiso_masivo,
         "nav_active": "academico",
     }
     return render(request, "academico/boletin_selector.html", ctx)
@@ -1526,23 +1771,35 @@ def boletin_generar(request):
     doc.build(story)
     return response
 
+from .models import (
+    AnioLectivo, Curso, Periodo, Estudiante,
+    AsignaturaOferta, Logro, CalificacionLogro,
+    AsistenciaDetalle, Observador,
+    ObservacionBoletin,   # Asegúrate de tener este modelo
+)
+
+# y helpers que ya usas en otros lados (PDF):
+# _promedio_asignatura_periodo, _concepto_letra,
+# ranking_curso_periodo, ranking_curso_anual, _puede_gestionar
+
+
 @requiere_gestion
 def boletin_estudiante(request):
-    anio_id     = request.GET.get("anio")
-    curso_id    = request.GET.get("curso")
-    periodo_id  = request.GET.get("periodo")
-    est_id      = request.GET.get("estudiante")
+    anio_id    = request.GET.get("anio")
+    curso_id   = request.GET.get("curso")
+    periodo_id = request.GET.get("periodo")
+    est_id     = request.GET.get("estudiante")
 
     if not (anio_id and curso_id and periodo_id and est_id):
         messages.error(request, "Faltan parámetros (año, curso, periodo, estudiante).")
         return redirect("academico:boletin_selector")
 
-    anio     = get_object_or_404(AnioLectivo, pk=anio_id)
-    curso    = get_object_or_404(Curso, pk=curso_id)
-    periodo  = get_object_or_404(Periodo, pk=periodo_id, anio=anio)
-    est      = get_object_or_404(Estudiante, pk=est_id, curso=curso)
+    anio    = get_object_or_404(AnioLectivo, pk=anio_id)
+    curso   = get_object_or_404(Curso, pk=curso_id)
+    periodo = get_object_or_404(Periodo, pk=periodo_id, anio=anio)
+    est     = get_object_or_404(Estudiante, pk=est_id, curso=curso)
 
-    # Ofertas (asignaturas) del curso en ese año
+    # ====== OFERTAS (asignaturas del curso en ese año) ======
     ofertas = (
         AsignaturaOferta.objects
         .select_related("asignatura", "docente")
@@ -1550,7 +1807,7 @@ def boletin_estudiante(request):
         .order_by("asignatura__area", "asignatura__nombre")
     )
 
-    # ========= RESUMEN DE TRES TRIMESTRES =========
+    # ====== RESUMEN DE TRES TRIMESTRES (igual que ya tenías) ======
     periodos_anio = list(
         Periodo.objects.filter(anio=anio).order_by("numero")[:3]
     )
@@ -1561,12 +1818,11 @@ def boletin_estudiante(request):
         fila_resumen = {
             "asignatura": of.asignatura.nombre,
         }
-
         proms_validos = []
 
         for idx, per in enumerate(periodos_anio, start=1):
             prom_p = _promedio_asignatura_periodo(est, of, per)
-            clave = f"p{idx}"          # p1, p2, p3
+            clave = f"p{idx}"  # p1, p2, p3
             fila_resumen[clave] = prom_p
             if prom_p is not None:
                 proms_validos.append(prom_p)
@@ -1599,7 +1855,10 @@ def boletin_estudiante(request):
     if notas_validas:
         promedio_anual = (sum(notas_validas) / len(notas_validas)).quantize(Decimal("0.01"))
 
-    # ==== AGRUPAR POR ÁREA (lo que ya tenías) ====
+    # === NUEVO: mapa asignatura -> resumen (para la tabla tipo PDF) ===
+    resumen_por_asig = {r["asignatura"]: r for r in resumen_asignaturas}
+
+    # ====== AGRUPAR POR ÁREA (logros + notas del periodo actual) ======
     areas_dict = defaultdict(list)
 
     for of in ofertas:
@@ -1644,6 +1903,7 @@ def boletin_estudiante(request):
     ]
     areas.sort(key=lambda a: a["nombre"])
 
+    # ====== OBSERVADOR (si lo quieres seguir mostrando en otro lado) ======
     observaciones = (
         Observador.objects
         .filter(
@@ -1653,6 +1913,8 @@ def boletin_estudiante(request):
         )
         .order_by("fecha")
     )
+
+    # ====== ASISTENCIA: fallas y tardanzas del período ======
     total_fallas_periodo = AsistenciaDetalle.objects.filter(
         estudiante=est,
         estado=AsistenciaDetalle.AUSENTE,
@@ -1660,6 +1922,33 @@ def boletin_estudiante(request):
         pase__curso=curso,
         pase__periodo=periodo,
     ).count()
+
+    total_tardanzas_periodo = AsistenciaDetalle.objects.filter(
+        estudiante=est,
+        estado=AsistenciaDetalle.TARDANZA,
+        pase__anio=anio,
+        pase__curso=curso,
+        pase__periodo=periodo,
+    ).count()
+
+    # ====== OBSERVACIÓN GENERAL DEL BOLETÍN (como en el PDF) ======
+    obs_general = ObservacionBoletin.objects.filter(
+        estudiante=est,
+        periodo=periodo
+    ).first()
+
+    # ====== PUESTOS POR TRIMESTRE Y ANUAL (si tienes estas funciones) ======
+    puestos_trimestres = []
+    for per in periodos_anio:
+        mapa_puestos = ranking_curso_periodo(anio, curso, per)  # {est_id: puesto}
+        puestos_trimestres.append(mapa_puestos)
+
+    puesto_p1 = puestos_trimestres[0].get(est.id) if len(puestos_trimestres) > 0 else None
+    puesto_p2 = puestos_trimestres[1].get(est.id) if len(puestos_trimestres) > 1 else None
+    puesto_p3 = puestos_trimestres[2].get(est.id) if len(puestos_trimestres) > 2 else None
+
+    puestos_anual = ranking_curso_anual(anio, curso)  # {est_id: puesto}
+    puesto_final  = puestos_anual.get(est.id)
 
     ctx = {
         "anio": anio,
@@ -1669,12 +1958,20 @@ def boletin_estudiante(request):
         "areas": areas,
         "observaciones": observaciones,
         "es_docente": _puede_gestionar(request.user),
-        "total_fallas_periodo": total_fallas_periodo,
 
-        # 👇 NUEVO: para que el HTML pinte la tabla
+        "total_fallas_periodo": total_fallas_periodo,
+        "total_tardanzas_periodo": total_tardanzas_periodo,
+
         "resumen_asignaturas": resumen_asignaturas,
+        "resumen_por_asig": resumen_por_asig,
         "promedios_trimestre": promedios_trimestre,
         "promedio_anual": promedio_anual,
+
+        "obs_general": obs_general,
+        "puesto_p1": puesto_p1,
+        "puesto_p2": puesto_p2,
+        "puesto_p3": puesto_p3,
+        "puesto_final": puesto_final,
     }
     return render(request, "academico/boletin_estudiante.html", ctx)
 
@@ -1961,8 +2258,11 @@ def observacion_nueva(request):
 def _promedio_asignatura_periodo(estudiante, oferta, periodo):
     """
     Calcula el promedio (0–5) de una asignatura para un estudiante
-    en un periodo, usando los logros y pesos configurados.
+    en un periodo, usando:
+      - Logros (90%)
+      - Saber Ser (10%) si existe
     """
+    # 1) Nota por logros (como antes)
     logros = Logro.objects.filter(oferta=oferta, periodo=periodo).order_by("titulo")
     cals = (
         CalificacionLogro.objects
@@ -1982,10 +2282,28 @@ def _promedio_asignatura_periodo(estudiante, oferta, periodo):
             suma_pesada += Decimal(nota) * peso_rel
             suma_pesos += peso_rel
 
+    nota_logros = None
     if suma_pesos > 0:
-        return (suma_pesada / suma_pesos).quantize(Decimal("0.01"))
+        nota_logros = (suma_pesada / suma_pesos).quantize(Decimal("0.01"))
 
-    return None
+    # si no hay logros con nota, no hay promedio
+    if nota_logros is None:
+        return None
+
+    # 2) Buscar Saber Ser (opcional)
+    ss = SaberSer.objects.filter(
+        estudiante=estudiante,
+        asignatura_oferta=oferta,
+        periodo=periodo,
+        anio=oferta.anio,
+    ).first()
+
+    if ss and ss.nota is not None:
+        final = (nota_logros * LOGROS_PESO) + (Decimal(ss.nota) * SABER_SER_PESO)
+        return final.quantize(Decimal("0.01"))
+
+    # Si no hay Saber Ser, devolvemos sólo logros
+    return nota_logros
 
 def es_directivo(user):
     if not user.is_authenticated:
@@ -2083,4 +2401,27 @@ def academico_home(request):
     return render(request, "academico/homeacademico.html", {
         "nav_active": "academico",
         "es_directivo": es_directivo_flag,
+    })
+
+@requiere_gestion
+def actividades_list(request, logro_id):
+    logro = get_object_or_404(Logro, pk=logro_id)
+
+    actividades = (
+        Actividad.objects
+        .filter(logro=logro)
+        .annotate(total_notas=Count("calificaciones"))
+        .order_by("id")
+    )
+
+    # 🔍 DEBUG: imprimir en consola
+    print("\n===== DEBUG ACTIVIDADES =====")
+    for a in actividades:
+        print(f"Actividad ID {a.id} | Título: {a.titulo} | total_notas = {a.total_notas}")
+    print("===== FIN DEBUG =====\n")
+
+    return render(request, "academico/actividades_list.html", {
+        "logro": logro,
+        "actividades": actividades,
+        "nav_active": "academico",
     })

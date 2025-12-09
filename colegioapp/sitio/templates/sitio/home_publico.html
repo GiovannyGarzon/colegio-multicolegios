@@ -110,6 +110,81 @@
   font-size: 1.1rem;
 }
 
+/* === BANNER NAVIDEÑO / FIN DE AÑO === */
+.banner-navidad-wrap {
+  background: linear-gradient(135deg, #0f172a, #0f766e);
+  padding: 28px 0 34px;
+}
+
+.banner-navidad-card {
+  max-width: 900px;
+  margin: 0 auto;
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 18px 24px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  box-shadow: 0 12px 30px rgba(15,23,42,.25);
+  border: 1px solid #e5e7eb;
+}
+
+.banner-navidad-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 20%, #fecaca, #b91c1c);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.banner-navidad-body h2 {
+  margin: 2px 0 6px;
+  font-size: 1.45rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.banner-navidad-kicker {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: #16a34a;
+}
+
+.banner-navidad-body p {
+  margin: 2px 0;
+  font-size: 0.95rem;
+  color: #374151;
+}
+
+.banner-navidad-footer {
+  margin-top: 4px;
+  font-size: 0.9rem;
+  font-style: italic;
+  color: #6b7280;
+}
+
+/* Responsive banner navideño */
+@media (max-width: 768px) {
+  .banner-navidad-card {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .banner-navidad-icon {
+    margin-bottom: 4px;
+  }
+
+  .banner-navidad-body h2 {
+    font-size: 1.2rem;
+  }
+}
+
 /* GRID PRINCIPAL */
 .home-main {
   max-width: 1100px;
@@ -203,6 +278,10 @@
   .hero-home { min-height: 70vh; }
   .hero-text h1 { font-size: 1.7rem; }
   .hero-metrics { gap: 10px; }
+
+  .banner-navidad-inner h2 {
+    font-size: 1.3rem;
+  }
 }
 </style>
 {% endblock extra_css %}
@@ -249,6 +328,32 @@
   </div>
 </section>
 
+{# ==== BANNER NAVIDEÑO / MENSAJE DE FIN DE AÑO ==== #}
+<section class="banner-navidad-wrap">
+  <div class="banner-navidad-card">
+    <div class="banner-navidad-icon">🎄</div>
+
+    <div class="banner-navidad-body">
+      <p class="banner-navidad-kicker">Mensaje especial de fin de año</p>
+      <h2>¡Gracias por acompañarnos en este año académico!</h2>
+
+      <p>
+        El <strong>Centro Educativo Gin Gabi</strong> felicita a toda nuestra comunidad educativa
+        por el esfuerzo, la dedicación y el compromiso demostrados durante este año escolar.
+      </p>
+      <p>
+        Deseamos a cada una de nuestras familias una <strong>Feliz Navidad</strong> y un
+        <strong>próspero año 2026</strong>, lleno de salud, paz, alegría y nuevos
+        aprendizajes para nuestros niños y niñas.
+      </p>
+
+      <p class="banner-navidad-footer">
+        Con cariño, Dirección, docentes y todo el equipo del Centro Educativo Gin Gabi.
+      </p>
+    </div>
+  </div>
+</section>
+
 <section class="banner-secundario">
   <div class="banner-content">
     <div class="banner-img">
@@ -267,6 +372,7 @@
     </div>
   </div>
 </section>
+
 <section class="banner-secundario" style="background:#004c6d;">
   <div class="banner-content">
 
