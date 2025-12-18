@@ -1,19 +1,54 @@
 {% extends "colegioapp/base.html" %}
-{% block title %}Eliminar Año Económico | CEI GIN GABY{% endblock %}
+
+{% block title %}
+  Eliminar Año Económico |
+  {% if request.school %}{{ request.school.name }}{% else %}Centro Educativo{% endif %}
+{% endblock %}
 
 {% block content %}
 <main style="max-width:720px;margin:0 auto;">
-  <h2 style="color:#c62828;">Eliminar año económico</h2>
-  <p>¿Seguro deseas eliminar el año <strong>{{ obj.nombre }}</strong> ({{ obj.fecha_inicio|date:"d/m/Y" }} – {{ obj.fecha_fin|date:"d/m/Y" }})?</p>
 
-  <form method="post" style="margin-top:12px;">
+  <h2 style="color:#c62828;">
+    Eliminar año económico
+  </h2>
+
+  <p style="color:#455a64;">
+    ¿Seguro deseas eliminar el año
+    <strong>{{ obj.nombre }}</strong>
+    ({{ obj.fecha_inicio|date:"d/m/Y" }} – {{ obj.fecha_fin|date:"d/m/Y" }})?
+  </p>
+
+  <form method="post" style="margin-top:16px;">
     {% csrf_token %}
-    <button type="submit" style="padding:10px 16px;background:#c62828;color:#fff;border:none;border-radius:8px;cursor:pointer;">
+
+    <!-- Botón eliminar -->
+    <button type="submit"
+            style="
+              padding:10px 18px;
+              background:#c62828;
+              color:#fff;
+              border:none;
+              border-radius:8px;
+              cursor:pointer;
+              font-weight:700;
+            ">
       Sí, eliminar
     </button>
-    <a href="{% url 'cartera:anios' %}" style="padding:10px 16px;background:#9e9e9e;color:#fff;border-radius:8px;text-decoration:none;margin-left:8px;">
+
+    <!-- Cancelar -->
+    <a href="{% url 'cartera:anios' %}"
+       style="
+         padding:10px 18px;
+         background: var(--button-color);
+         color:#fff;
+         border-radius:8px;
+         text-decoration:none;
+         margin-left:10px;
+         font-weight:600;
+       ">
       Cancelar
     </a>
   </form>
+
 </main>
 {% endblock %}

@@ -1,10 +1,13 @@
 {% extends "colegioapp/base.html" %}
 
-{% block title %}Administrativo | Centro Educativo Infantil GIN GABY{% endblock %}
+{% block title %}
+  Administrativo |
+  {% if request.school %}{{ request.school.name }}{% else %}Centro Educativo{% endif %}
+{% endblock %}
 
 {% block content %}
 <main>
-    <h2>Gestión Administrativa</h2>
+    <h2 style="color: var(--primary-color);">Gestión Administrativa</h2>
     <p>
         Bienvenido al módulo administrativo del sistema. Desde aquí podrás gestionar la información
         relacionada con personal, inventarios, pagos, y la organización general del colegio.
@@ -12,19 +15,25 @@
 
     <section class="banner-mision-vision">
         <div class="container">
-            <!-- Personal administrativo -->
+            <!-- Cargos -->
             <div class="banner-item">
-                <h3><a href="{% url 'administrativo:cargos' %}" style="text-decoration:none; color:#00796B;">Cargos</a></h3>
+                <h3>
+                  <a href="{% url 'administrativo:cargos' %}"
+                     style="text-decoration:none; color: var(--primary-color);">
+                    Cargos
+                  </a>
+                </h3>
                 <p>
                     Consulta y administra la información del personal administrativo,
                     asignaciones, cargos y datos de contacto.
                 </p>
             </div>
 
-            <!-- Nómina -->
+            <!-- Empleados -->
             <div class="banner-item">
                 <h3>
-                  <a href="{% url 'administrativo:empleados' %}" style="text-decoration:none; color:#00796B;">
+                  <a href="{% url 'administrativo:empleados' %}"
+                     style="text-decoration:none; color: var(--primary-color);">
                     Empleados
                   </a>
                 </h3>
@@ -34,39 +43,74 @@
                 </p>
             </div>
 
-            <!-- Inventarios -->
+            <!-- Proveedores -->
             <div class="banner-item">
-                <h3><a href="{% url 'administrativo:proveedores' %}" style="text-decoration:none; color:#00796B;">Proveedores</a></h3>
+                <h3>
+                  <a href="{% url 'administrativo:proveedores' %}"
+                     style="text-decoration:none; color: var(--primary-color);">
+                    Proveedores
+                  </a>
+                </h3>
                 <p>
                     Administra el inventario del colegio, materiales, útiles, mobiliario
                     y demás recursos institucionales.
                 </p>
             </div>
 
-            <!-- Pagos y servicios -->
+            <!-- Contratos -->
             <div class="banner-item">
-                <h3><a href="{% url 'administrativo:contratos' %}" style="text-decoration:none; color:#00796B;">Contratos</a></h3>
+                <h3>
+                  <a href="{% url 'administrativo:contratos' %}"
+                     style="text-decoration:none; color: var(--primary-color);">
+                    Contratos
+                  </a>
+                </h3>
                 <p>
                     Controla los pagos generales, facturas y servicios institucionales
                     de forma clara y organizada.
                 </p>
             </div>
-            <!-- Matrículas (NUEVO) -->
+
+            <!-- Matrículas -->
             <div class="banner-item">
                 <h3>
-                    <a href="{% url 'administrativo:matriculas' %}" style="text-decoration:none; color:#00796B;">
-                        Matrículas
-                    </a>
+                  <a href="{% url 'administrativo:matriculas' %}"
+                     style="text-decoration:none; color: var(--primary-color);">
+                    Matrículas
+                  </a>
                 </h3>
                 <p>
                     Gestiona la matrícula de estudiantes por año lectivo y curso.
                 </p>
             </div>
+
+            <!-- Certificaciones -->
             <div class="banner-item">
-                <h3><a href="{% url 'administrativo:certificaciones' %}" style="text-decoration:none; color:#00796B;">Certificaciones</a></h3>
+                <h3>
+                  <a href="{% url 'administrativo:certificaciones' %}"
+                     style="text-decoration:none; color: var(--primary-color);">
+                    Certificaciones
+                  </a>
+                </h3>
                 <p>Genera certificados estudiantiles y de notas.</p>
             </div>
         </div>
     </section>
 </main>
+
+<style>
+    .banner-mision-vision {
+        background-color: var(--secondary-color, #e0f2f1);
+        padding: 50px 20px;
+    }
+
+    .banner-item {
+        background: #ffffff;
+        border-left: 5px solid var(--primary-color);
+    }
+
+    h2 {
+        font-weight: bold;
+    }
+</style>
 {% endblock content %}

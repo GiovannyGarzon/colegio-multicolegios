@@ -1,11 +1,20 @@
 {% extends "colegioapp/base.html" %}
 {% load roles %}
-{% block title %}Gestión Académica Avanzada | CEI GIN GABY{% endblock %}
+
+{% block title %}
+  Gestión Académica Avanzada | {{ request.school.nombre|default:"Institución Educativa" }}
+{% endblock %}
 
 {% block content %}
-<main>
-  <h2>Gestión Académica Avanzada</h2>
-  <p>
+<main style="max-width:1100px;margin:0 auto;padding:20px 16px;">
+  <h2 style="
+        text-align:center;
+        margin-bottom:10px;
+        color:var(--color-primary, #2563eb);
+      ">
+    Gestión Académica Avanzada
+  </h2>
+  <p style="text-align:center;margin-bottom:18px;color:#4b5563;font-size:0.95rem;">
     Desde este panel podrás acceder a las herramientas académicas según tu rol en la institución.
   </p>
 
@@ -14,91 +23,95 @@
 
     {# 1) SUPERUSUARIO / STAFF / RECTOR: ven todo #}
     {% if user.is_superuser or user.is_staff or user|has_group:"Rector" %}
-      <a href="{% url 'academico:asignaturas' %}" class="btn">Asignaturas (Catálogo)</a>
-      <a href="{% url 'academico:ofertas' %}" class="btn">Oferta por curso/año</a>
-      <a href="{% url 'academico:periodos' %}" class="btn">Periodos del año</a>
-      <a href="{% url 'academico:notas_selector' %}" class="btn">Captura de notas</a>
-      <a href="{% url 'academico:boletin_selector' %}" class="btn">Boletines</a>
-      <a href="{% url 'academico:asistencia_selector' %}" class="btn">Asistencia (pase de lista)</a>
-      <a href="{% url 'academico:anios_lectivos' %}" class="btn">Años lectivos</a>
+      <a href="{% url 'academico:asignaturas' %}" class="btn-acad">Asignaturas (Catálogo)</a>
+      <a href="{% url 'academico:ofertas' %}" class="btn-acad">Oferta por curso/año</a>
+      <a href="{% url 'academico:periodos' %}" class="btn-acad">Periodos del año</a>
+      <a href="{% url 'academico:notas_selector' %}" class="btn-acad">Captura de notas</a>
+      <a href="{% url 'academico:boletin_selector' %}" class="btn-acad">Boletines</a>
+      <a href="{% url 'academico:asistencia_selector' %}" class="btn-acad">Asistencia (pase de lista)</a>
+      <a href="{% url 'academico:anios_lectivos' %}" class="btn-acad">Años lectivos</a>
 
     {# 2) COORDINADOR / DOCENTE: solo 4 opciones #}
     {% elif user|has_group:"Coordinador" or user|has_group:"Docente" %}
-      <a href="{% url 'academico:periodos' %}" class="btn">Periodos del año</a>
-      <a href="{% url 'academico:notas_selector' %}" class="btn">Captura de notas</a>
-      <a href="{% url 'academico:boletin_selector' %}" class="btn">Boletines</a>
-      <a href="{% url 'academico:asistencia_selector' %}" class="btn">Asistencia (pase de lista)</a>
+      <a href="{% url 'academico:periodos' %}" class="btn-acad">Periodos del año</a>
+      <a href="{% url 'academico:notas_selector' %}" class="btn-acad">Captura de notas</a>
+      <a href="{% url 'academico:boletin_selector' %}" class="btn-acad">Boletines</a>
+      <a href="{% url 'academico:asistencia_selector' %}" class="btn-acad">Asistencia (pase de lista)</a>
 
     {# 3) ESTUDIANTE: solo boletines (portal) #}
     {% elif user|has_group:"Estudiante" %}
-      <a href="{% url 'academico:portal_boletin' %}" class="btn">Boletines</a>
+      <a href="{% url 'academico:portal_boletin' %}" class="btn-acad">Boletines</a>
     {% endif %}
 
   </nav>
 
   {# ================= SECCIONES / TARJETAS ================= #}
   <section class="banner-mision-vision">
-    <div class="container">
+    <div class="container" style="
+          display:grid;
+          grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+          gap:16px;
+        ">
 
       {# 1) ADMIN / STAFF / RECTOR: TODAS LAS TARJETAS #}
       {% if user.is_superuser or user.is_staff or user|has_group:"Rector" %}
-        <div class="banner-item">
+        <div class="banner-item card-acad">
           <h3>
-            <a href="{% url 'academico:asignaturas' %}" style="text-decoration:none; color:#00796B;">
+            <a href="{% url 'academico:asignaturas' %}" class="card-acad-link">
               Asignaturas (Catálogo)
             </a>
           </h3>
           <p>Lista global de materias (Matemáticas, Lengua…). No dependen del curso ni del año.</p>
         </div>
 
-        <div class="banner-item">
+        <div class="banner-item card-acad">
           <h3>
-            <a href="{% url 'academico:ofertas' %}" style="text-decoration:none; color:#00796B;">
+            <a href="{% url 'academico:ofertas' %}" class="card-acad-link">
               Oferta académica por curso y año
             </a>
           </h3>
           <p>Configura qué asignaturas ve cada curso en cada año lectivo y qué docente las imparte.</p>
         </div>
 
-        <div class="banner-item">
+        <div class="banner-item card-acad">
           <h3>
-            <a href="{% url 'academico:periodos' %}" style="text-decoration:none; color:#00796B;">
+            <a href="{% url 'academico:periodos' %}" class="card-acad-link">
               Periodos y logros
             </a>
           </h3>
           <p>Define los periodos del año y los logros con su peso por curso, asignatura y periodo.</p>
         </div>
 
-        <div class="banner-item">
+        <div class="banner-item card-acad">
           <h3>
-            <a href="{% url 'academico:notas_selector' %}" style="text-decoration:none; color:#00796B;">
+            <a href="{% url 'academico:notas_selector' %}" class="card-acad-link">
               Captura de notas
             </a>
           </h3>
           <p>Registra calificaciones por logro y periodo para los estudiantes de cada curso.</p>
         </div>
 
-        <div class="banner-item">
+        <div class="banner-item card-acad">
           <h3>
-            <a href="{% url 'academico:boletin_selector' %}" style="text-decoration:none; color:#00796B;">
+            <a href="{% url 'academico:boletin_selector' %}" class="card-acad-link">
               Boletines
             </a>
           </h3>
           <p>Genera boletines por estudiante con promedios por periodo y promedio anual.</p>
         </div>
 
-        <div class="banner-item">
+        <div class="banner-item card-acad">
           <h3>
-            <a href="{% url 'academico:asistencia_selector' %}" style="text-decoration:none; color:#00796B;">
+            <a href="{% url 'academico:asistencia_selector' %}" class="card-acad-link">
               Asistencia (pase de lista)
             </a>
           </h3>
           <p>Registra la asistencia diaria de cada curso (presentes, ausentes, tardanzas y justificadas).</p>
         </div>
 
-        <div class="banner-item">
+        <div class="banner-item card-acad">
           <h3>
-            <a href="{% url 'academico:anios_lectivos' %}" style="text-decoration:none; color:#00796B;">
+            <a href="{% url 'academico:anios_lectivos' %}" class="card-acad-link">
               Años lectivos
             </a>
           </h3>
@@ -107,36 +120,36 @@
 
       {# 2) COORDINADOR / DOCENTE: SOLO 4 TARJETAS #}
       {% elif user|has_group:"Coordinador" or user|has_group:"Docente" %}
-        <div class="banner-item">
+        <div class="banner-item card-acad">
           <h3>
-            <a href="{% url 'academico:periodos' %}" style="text-decoration:none; color:#00796B;">
+            <a href="{% url 'academico:periodos' %}" class="card-acad-link">
               Periodos del año
             </a>
           </h3>
           <p>Consulta la estructura de periodos y los logros definidos por curso y asignatura.</p>
         </div>
 
-        <div class="banner-item">
+        <div class="banner-item card-acad">
           <h3>
-            <a href="{% url 'academico:notas_selector' %}" style="text-decoration:none; color:#00796B;">
+            <a href="{% url 'academico:notas_selector' %}" class="card-acad-link">
               Captura de notas
             </a>
           </h3>
           <p>Ingresa y edita las notas de tus estudiantes por logro y periodo.</p>
         </div>
 
-        <div class="banner-item">
+        <div class="banner-item card-acad">
           <h3>
-            <a href="{% url 'academico:boletin_selector' %}" style="text-decoration:none; color:#00796B;">
+            <a href="{% url 'academico:boletin_selector' %}" class="card-acad-link">
               Boletines
             </a>
           </h3>
           <p>Genera boletines por curso o por estudiante con sus promedios y observaciones.</p>
         </div>
 
-        <div class="banner-item">
+        <div class="banner-item card-acad">
           <h3>
-            <a href="{% url 'academico:asistencia_selector' %}" style="text-decoration:none; color:#00796B;">
+            <a href="{% url 'academico:asistencia_selector' %}" class="card-acad-link">
               Asistencia (pase de lista)
             </a>
           </h3>
@@ -145,9 +158,9 @@
 
       {# 3) ESTUDIANTE: SOLO BOLETINES #}
       {% elif user|has_group:"Estudiante" %}
-        <div class="banner-item">
+        <div class="banner-item card-acad">
           <h3>
-            <a href="{% url 'academico:portal_boletin' %}" style="text-decoration:none; color:#00796B;">
+            <a href="{% url 'academico:portal_boletin' %}" class="card-acad-link">
               Mis boletines
             </a>
           </h3>
@@ -161,25 +174,68 @@
     </div>
   </section>
 
-  <div style="display:flex;justify-content:center;margin-top:18px;">
-    <a href="{% url 'academico:home' %}" class="btn-sec">← Volver a Académico</a>
+  <div style="display:flex;justify-content:center;margin-top:22px;">
+    <a href="{% url 'academico:home' %}" class="btn-acad-sec">
+      ← Volver a Académico
+    </a>
   </div>
 </main>
 
 <style>
-  .btn{
+  .btn-acad{
     text-decoration:none;
-    background:#004d40;
-    color:#fff;
-    padding:10px 16px;
-    border-radius:10px;
+    background:var(--color-primary, #2563eb);
+    color:#ffffff;
+    padding:8px 14px;
+    border-radius:999px;
+    font-size:0.9rem;
+    border:1px solid transparent;
+    transition:background 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
   }
-  .btn-sec{
+  .btn-acad:hover{
+    background:var(--color-primary-dark, #1d4ed8);
+    box-shadow:0 3px 8px rgba(15,23,42,0.25);
+    transform:translateY(-1px);
+  }
+
+  .btn-acad-sec{
     text-decoration:none;
-    background:#9e9e9e;
-    color:#fff;
-    padding:10px 16px;
-    border-radius:10px;
+    background:var(--color-muted, #6b7280);
+    color:#ffffff;
+    padding:9px 16px;
+    border-radius:999px;
+    font-size:0.9rem;
+    border:1px solid transparent;
+    transition:background 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
+  }
+  .btn-acad-sec:hover{
+    background:var(--color-muted-dark, #4b5563);
+    box-shadow:0 3px 8px rgba(15,23,42,0.25);
+    transform:translateY(-1px);
+  }
+
+  .card-acad{
+    background:#ffffff;
+    border-radius:12px;
+    padding:16px 18px;
+    border:1px solid var(--color-muted-border, #e5e7eb);
+    box-shadow:0 3px 10px rgba(15,23,42,0.06);
+  }
+  .card-acad h3{
+    margin:0 0 6px;
+    font-size:1rem;
+  }
+  .card-acad p{
+    margin:0;
+    font-size:0.9rem;
+    color:#4b5563;
+  }
+  .card-acad-link{
+    text-decoration:none;
+    color:var(--color-primary, #2563eb);
+  }
+  .card-acad-link:hover{
+    text-decoration:underline;
   }
 </style>
 {% endblock %}

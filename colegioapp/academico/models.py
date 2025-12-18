@@ -2,8 +2,10 @@ from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
 from decimal import Decimal
 from django.contrib.auth.models import User
+from myapp.models import School
 
 class Curso(models.Model):
+    school = models.ForeignKey(School, on_delete=models.CASCADE)
     nombre = models.CharField(max_length=100)
     grado = models.CharField(max_length=50)
     jornada = models.CharField(max_length=50, blank=True, null=True)
@@ -12,6 +14,7 @@ class Curso(models.Model):
         return f"{self.grado} - {self.nombre}"
 
 class Docente(models.Model):
+    school = models.ForeignKey(School, on_delete=models.CASCADE)
     nombres = models.CharField(max_length=100)
     apellidos = models.CharField(max_length=100)
     identificacion = models.CharField(max_length=20, unique=True)
@@ -30,7 +33,7 @@ class Estudiante(models.Model):
         ("TI", "Tarjeta de identidad"),
         ("CC", "Cédula de ciudadanía"),
     ]
-
+    school = models.ForeignKey(School, on_delete=models.CASCADE)
     nombres = models.CharField(max_length=100)
     apellidos = models.CharField(max_length=100)
     tipo_documento = models.CharField(
@@ -82,9 +85,7 @@ class Periodo(models.Model):
 
 
 class AsignaturaCatalogo(models.Model):
-    """
-    Catálogo global de asignaturas (Matemáticas, Lengua, etc.).
-    """
+    school = models.ForeignKey(School, on_delete=models.CASCADE)
     nombre = models.CharField(max_length=120, unique=True)
     area = models.CharField(max_length=120, blank=True, null=True)  # opcional: Ciencias, Lenguaje...
 
@@ -98,9 +99,7 @@ class AsignaturaCatalogo(models.Model):
 
 
 class AsignaturaOferta(models.Model):
-    """
-    Oferta concreta de una asignatura para un curso en un año lectivo.
-    """
+    school = models.ForeignKey(School, on_delete=models.CASCADE)
     anio = models.ForeignKey(AnioLectivo, on_delete=models.CASCADE, related_name="ofertas")
     curso = models.ForeignKey("academico.Curso", on_delete=models.CASCADE, related_name="ofertas")
     asignatura = models.ForeignKey(AsignaturaCatalogo, on_delete=models.CASCADE, related_name="ofertas")
@@ -124,7 +123,7 @@ class Logro(models.Model):
         (TIPO_SER, "Saber ser"),
         (TIPO_SABER, "Saber"),
     ]
-
+    school = models.ForeignKey(School, on_delete=models.CASCADE)
     oferta = models.ForeignKey(AsignaturaOferta, on_delete=models.CASCADE, related_name="logros")
     periodo = models.ForeignKey(Periodo, on_delete=models.CASCADE, related_name="logros")
 
@@ -165,6 +164,7 @@ class CalificacionLogro(models.Model):
         return f"{self.estudiante} | {self.logro} = {self.nota}"
 
 class Observador(models.Model):
+    school = models.ForeignKey(School, on_delete=models.CASCADE)
     estudiante = models.ForeignKey("academico.Estudiante", on_delete=models.CASCADE, related_name="observaciones")
     fecha = models.DateField(auto_now_add=True)
     tipo = models.CharField(max_length=40, choices=[
@@ -208,10 +208,7 @@ class ObservacionBoletin(models.Model):
         return f"{self.estudiante} - {self.periodo} ({self.fecha_actualizacion:%Y-%m-%d})"
 
 class PaseLista(models.Model):
-    """
-    Encabezado de asistencia de un curso en una fecha.
-    Un registro por curso / fecha (y periodo/año).
-    """
+    school = models.ForeignKey(School, on_delete=models.CASCADE)
     anio = models.ForeignKey(AnioLectivo, on_delete=models.CASCADE)
     curso = models.ForeignKey(Curso, on_delete=models.CASCADE)
     periodo = models.ForeignKey(Periodo, on_delete=models.CASCADE)

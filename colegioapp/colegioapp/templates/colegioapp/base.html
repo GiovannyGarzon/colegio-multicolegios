@@ -4,127 +4,243 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{% block title %}Centro Educativo GIN GABI{% endblock %}</title>
 
+  {# 🧠 Título dinámico: si hay colegio, usa su nombre, si no, el texto viejo #}
+  <title>
+    {% block title %}
+      {% if request.school %}
+        {{ request.school.name }}
+      {% else %}
+        Centro Educativo GIN GABI
+      {% endif %}
+    {% endblock %}
+  </title>
+
+  {# 🎨 CSS extra de cada template hijo #}
   {% block extra_css %}{% endblock %}
 
   <style>
-  header.site-header, nav.site-nav{
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-  }
-    /* ===== Sticky footer ===== */
-    html, body { height: 100%; margin: 0; }
-    .page-container { min-height: 100vh; display: flex; flex-direction: column; }
-    .content-wrap { flex: 1; display: flex; flex-direction: column; }
+    /* ------------- VARIABLES DE COLOR POR COLEGIO ------------- */
+    :root {
+      --primary-color: {% if request.school %}{{ request.school.primary_color }}{% else %}#0077B6{% endif %};
+      --secondary-color: {% if request.school %}{{ request.school.secondary_color }}{% else %}#009688{% endif %};
+    }
 
-    body { font-family:"Segoe UI",Arial,sans-serif; background:#f4f8f6; color:#333; }
+    /* ------------- LAYOUT GENERAL / STICKY FOOTER ------------- */
+    html, body {
+      height: 100%;
+      margin: 0;
+    }
 
-    header {
-      background: linear-gradient(90deg, #0077B6, #009688);
+    body {
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: #f4f8f6;
+      color: #333;
+    }
+
+    .page-container {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .content-wrap {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ------------- HEADER / LOGO / USUARIO ------------- */
+    header.site-header,
+    nav.site-nav {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+
+    header.site-header {
+      background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
       color: white;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;   /* 👉 ahora separa izquierda y derecha */
-      text-align:left;
-      padding:15px 40px;
-      gap:20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      text-align: left;
+      padding: 15px 40px;
+      gap: 20px;
     }
 
-    .header-left{
-      display:flex;
-      align-items:center;
-      gap:20px;
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 20px;
     }
 
-    header .logo{
-      width:80px;
-      height:auto;
-      background:transparent;
-      border:none;
-      margin:0;
-      padding:0;
-    }
-    header .header-text{
-      display:flex;
-      flex-direction:column;
-      justify-content:center;
-    }
-    header .header-text h1{
-      margin:0;
-      font-size:1.9em;
-      letter-spacing:1px;
-    }
-    header .header-text p{
-      margin:5px 0 0 0;
-      font-size:1em;
-      color:#e0f2f1;
+    header .logo {
+      width: 80px;
+      height: auto;
+      background: transparent;
+      border: none;
+      margin: 0;
+      padding: 0;
     }
 
-    /* ===== Usuario / foto en el header ===== */
-    .header-user{
-      display:flex;
-      align-items:center;
-      gap:12px;
+    header .header-text {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
     }
 
-    .header-user-info{
-      display:flex;
-      flex-direction:column;
-      align-items:flex-end;
-      font-size:0.85rem;
-      color:#e0f2f1;
+    header .header-text h1 {
+      margin: 0;
+      font-size: 1.9em;
+      letter-spacing: 1px;
     }
 
-    .header-user-name{
-      font-weight:600;
+    header .header-text p {
+      margin: 5px 0 0 0;
+      font-size: 1em;
+      color: #e0f2f1;
     }
 
-    .header-user-role{
-      opacity:0.85;
+    /* ------ Usuario / foto en el header ------ */
+    .header-user {
+      display: flex;
+      align-items: center;
+      gap: 12px;
     }
 
-    .header-avatar{
-      width:48px;
-      height:58px;
-      border-radius:6px;
-      object-fit:cover;
-      border:2px solid rgba(255,255,255,0.6);
-      background:#e0f2f1;
+    .header-user-info {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      font-size: 0.85rem;
+      color: #e0f2f1;
     }
 
-    .header-avatar-placeholder{
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      font-size:0.7rem;
-      color:#ffffffcc;
-      background:rgba(0,0,0,0.18);
+    .header-user-name {
+      font-weight: 600;
     }
 
-    nav { background-color:#004d40; display:flex; align-items:center; gap:20px; padding:12px 20px; }
-    nav a { color:#ffffff; text-decoration:none; font-weight:500; transition:color .3s; }
-    nav a:hover, nav a.active { color:#80cbc4; }
-    .nav-spacer { margin-left:auto; color:#c8e6c9; }
+    .header-user-role {
+      opacity: 0.85;
+    }
 
-    main { padding:50px 20px; text-align:center; }
-    main h2 { color:#00796B; font-size:1.8em; margin-bottom:15px; }
-    main p { max-width:750px; margin:10px auto; line-height:1.6em; font-size:1.05em; }
+    .header-avatar {
+      width: 48px;
+      height: 58px;
+      border-radius: 6px;
+      object-fit: cover;
+      border: 2px solid rgba(255, 255, 255, 0.6);
+      background: #e0f2f1;
+    }
 
-    footer { background:#004d40; color:#c8e6c9; text-align:center; padding:15px 0; font-size:.9em; }
+    .header-avatar-placeholder {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      color: #ffffffcc;
+      background: rgba(0, 0, 0, 0.18);
+    }
 
-    .banner-mision-vision { background-color:#e0f2f1; padding:50px 20px; }
-    .banner-mision-vision .container { display:flex; justify-content:center; align-items:flex-start; gap:40px; flex-wrap:wrap; }
-    .banner-item { flex:1 1 300px; max-width:450px; text-align:center; background:#ffffff; padding:25px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.1); }
-    .banner-item h3 { color:#00796B; margin-bottom:15px; font-size:1.5em; }
-    .banner-item p { font-size:1em; line-height:1.6em; color:#333; }
+    /* ------------- NAVBAR ------------- */
+    nav.site-nav {
+      background-color: var(--primary-color);
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      padding: 12px 20px;
+    }
+
+    nav a {
+      color: #ffffff;
+      text-decoration: none;
+      font-weight: 500;
+      transition: color .3s;
+    }
+
+    nav a:hover,
+    nav a.active {
+      color: var(--secondary-color);
+    }
+
+    .nav-spacer {
+      margin-left: auto;
+      color: #c8e6c9;
+    }
+
+    /* ------------- CONTENIDO PRINCIPAL ------------- */
+    main {
+      padding: 50px 20px;
+      text-align: center;
+    }
+
+    main h2 {
+      color: #00796B;
+      font-size: 1.8em;
+      margin-bottom: 15px;
+    }
+
+    main p {
+      max-width: 750px;
+      margin: 10px auto;
+      line-height: 1.6em;
+      font-size: 1.05em;
+    }
+
+    /* ------------- BLOQUE MISIÓN / VISIÓN ------------- */
+    .banner-mision-vision {
+      background-color: #e0f2f1;
+      padding: 50px 20px;
+    }
+
+    .banner-mision-vision .container {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 40px;
+      flex-wrap: wrap;
+    }
+
+    .banner-item {
+      flex: 1 1 300px;
+      max-width: 450px;
+      text-align: center;
+      background: #ffffff;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .banner-item h3 {
+      color: var(--primary-color);
+      margin-bottom: 15px;
+      font-size: 1.5em;
+    }
+
+    .banner-item p {
+      font-size: 1em;
+      line-height: 1.6em;
+      color: #333;
+    }
+
+    /* ------------- FOOTER ------------- */
+    footer {
+      background: var(--primary-color);
+      color: #ffffff;
+      text-align: center;
+      padding: 15px 0;
+      font-size: .9em;
+    }
   </style>
 </head>
 <body>
+
 <div class="page-container">
   <div class="content-wrap">
+
     <header class="site-header">
+      {# MENSAJES FLASH #}
       {% if messages %}
         <div style="max-width:980px;margin:14px auto;">
           {% for message in messages %}
@@ -140,10 +256,28 @@
       {% endif %}
 
       <div class="header-left">
-        <img src="{% static 'img/logo.png' %}" alt="Logo GIN GABY" class="logo">
+        {# 🧠 Logo dinámico: si el colegio tiene logo, úsalo; si no, el PNG general #}
+        <img
+          src="{% if request.school and request.school.logo %}{{ request.school.logo.url }}{% else %}{% static 'img/logo.png' %}{% endif %}"
+          alt="Logo del colegio"
+          class="logo"
+        >
         <div class="header-text">
-          <h1>CENTRO EDUCATIVO GIN GABI</h1>
-          <p>EDUCAMOS CON AMOR A QUIENES CONSTRUIRÁN EL MAÑANA</p>
+          <h1>
+            {% if request.school %}
+              {{ request.school.name }}
+            {% else %}
+              CENTRO EDUCATIVO GIN GABI
+            {% endif %}
+          </h1>
+
+          <p>
+            {% if request.school and request.school.slogan %}
+              {{ request.school.slogan }}
+            {% else %}
+              EDUCAMOS CON AMOR A QUIENES CONSTRUIRÁN EL MAÑANA
+            {% endif %}
+          </p>
         </div>
       </div>
 
@@ -168,21 +302,19 @@
               {% endif %}
             </span>
           </div>
+
           {% if user|has_group:"Estudiante" and user.estudiante and user.estudiante.foto %}
               <img src="{{ user.estudiante.foto.url }}"
                    class="header-avatar"
                    alt="Foto estudiante">
-
           {% elif user|has_group:"Docente" and user.docente and user.docente.foto %}
               <img src="{{ user.docente.foto.url }}"
                    class="header-avatar"
                    alt="Foto docente">
-
           {% elif user.perfil and user.perfil.foto %}
               <img src="{{ user.perfil.foto.url }}"
                    class="header-avatar"
                    alt="Foto perfil">
-
           {% else %}
               <div class="header-avatar header-avatar-placeholder">
                 Sin foto
@@ -190,9 +322,10 @@
           {% endif %}
 
         </div>
-        {% endif %}
+      {% endif %}
     </header>
 
+    {# ------------------- NAVBAR (puede ocultarse en algunas páginas) ------------------- #}
     {% block navbar %}
       {% if user.is_authenticated %}
       <nav class="site-nav">
@@ -230,7 +363,9 @@
                    placeholder="Buscar persona..."
                    style="padding:4px 8px; border-radius:6px; border:1px solid #80cbc4; font-size:0.85rem;">
             <button type="submit"
-                    style="padding:4px 8px; border-radius:6px; border:none; background:#00695c; color:#fff; font-size:0.8rem; cursor:pointer;">
+                    style="padding:4px 8px; border-radius:6px; border:none;
+                           background:var(--secondary-color); color:#fff;
+                           font-size:0.8rem; cursor:pointer;">
               Buscar
             </button>
           </form>
@@ -241,12 +376,19 @@
       {% endif %}
     {% endblock %}
 
+    {# ------------------- CONTENIDO POR DEFECTO DEL HOME ------------------- #}
     {% block content %}
     <main>
       <h2>Bienvenidos al Sistema Institucional</h2>
       <p>
         Este sistema ha sido desarrollado para optimizar la gestión académica y administrativa del
-        <strong>Centro Educativo GIN GABI</strong>. Desde aquí podrás consultar información
+        <strong>
+          {% if request.school %}
+            {{ request.school.name }}
+          {% else %}
+            Centro Educativo GIN GABI
+          {% endif %}
+        </strong>. Desde aquí podrás consultar información
         de estudiantes, docentes, cursos y procesos financieros de manera ágil y segura.
       </p>
       <p>
@@ -259,19 +401,40 @@
       <div class="container">
         <div class="banner-item">
           <h3>Misión</h3>
-          <p>Formar niños y niñas con valores, amor por el aprendizaje y desarrollo integral, brindando un entorno seguro y estimulante…</p>
+          <p>
+            {% if request.school and request.school.mission %}
+              {{ request.school.mission }}
+            {% else %}
+              Formar niños y niñas con valores, amor por el aprendizaje y desarrollo integral,
+              brindando un entorno seguro y estimulante.
+            {% endif %}
+          </p>
         </div>
         <div class="banner-item">
           <h3>Visión</h3>
-          <p>Ser un referente educativo en la ciudad, ofreciendo educación de calidad y acompañamiento integral…</p>
+          <p>
+            {% if request.school and request.school.vision %}
+              {{ request.school.vision }}
+            {% else %}
+              Ser un referente educativo en la ciudad, ofreciendo educación de calidad
+              y acompañamiento integral a las familias.
+            {% endif %}
+          </p>
         </div>
       </div>
     </section>
     {% endblock %}
+
   </div>  {# /.content-wrap #}
 
   <footer>
-    &copy; 2025 Centro Educativo GIN GABI - Todos los derechos reservados.
+    &copy; 2025
+    {% if request.school %}
+      {{ request.school.name }}
+    {% else %}
+      Centro Educativo GIN GABI
+    {% endif %}
+    - Todos los derechos reservados.
   </footer>
 </div>  {# /.page-container #}
 
@@ -280,8 +443,16 @@
 (function() {
   let timer;
   const INACTIVITY_LIMIT = 3 * 60 * 1000; // 3 minutos
-  function resetTimer(){ clearTimeout(timer); timer = setTimeout(()=>{ window.location.href = "{% url 'logout' %}"; }, INACTIVITY_LIMIT); }
-  ['click','mousemove','keydown','scroll','touchstart'].forEach(evt => document.addEventListener(evt, resetTimer, false));
+  function resetTimer(){
+    clearTimeout(timer);
+    timer = setTimeout(function(){
+      window.location.href = "{% url 'logout' %}";
+    }, INACTIVITY_LIMIT);
+  }
+  ['click','mousemove','keydown','scroll','touchstart']
+    .forEach(function(evt){
+      document.addEventListener(evt, resetTimer, false);
+    });
   resetTimer();
 })();
 </script>

@@ -1,27 +1,104 @@
 {% extends "colegioapp/base.html" %}
 
-{% block title %}Detalle Docente | GIN GABY{% endblock %}
+{% block title %}Detalle Docente | {{ request.school.name }}{% endblock %}
 
 {% block content %}
-<main>
-  <h2>Detalle del docente</h2>
-  <div style="max-width:800px;margin:0 auto;background:#fff;padding:16px;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.06);">
-    <p><strong>Nombre:</strong> {{ d.apellidos }} {{ d.nombres }}</p>
-    <p><strong>Identificación:</strong> {{ d.identificacion }}</p>
-    <p><strong>Correo:</strong> {{ d.correo|default:"" }}</p>
-    <p><strong>Teléfono:</strong> {{ d.telefono|default:"" }}</p>
-    <p><strong>Curso asignado:</strong>
-      {% if d.curso_asignado %}
-        {{ d.curso_asignado.grado }} - {{ d.curso_asignado.nombre }}
+<main style="max-width:860px;margin:0 auto;padding:20px 10px;">
+
+  <h2 style="color:var(--primary-color); margin-bottom:18px;">
+    Detalle del docente
+  </h2>
+
+  <div style="
+      background:#ffffff;
+      padding:22px 24px;
+      border-radius:12px;
+      box-shadow:0 4px 12px rgba(0,0,0,0.06);
+      display:grid;
+      grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+      gap:20px;
+  ">
+    <!-- Columna izquierda: datos -->
+    <div style="display:grid; gap:6px; font-size:0.98rem;">
+      <p><strong>Nombre:</strong> {{ d.apellidos }} {{ d.nombres }}</p>
+      <p><strong>Identificación:</strong> {{ d.identificacion }}</p>
+      <p><strong>Correo:</strong> {{ d.correo|default:"" }}</p>
+      <p><strong>Teléfono:</strong> {{ d.telefono|default:"" }}</p>
+      <p>
+        <strong>Curso asignado:</strong>
+        {% if d.curso_asignado %}
+          {{ d.curso_asignado.grado }} - {{ d.curso_asignado.nombre }}
+        {% else %}
+          <span style="color:#9ca3af;">Sin curso asignado</span>
+        {% endif %}
+      </p>
+    </div>
+
+    <!-- Columna derecha: foto si existe -->
+    <div style="text-align:center;">
+      {% if d.foto %}
+        <img src="{{ d.foto.url }}"
+             alt="Foto del docente"
+             style="width:130px;height:160px;object-fit:cover;
+                    border-radius:10px;border:1px solid #e5e7eb;">
       {% else %}
-        —
+        <div style="
+            width:130px;
+            height:160px;
+            border-radius:10px;
+            border:1px dashed #d1d5db;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            font-size:12px;
+            color:#9ca3af;
+        ">
+          Sin foto
+        </div>
       {% endif %}
-    </p>
+      <p style="margin-top:6px;font-size:11px;color:#9ca3af;">
+        Foto tipo carné (opcional)
+      </p>
+    </div>
   </div>
 
-  <div style="margin-top:16px; display:flex; gap:8px; justify-content:center;">
-    <a href="{% url 'academico:docente_update' d.id %}" style="padding:10px 16px; background:#00796B; color:#fff; text-decoration:none; border-radius:8px;">Editar</a>
-    <a href="{% url 'academico:docentes' %}" style="padding:10px 16px; background:#004d40; color:#fff; text-decoration:none; border-radius:8px;">Volver</a>
+  <div style="margin-top:18px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+    <a href="{% url 'academico:docente_update' d.id %}" class="btn-primary">
+      ✏️ Editar docente
+    </a>
+    <a href="{% url 'academico:docentes' %}" class="btn-sec">
+      ← Volver al listado
+    </a>
   </div>
 </main>
+
+<style>
+  .btn-primary{
+    padding:10px 16px;
+    background:var(--primary-color, #00796B);
+    color:#fff;
+    border-radius:8px;
+    text-decoration:none;
+    border:none;
+    display:inline-block;
+    cursor:pointer;
+    transition:.15s;
+  }
+  .btn-primary:hover{
+    filter:brightness(0.93);
+  }
+
+  .btn-sec{
+    padding:10px 16px;
+    background:#9ca3af;
+    color:#fff;
+    border-radius:8px;
+    text-decoration:none;
+    display:inline-block;
+    transition:.15s;
+  }
+  .btn-sec:hover{
+    background:#6b7280;
+  }
+</style>
 {% endblock content %}

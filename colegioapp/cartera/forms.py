@@ -4,6 +4,9 @@ from decimal import Decimal
 from datetime import date
 from django.core.exceptions import ValidationError
 
+from academico.models import Estudiante
+
+
 class AnioEconomicoForm(forms.ModelForm):
     class Meta:
         model = AnioEconomico
@@ -24,6 +27,14 @@ class AnioEconomicoForm(forms.ModelForm):
         return cleaned
 
 class ConceptoPagoForm(forms.ModelForm):
+    def __init__(self, *args, school=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.school = school
+
+        # Select año SOLO del colegio
+        if school:
+            self.fields["anio"].queryset = AnioEconomico.objects.filter(school=school)
+
     class Meta:
         model = ConceptoPago
         fields = ["nombre", "descripcion", "anio", "valor", "recurrente", "activo"]
@@ -40,12 +51,18 @@ class ConceptoPagoForm(forms.ModelForm):
         cleaned = super().clean()
         nombre = (cleaned.get("nombre") or "").strip()
         anio = cleaned.get("anio")
-        if nombre and anio:
-            qs = ConceptoPago.objects.filter(nombre__iexact=nombre, anio=anio)
+
+        if nombre and anio and self.school:
+            qs = ConceptoPago.objects.filter(
+                school=self.school,
+                nombre__iexact=nombre,
+                anio=anio
+            )
             if self.instance.pk:
                 qs = qs.exclude(pk=self.instance.pk)
             if qs.exists():
                 self.add_error("nombre", "Ya existe un concepto con este nombre en el año seleccionado.")
+
         return cleaned
 
     def clean_valor(self):
@@ -55,6 +72,29 @@ class ConceptoPagoForm(forms.ModelForm):
         return v
 
 class CuentaPorCobrarForm(forms.ModelForm):
+    def __init__(self, *args, school=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.school = school
+
+        if school:
+            # ✅ Conceptos SOLO del colegio
+            self.fields["concepto"].queryset = (
+                ConceptoPago.objects
+                .select_related("anio")
+                .filter(school=school, activo=True)
+                .order_by("-anio__activo", "-anio__nombre", "nombre")
+            )
+
+            # ✅ Estudiantes SOLO del colegio (AJUSTA el filtro según tu modelo)
+            # Si Estudiante tiene school:
+            # self.fields["estudiante"].queryset = Estudiante.objects.filter(school=school)
+            # Si Estudiante NO tiene school pero Curso sí: estudiante__curso__school
+            self.fields["estudiante"].queryset = (
+                Estudiante.objects
+                .filter(curso__school=school)   # <-- cambia esto si tu relación es distinta
+                .order_by("apellidos", "nombres")
+            )
+
     class Meta:
         model = CuentaPorCobrar
         fields = ["estudiante", "concepto", "fecha_vencimiento", "valor_total", "saldo_pendiente", "pagada"]
@@ -68,17 +108,45 @@ class CuentaPorCobrarForm(forms.ModelForm):
 
     def clean(self):
         cleaned = super().clean()
+
+        est = cleaned.get("estudiante")
+        concepto = cleaned.get("concepto")
+
+        # 🔒 seguridad: estudiante y concepto deben ser del mismo colegio
+        if self.school and concepto and concepto.school_id != self.school.id:
+            self.add_error("concepto", "Concepto inválido para este colegio.")
+
+        # Ajusta esta validación según tu modelo real:
+        if self.school and est:
+            # si Estudiante se valida via curso__school
+            if getattr(est, "curso", None) and getattr(est.curso, "school_id", None) != self.school.id:
+                self.add_error("estudiante", "Estudiante inválido para este colegio.")
+
         valor = cleaned.get("valor_total") or 0
         saldo = cleaned.get("saldo_pendiente")
-        # Si no teclearon saldo, por defecto igual al valor_total
+
         if saldo is None:
             cleaned["saldo_pendiente"] = valor
             saldo = valor
-        # coherencia pagada
+
         cleaned["pagada"] = bool(saldo == 0)
         return cleaned
 
+
 class PagoForm(forms.ModelForm):
+    def __init__(self, *args, school=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.school = school
+
+        if school:
+            # ✅ Solo cuentas del colegio (por concepto)
+            self.fields["cuenta"].queryset = (
+                CuentaPorCobrar.objects
+                .select_related("concepto", "concepto__anio", "estudiante")
+                .filter(concepto__school=school)
+                .order_by("-fecha_generacion")
+            )
+
     class Meta:
         model = Pago
         fields = ["cuenta", "medio_pago", "valor_pagado", "observaciones"]
@@ -93,10 +161,14 @@ class PagoForm(forms.ModelForm):
         cleaned = super().clean()
         cuenta = cleaned.get("cuenta")
         valor_pagado = cleaned.get("valor_pagado")
+
         if not cuenta or valor_pagado is None:
             return cleaned
 
-        # Cuando es creación, valor_pagado no puede exceder el saldo
+        # 🔒 seguridad: cuenta debe pertenecer al colegio
+        if self.school and cuenta.concepto.school_id != self.school.id:
+            raise ValidationError("Cuenta inválida para este colegio.")
+
         if self.instance.pk is None:
             if valor_pagado <= 0:
                 raise ValidationError("El valor pagado debe ser mayor a 0.")
@@ -105,10 +177,8 @@ class PagoForm(forms.ModelForm):
                     f"El valor pagado ({valor_pagado}) excede el saldo pendiente ({cuenta.saldo_pendiente})."
                 )
         else:
-            # Edición: validar con delta
             original = Pago.objects.get(pk=self.instance.pk)
             delta = (valor_pagado or Decimal("0")) - (original.valor_pagado or Decimal("0"))
-            # saldo después de aplicar delta no puede ser negativo
             if (cuenta.saldo_pendiente or Decimal("0")) - delta < 0:
                 raise ValidationError(
                     f"No es posible actualizar: el nuevo valor dejaría saldo negativo. "
@@ -117,7 +187,6 @@ class PagoForm(forms.ModelForm):
             if valor_pagado <= 0:
                 raise ValidationError("El valor pagado debe ser mayor a 0.")
 
-        # Fecha por defecto hoy si no viene (por si el navegador no la envía)
         if not cleaned.get("fecha_pago"):
             cleaned["fecha_pago"] = date.today()
 

@@ -1,19 +1,26 @@
 {% extends "colegioapp/base.html" %}
 {% load static %}
 
-{% block title %}{{ title }} | Centro Educativo Infantil GIN GABY{% endblock %}
+{% block title %}{{ title }} | {{ request.school.nombre|default:"Colegio" }}{% endblock %}
 
 {% block content %}
 
 <main style="max-width:900px; margin:0 auto; padding:20px;">
 
-  <h2 style="text-align:center; margin-bottom:25px; color:#004d40;">
+  <h2 style="text-align:center; margin-bottom:25px; color:#111827;">
     {{ title }}
   </h2>
 
   <form method="post" enctype="multipart/form-data"
-        style="background:white; padding:25px; border-radius:10px;
-               box-shadow:0 2px 12px rgba(0,0,0,0.08); display:grid; gap:18px;">
+        style="
+          background:white;
+          padding:25px;
+          border-radius:10px;
+          box-shadow:0 2px 12px rgba(15,23,42,0.08);
+          display:grid;
+          gap:18px;
+          border:1px solid #e5e7eb;
+        ">
     {% csrf_token %}
 
     <!-- FOTO DEL ESTUDIANTE -->
@@ -22,22 +29,31 @@
       <div style="width:120px; text-align:center;">
         {% if form.instance.foto %}
           <img src="{{ form.instance.foto.url }}"
-               style="width:120px; height:150px; object-fit:cover; border-radius:6px; border:1px solid #ccc;">
+               style="width:120px; height:150px; object-fit:cover;
+                      border-radius:6px; border:1px solid #d1d5db;">
         {% else %}
-          <div style="width:120px; height:150px; border:1px dashed #ccc; border-radius:6px;
-                      display:flex; justify-content:center; align-items:center; color:#777;">
+          <div style="
+                width:120px;
+                height:150px;
+                border:1px dashed #d1d5db;
+                border-radius:6px;
+                display:flex;
+                justify-content:center;
+                align-items:center;
+                color:#9ca3af;
+              ">
             Sin foto
           </div>
         {% endif %}
       </div>
 
       <div style="flex:1;">
-        <label style="font-weight:600;">Foto (tipo carné)</label><br>
+        <label style="font-weight:600; color:#374151;">Foto (tipo carné)</label><br>
         {{ form.foto }}
-        <small style="color:#555;">Debe ser una foto vertical tipo carné, fondo claro.</small>
+        <small style="color:#6b7280;">Debe ser una foto vertical tipo carné, fondo claro.</small>
 
         {% if form.foto.errors %}
-        <div style="color:#c62828;">{{ form.foto.errors }}</div>
+        <div style="color:#dc2626; margin-top:4px;">{{ form.foto.errors }}</div>
         {% endif %}
       </div>
 
@@ -46,42 +62,42 @@
     <!-- DATOS BÁSICOS -->
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:18px;">
       <div>
-        <label class="label">Nombres</label>
+        <label class="label" style="font-weight:600; color:#374151;">Nombres</label>
         {{ form.nombres }}
       </div>
 
       <div>
-        <label class="label">Apellidos</label>
+        <label class="label" style="font-weight:600; color:#374151;">Apellidos</label>
         {{ form.apellidos }}
       </div>
     </div>
 
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:18px;">
       <div>
-        <label class="label">Identificación</label>
+        <label class="label" style="font-weight:600; color:#374151;">Identificación</label>
         {{ form.identificacion }}
       </div>
 
       <div>
-        <label class="label">Fecha de nacimiento</label>
+        <label class="label" style="font-weight:600; color:#374151;">Fecha de nacimiento</label>
         {{ form.fecha_nacimiento }}
       </div>
     </div>
 
     <!-- CONTACTO -->
     <div>
-      <label class="label">Dirección</label>
+      <label class="label" style="font-weight:600; color:#374151;">Dirección</label>
       {{ form.direccion }}
     </div>
 
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:18px;">
       <div>
-        <label class="label">Teléfono</label>
+        <label class="label" style="font-weight:600; color:#374151;">Teléfono</label>
         {{ form.telefono }}
       </div>
 
       <div>
-        <label class="label">Correo</label>
+        <label class="label" style="font-weight:600; color:#374151;">Correo</label>
         {{ form.correo }}
       </div>
     </div>
@@ -89,12 +105,12 @@
     <!-- CURSO Y ACUDIENTE -->
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:18px;">
       <div>
-        <label class="label">Curso</label>
+        <label class="label" style="font-weight:600; color:#374151;">Curso</label>
         {{ form.curso }}
       </div>
 
       <div>
-        <label class="label">Acudiente</label>
+        <label class="label" style="font-weight:600; color:#374151;">Acudiente</label>
         {{ form.acudiente }}
       </div>
     </div>
@@ -102,14 +118,27 @@
     <!-- BOTONES -->
     <div style="display:flex; justify-content:flex-end; gap:15px; margin-top:10px;">
       <a href="{% url 'academico:estudiantes' %}"
-         style="padding:10px 20px; background:#90a4ae; color:white; text-decoration:none;
-                border-radius:8px;">
+         style="
+           padding:10px 20px;
+           background:#6b7280;
+           color:white;
+           text-decoration:none;
+           border-radius:8px;
+           font-size:0.95rem;
+         ">
         Cancelar
       </a>
 
       <button type="submit"
-              style="padding:10px 20px; background:#00796B; color:white; border:none;
-                     border-radius:8px; cursor:pointer;">
+              style="
+                padding:10px 20px;
+                background:#2563eb;
+                color:white;
+                border:none;
+                border-radius:8px;
+                cursor:pointer;
+                font-size:0.95rem;
+              ">
         Guardar
       </button>
     </div>
@@ -117,7 +146,14 @@
 
   <div style="text-align:center; margin-top:25px;">
     <a href="{% url 'academico:estudiantes' %}"
-       style="padding:10px 18px; background:#004d40; color:white; text-decoration:none; border-radius:8px;">
+       style="
+         padding:10px 18px;
+         background:#1f2937;
+         color:white;
+         text-decoration:none;
+         border-radius:8px;
+         font-size:0.95rem;
+       ">
       ⬅ Volver al listado
     </a>
   </div>

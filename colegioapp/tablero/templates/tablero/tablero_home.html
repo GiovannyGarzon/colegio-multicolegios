@@ -181,7 +181,16 @@
 .dash__grid{display:grid;grid-template-columns:1.5fr 1fr;gap:18px;align-items:start}
 @media (max-width:980px){.dash__grid{grid-template-columns:1fr}}
 
-:where(.dash) {--ink:#0f3f39;--muted:#6b7b83;--line:#e9eef0;--card:#fff;--shadow:0 4px 12px rgba(0,0,0,.06);--brand:#00695c;}
+/* 👇 AQUÍ EL CAMBIO IMPORTANTE */
+:where(.dash) {
+  --ink:#0f3f39;
+  --muted:#6b7b83;
+  --line:#e9eef0;
+  --card:#fff;
+  --shadow:0 4px 12px rgba(0,0,0,.06);
+  --brand: var(--primary-color);  /* usa el color del colegio */
+}
+
 .dash *{letter-spacing:.2px}
 .muted{color:var(--muted)}
 .ok{color:#2e7d32}

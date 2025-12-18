@@ -1,17 +1,28 @@
 {% extends "colegioapp/base.html" %}
 
-{% block title %}Académico | Centro Educativo Infantil GIN GABY{% endblock %}
+{% block title %}
+  Académico |
+  {% if request.school %}{{ request.school.name }}{% else %}Centro Educativo{% endif %}
+{% endblock %}
 
 {% block content %}
 <main>
-    <h2>Gestión Académica</h2>
+    <h2 style="color: var(--primary-color);">Gestión Académica</h2>
+
     <p>
         Bienvenido al módulo académico del sistema. Desde aquí podrás administrar estudiantes,
         docentes, cursos y calificaciones de manera sencilla y organizada.
     </p>
+
     <div style="display:flex;justify-content:center;margin:18px 0;">
         <a href="{% url 'academico:hub' %}"
-           style="text-decoration:none;background:#004d40;color:#fff;padding:12px 18px;border-radius:10px;">
+           style="
+               text-decoration:none;
+               background: var(--primary-color);
+               color:#fff;
+               padding:12px 18px;
+               border-radius:10px;
+           ">
           Ir a gestión académica avanzada
         </a>
     </div>
@@ -19,32 +30,70 @@
 
     <section class="banner-mision-vision">
         <div class="container">
+
             <div class="banner-item">
-                <h3><a href="{% url 'academico:estudiantes' %}" style="text-decoration:none; color:#00796B;">Estudiantes</a></h3>
+                <h3>
+                  <a href="{% url 'academico:estudiantes' %}"
+                     style="text-decoration:none; color: var(--primary-color);">
+                    Estudiantes
+                  </a>
+                </h3>
                 <p>Accede a los listados de alumnos, consulta sus datos y realiza seguimiento académico y disciplinario.</p>
             </div>
+
             <div class="banner-item">
-                <h3><a href="{% url 'academico:docentes' %}" style="text-decoration:none; color:#00796B;">Docentes</a></h3>
+                <h3>
+                  <a href="{% url 'academico:docentes' %}"
+                     style="text-decoration:none; color: var(--primary-color);">
+                    Docentes
+                  </a>
+                </h3>
                 <p>Gestiona la información de los profesores, asigna cursos y revisa reportes de desempeño.</p>
             </div>
+
             <div class="banner-item">
-                <h3><a href="{% url 'academico:cursos' %}" style="text-decoration:none; color:#00796B;">Cursos</a></h3>
+                <h3>
+                  <a href="{% url 'academico:cursos' %}"
+                     style="text-decoration:none; color: var(--primary-color);">
+                    Cursos
+                  </a>
+                </h3>
                 <p>Crea, edita y organiza los grupos académicos, horarios y materias asociadas.</p>
             </div>
 
             {% if es_directivo %}
             <div class="banner-item">
                 <h3>
-                  <a href="{% url 'academico:anios_lectivos' %}" style="text-decoration:none; color:#00796B;">
+                  <a href="{% url 'academico:anios_lectivos' %}"
+                     style="text-decoration:none; color: var(--primary-color);">
                     Años lectivos
                   </a>
                 </h3>
                 <p>
-                    Crea y administra los años escolares (2025, 2026, etc.) y define fechas de inicio y fin.
+                    Crea y administra los años escolares y define fechas de inicio y fin.
                 </p>
             </div>
             {% endif %}
+
         </div>
     </section>
 </main>
-{% endblock content %}
+
+<style>
+    /* Fondo suave del bloque de tarjetas */
+    .banner-mision-vision {
+        background-color: var(--secondary-color, #e0f2f1);
+        padding: 50px 20px;
+    }
+
+    .banner-item {
+        background: #ffffff;
+        border-left: 5px solid var(--primary-color);
+    }
+
+    h2 {
+        font-weight: bold;
+    }
+</style>
+
+{% endblock %}

@@ -1,16 +1,65 @@
 {% extends "colegioapp/base.html" %}
-{% block title %}Eliminar Estudiante | GIN GABY{% endblock %}
+{% block title %}Eliminar Estudiante | {{ request.school.name }}{% endblock %}
 
 {% block content %}
-<main>
-  <h2>Eliminar estudiante</h2>
-  <div style="max-width:700px;margin:0 auto;background:#fff;padding:16px;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.06);">
-    <p>¿Seguro que deseas eliminar al estudiante <strong>{{ e.apellidos }} {{ e.nombres }}</strong> ({{ e.identificacion }})?</p>
-    <form method="post" style="display:flex; gap:10px; justify-content:flex-end; margin-top:16px;">
+<main style="max-width:760px;margin:0 auto;padding:20px 10px;">
+
+  <h2 style="color:var(--primary-color); margin-bottom:18px;">
+    Eliminar estudiante
+  </h2>
+
+  <div style="
+      background:#fff;
+      padding:22px 24px;
+      border-radius:12px;
+      box-shadow:0 4px 12px rgba(0,0,0,0.06);
+  ">
+    <p style="font-size:1.05rem; line-height:1.5;">
+      ¿Seguro que deseas eliminar al estudiante
+      <strong>{{ e.apellidos }} {{ e.nombres }}</strong>
+      ({{ e.identificacion }})?
+    </p>
+
+    <form method="post" style="margin-top:20px; display:flex; gap:12px; justify-content:flex-end;">
       {% csrf_token %}
-      <a href="{% url 'academico:estudiantes' %}" style="padding:10px 16px; background:#90a4ae; color:#fff; text-decoration:none; border-radius:8px;">Cancelar</a>
-      <button type="submit" style="padding:10px 16px; background:#c62828; color:#fff; border:none; border-radius:8px;">Eliminar</button>
+
+      <a href="{% url 'academico:estudiantes' %}" class="btn-sec">
+        Cancelar
+      </a>
+
+      <button type="submit" class="btn-danger">
+        Eliminar
+      </button>
     </form>
   </div>
+
 </main>
+
+<style>
+  .btn-sec{
+    padding:10px 16px;
+    background:#9ca3af;
+    color:white;
+    border-radius:8px;
+    text-decoration:none;
+    transition:.15s;
+  }
+  .btn-sec:hover{
+    background:#6b7280;
+  }
+
+  .btn-danger{
+    padding:10px 16px;
+    background:#c62828;
+    color:white;
+    border-radius:8px;
+    border:none;
+    cursor:pointer;
+    transition:.15s;
+  }
+  .btn-danger:hover{
+    background:#b71c1c;
+  }
+</style>
+
 {% endblock content %}

@@ -164,9 +164,16 @@
         color: #000;
     }
     .texto-final {
-        margin-top: 55px;      /* 👈 ajusta este valor para más o menos espacio */
+        margin-top: 55px;
         line-height: 1.5;
         text-align: justify;
+    }
+    .sello {
+        position: absolute;
+        right: 20mm;
+        bottom: 20mm;
+        height: 55px;
+        z-index: 3;
     }
     </style>
 </head>
@@ -175,24 +182,60 @@
 
 <div class="header-top">
     <span class="fecha">{{ hoy|date:"d/m/Y" }}</span>
-    <a href="http://127.0.0.1:8001/" class="enlace">gingabi.gdevsolution.com</a>
+
+    {% if request.school.website %}
+      <a href="{{ request.school.website }}" class="enlace">{{ request.school.website }}</a>
+    {% else %}
+      <span class="enlace">
+        {% if request.school %}{{ request.school.name }}{% else %}Centro Educativo{% endif %}
+      </span>
+    {% endif %}
 </div>
 
 <div class="contenedor">
 
-    <img src="{% static 'img/logo.png' %}" class="watermark">
+    {# Marca de agua dinámica #}
+    {% if request.school.logo %}
+      <img src="{{ request.school.logo.url }}" class="watermark" alt="Marca de agua">
+    {% else %}
+      <img src="{% static 'img/logo.png' %}" class="watermark" alt="Marca de agua">
+    {% endif %}
 
     <div class="encabezado">
-        <img src="{% static 'img/logo.png' %}" alt="Logo" class="logo">
+        {# Logo dinámico #}
+        {% if request.school.logo %}
+          <img src="{{ request.school.logo.url }}" alt="Logo" class="logo">
+        {% else %}
+          <img src="{% static 'img/logo.png' %}" alt="Logo" class="logo">
+        {% endif %}
 
         <div class="titulo">
-            <div class="titulo-principal">CENTRO EDUCATIVO GIN GABI SAS</div>
-            <div class="titulo-sub">PREESCOLAR - BÁSICA PRIMARIA - BÁSICA SECUNDARIA</div>
+            <div class="titulo-principal">
+              {% if request.school %}{{ request.school.name|upper }}{% else %}CENTRO EDUCATIVO{% endif %}
+            </div>
 
-            <p class="titulo-detalle">Resolución de Aprobación N° 1358 del 8 junio 2013 - Primaria</p>
-            <p class="titulo-detalle">Resolución de Aprobación N° 1490 del 9 diciembre 2020 - Bachillerato</p>
-            <p class="titulo-detalle">Secretaría de Educación Soacha</p>
-            <p class="titulo-detalle">DANE 325754003649 / NIT 901272275-3</p>
+            {% if request.school.subtitle %}
+              <div class="titulo-sub">{{ request.school.subtitle|upper }}</div>
+            {% else %}
+              <div class="titulo-sub">PREESCOLAR - BÁSICA PRIMARIA - BÁSICA SECUNDARIA</div>
+            {% endif %}
+
+            {% if request.school.resolucion_primaria %}
+              <p class="titulo-detalle">{{ request.school.resolucion_primaria }}</p>
+            {% endif %}
+            {% if request.school.resolucion_bachillerato %}
+              <p class="titulo-detalle">{{ request.school.resolucion_bachillerato }}</p>
+            {% endif %}
+            {% if request.school.secretaria_educacion %}
+              <p class="titulo-detalle">{{ request.school.secretaria_educacion }}</p>
+            {% endif %}
+            {% if request.school.dane or request.school.nit %}
+              <p class="titulo-detalle">
+                {% if request.school.dane %}DANE {{ request.school.dane }}{% endif %}
+                {% if request.school.dane and request.school.nit %} / {% endif %}
+                {% if request.school.nit %}NIT {{ request.school.nit }}{% endif %}
+              </p>
+            {% endif %}
         </div>
     </div>
 
@@ -243,14 +286,14 @@
             </tbody>
         </table>
 
-        <!-- 🔍 ACLARACIÓN DE SIGLAS BAJO LA TABLA -->
         <p style="margin-top:6px; font-size:9px;">
             I.H = INTENSIDAD HORARIA, FINAL = CALIFICACIÓN FINAL,
             DESEMPEÑO = ESCALA VALORATIVA BÁSICO, ALTO, SUPERIOR.
         </p>
 
         <p style="margin-top:14px;">
-            Las anteriores notas son fiel copia de los libros de calificaciones del GIN GABI.
+            Las anteriores notas son fiel copia de los libros de calificaciones de
+            {% if request.school %}{{ request.school.name }}{% else %}la institución{% endif %}.
         </p>
 
         <p style="margin-top:10px;">
@@ -264,23 +307,30 @@
             {% endif %}
         </p>
 
-        <!-- Párrafo final -->
-            <p class="texto-final">
-                La presente se expide a solicitud del interesado, en Soacha (Cund.) a los
-                {{ hoy.day }} días del mes de {{ hoy|date:"F" }} del año 20 {{ hoy|date:"y" }}.
-            </p>
+        <p class="texto-final">
+            La presente se expide a solicitud del interesado, en
+            {% if request.school.city %}{{ request.school.city }}{% else %}Soacha (Cund.){% endif %}
+            a los {{ hoy.day }} días del mes de {{ hoy|date:"F" }} del año 20 {{ hoy|date:"y" }}.
+        </p>
 
     </div>
 
     <div class="footer-block">
+        {# ✅ SELLO institucional (lado derecho de la firma) #}
+        {% if sello_url %}
+          <img src="{{ sello_url }}" alt="Sello institucional" class="sello">
+        {% endif %}
         <div class="firma">
-            <div>Eocaris Castro</div>
-            <div>_______________________________</div>
-            <div>Rectora</div>
+          <div>{% if rector_nombre %}{{ rector_nombre }}{% else %}________________{% endif %}</div>
+          <div>_______________________________</div>
+          <div>{% if rector_cargo %}{{ rector_cargo }}{% else %}RECTOR(A){% endif %}</div>
         </div>
 
         <div class="pie">
-            Calle 5 # 6B – 03 Barrio la Fragua | c.egingabi@gmail.com | Cel: 3133144382
+            {% if request.school.address %}{{ request.school.address }}{% endif %}
+            {% if request.school.address and request.school.email %} | {% endif %}
+            {% if request.school.email %}{{ request.school.email }}{% endif %}
+            {% if request.school.phone %} | Cel: {{ request.school.phone }}{% endif %}
         </div>
     </div>
 

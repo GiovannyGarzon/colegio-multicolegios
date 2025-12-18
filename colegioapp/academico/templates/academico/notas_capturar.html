@@ -1,108 +1,183 @@
 {% extends "colegioapp/base.html" %}
 {% load extras %}
-{% block title %}Captura de Notas | CEI GIN GABY{% endblock %}
+{% block title %}Captura de Notas | {{ request.school.name }}{% endblock %}
 
 {% block content %}
-<main>
-  <h2>Captura de Notas</h2>
-  <p style="margin-top:-6px;">
+<main style="max-width:1000px;margin:0 auto;padding:20px 10px;">
+
+  <h2 style="color:var(--primary-color);margin-bottom:4px;">
+    Captura de Notas
+  </h2>
+
+  <p style="margin-top:0;color:#4b5563;font-size:0.95rem;">
     <strong>Año:</strong> {{ oferta.anio.nombre }} &nbsp;•&nbsp;
     <strong>Curso:</strong> {{ oferta.curso.grado }} - {{ oferta.curso.nombre }} &nbsp;•&nbsp;
     <strong>Asignatura:</strong> {{ oferta.asignatura.nombre }} &nbsp;•&nbsp;
     <strong>Periodo:</strong> {{ periodo.nombre }}
   </p>
 
-  <div style="background:#e3f2fd;padding:10px 14px;border-radius:8px;margin:10px auto 18px;max-width:900px;color:#0d47a1;">
-    <strong>Nota:</strong> Las calificaciones de cada logro se calculan automáticamente
-    a partir de las <strong>actividades</strong> asociadas (escala 0.00–5.00).
+  <div style="
+        background:rgba(14,116,144,0.06);
+        border:1px solid rgba(15,118,110,0.25);
+        padding:10px 14px;
+        border-radius:10px;
+        margin:10px 0 18px;
+        max-width:900px;
+        color:#0f172a;
+        font-size:0.9rem;">
+    <strong style="color:var(--primary-color);">Nota:</strong>
+    Las calificaciones de cada logro se calculan automáticamente a partir de las
+    <strong>actividades</strong> asociadas (escala 0.00–5.00).
   </div>
 
   {% if not logros %}
-    <div style="max-width:980px;margin:0 auto;background:#fff;padding:16px;border-radius:12px;border:1px dashed #b0bec5;">
-      <p style="margin:0;">No hay logros configurados para esta oferta en este periodo. Primero crea logros.</p>
+    <div style="
+          max-width:980px;
+          margin:0 auto;
+          background:#ffffff;
+          padding:16px 18px;
+          border-radius:12px;
+          border:1px dashed #cbd5e1;">
+      <p style="margin:0;color:#4b5563;">
+        No hay logros configurados para esta oferta en este periodo. Primero crea logros.
+      </p>
       <a href="{% url 'academico:logros' %}"
-         style="display:inline-block;margin-top:10px;padding:8px 12px;background:#004d40;color:#fff;border-radius:8px;text-decoration:none;">
+         class="btn-acad"
+         style="margin-top:12px;display:inline-flex;align-items:center;gap:6px;">
         Gestionar Logros
       </a>
     </div>
+
   {% else %}
 
-  <div style="min-width:880px;background:#fff;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.06);overflow:auto;">
-    <table style="width:100%;border-collapse:collapse;">
-      <thead style="background:#e0f2f1;">
-        <tr>
-          <th style="padding:12px;text-align:left;white-space:nowrap;">Estudiante</th>
+    <div style="
+          margin-top:10px;
+          background:#ffffff;
+          border-radius:12px;
+          box-shadow:0 4px 12px rgba(0,0,0,0.06);
+          overflow:auto;">
+      <table style="width:100%;border-collapse:collapse;min-width:880px;">
+        <thead style="background:#f1f5f9;">
+          <tr>
+            <th style="padding:12px;text-align:left;white-space:nowrap;font-size:0.9rem;color:#0f172a;">
+              Estudiante
+            </th>
 
-          {% for l in logros %}
-          <th style="padding:12px;text-align:center;min-width:170px;">
-            <div>
-              <strong>{{ l.titulo }}</strong><br>
-              <small>Peso logro: {{ l.peso }}%</small>
-            </div>
+            {% for l in logros %}
+            <th style="padding:12px;text-align:center;min-width:190px;font-size:0.9rem;color:#0f172a;">
+              <div>
+                <strong>{{ l.titulo }}</strong><br>
+                <small style="color:#64748b;">Peso logro: {{ l.peso }}%</small>
+              </div>
 
-            {% with acts=actividades_por_logro|get_item:l.id %}
-              {% if not acts %}
-                <div style="margin-top:6px;font-size:11px;color:#c62828;">
-                  Sin actividades configuradas
-                </div>
-              {% else %}
-                <div style="margin-top:6px;">
-                  <a href="{% url 'academico:actividades' l.id %}"
-                     style="display:inline-block;background:#546e7a;color:#fff;padding:4px 8px;font-size:12px;border-radius:6px;text-decoration:none;">
-                    Gestionar actividades ({{ acts|length }})
-                  </a>
-                </div>
-              {% endif %}
-            {% endwith %}
-          </th>
-          {% endfor %}
-        </tr>
-      </thead>
-
-      <tbody>
-        {% for e in estudiantes %}
-        <tr style="border-top:1px solid #eceff1;">
-          <td style="padding:10px 12px;white-space:nowrap;">
-            {{ e.apellidos }} {{ e.nombres }}
-          </td>
-
-          {% for l in logros %}
-            <td style="padding:8px 10px;text-align:center;font-size:13px;">
               {% with acts=actividades_por_logro|get_item:l.id %}
                 {% if not acts %}
-                  <span style="color:#b0bec5;">Sin actividades</span>
+                  <div style="margin-top:6px;font-size:11px;color:#c62828;">
+                    Sin actividades configuradas
+                  </div>
                 {% else %}
-                  {# buscamos notas_por_estudiante_logro[e.id][l.id] #}
-                  {% with notas_est=notas_por_estudiante_logro|get_item:e.id %}
-                    {% if notas_est %}
-                      {% with nota=notas_est|get_item:l.id %}
-                        {% if nota %}
-                          <span style="font-weight:bold;">{{ nota }}</span>
-                        {% else %}
-                          <span style="color:#ff8f00;">Sin calificaciones de actividades</span>
-                        {% endif %}
-                      {% endwith %}
-                    {% else %}
-                      <span style="color:#ff8f00;">Sin calificaciones de actividades</span>
-                    {% endif %}
-                  {% endwith %}
+                  <div style="margin-top:6px;">
+                    <a href="{% url 'academico:actividades' l.id %}"
+                       class="btn-chip">
+                      Gestionar actividades ({{ acts|length }})
+                    </a>
+                  </div>
                 {% endif %}
               {% endwith %}
-            </td>
-          {% endfor %}
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
+            </th>
+            {% endfor %}
+          </tr>
+        </thead>
 
-  <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px;">
-    <a href="{% url 'academico:notas_selector' %}"
-       style="padding:10px 16px;background:#9e9e9e;color:#fff;border-radius:8px;text-decoration:none;">
-      ← Cambiar selección
-    </a>
-  </div>
+        <tbody>
+          {% for e in estudiantes %}
+          <tr style="border-top:1px solid #e5e7eb;">
+            <td style="padding:10px 12px;white-space:nowrap;font-size:0.9rem;color:#111827;">
+              {{ e.apellidos }} {{ e.nombres }}
+            </td>
+
+            {% for l in logros %}
+              <td style="padding:8px 10px;text-align:center;font-size:0.85rem;">
+                {% with acts=actividades_por_logro|get_item:l.id %}
+                  {% if not acts %}
+                    <span style="color:#cbd5e1;">Sin actividades</span>
+                  {% else %}
+                    {# buscamos notas_por_estudiante_logro[e.id][l.id] #}
+                    {% with notas_est=notas_por_estudiante_logro|get_item:e.id %}
+                      {% if notas_est %}
+                        {% with nota=notas_est|get_item:l.id %}
+                          {% if nota %}
+                            <span style="font-weight:600;color:#111827;">{{ nota }}</span>
+                          {% else %}
+                            <span style="color:#f59e0b;">Sin calificaciones de actividades</span>
+                          {% endif %}
+                        {% endwith %}
+                      {% else %}
+                        <span style="color:#f59e0b;">Sin calificaciones de actividades</span>
+                      {% endif %}
+                    {% endwith %}
+                  {% endif %}
+                {% endwith %}
+              </td>
+            {% endfor %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px;">
+      <a href="{% url 'academico:notas_selector' %}" class="btn-acad-muted">
+        ← Cambiar selección
+      </a>
+    </div>
 
   {% endif %}
 </main>
+
+<style>
+  .btn-acad{
+    background:var(--primary-color);
+    color:#ffffff;
+    padding:9px 16px;
+    border-radius:10px;
+    border:none;
+    cursor:pointer;
+    font-size:0.9rem;
+    text-decoration:none;
+    transition:0.15s ease;
+  }
+  .btn-acad:hover{
+    filter:brightness(1.07);
+  }
+
+  .btn-acad-muted{
+    background:#9ca3af;
+    color:#ffffff;
+    padding:9px 16px;
+    border-radius:10px;
+    text-decoration:none;
+    font-size:0.9rem;
+    display:inline-flex;
+    align-items:center;
+    transition:0.15s ease;
+  }
+  .btn-acad-muted:hover{
+    background:#6b7280;
+  }
+
+  .btn-chip{
+    display:inline-block;
+    background:#0f172a;
+    color:#ffffff;
+    padding:4px 9px;
+    font-size:11px;
+    border-radius:999px;
+    text-decoration:none;
+    transition:0.15s ease;
+  }
+  .btn-chip:hover{
+    filter:brightness(1.1);
+  }
+</style>
 {% endblock %}

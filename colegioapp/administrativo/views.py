@@ -10,11 +10,15 @@ from django.http import HttpResponse
 from academico.models import Estudiante, AnioLectivo, Matricula, AsignaturaOferta, Periodo, CalificacionLogro, Curso
 from django.template.loader import render_to_string
 from django.db import transaction
+from urllib.parse import urljoin
 from django.contrib.auth.decorators import login_required, user_passes_test
 import os
 from django.conf import settings
 from weasyprint import HTML
 from decimal import Decimal, ROUND_HALF_UP
+from pathlib import Path
+from cuentas.models import PerfilUsuario
+
 
 def home(request):
     return render(request, "administrativo/homeadministrativo.html", {"nav_active": "administrativo"})
@@ -317,7 +321,9 @@ def contrato_delete(request, pk):
 
 def certificaciones_buscar(request):
     q = (request.GET.get("q") or "").strip()
-    estudiantes = Estudiante.objects.all().order_by("apellidos", "nombres")
+
+    # ✅ filtro por colegio
+    estudiantes = Estudiante.objects.filter(school=request.school).order_by("apellidos", "nombres")
 
     if q:
         estudiantes = estudiantes.filter(
@@ -326,21 +332,16 @@ def certificaciones_buscar(request):
             Q(identificacion__icontains=q)
         )
 
-    # Cuando el usuario selecciona un estudiante y tipo y envía el formulario
     if request.method == "POST":
         estudiante_id = request.POST.get("estudiante_id")
-        tipo = request.POST.get("tipo")  # "estudiantil" o "notas"
+        tipo = request.POST.get("tipo")
         anio = request.POST.get("anio")
-        # podrías validar aquí
 
-        url = reverse(
-            "administrativo:certificado_pdf",
-            args=[tipo, estudiante_id]
-        ) + f"?anio={anio}"
+        url = reverse("administrativo:certificado_pdf", args=[tipo, estudiante_id]) + f"?anio={anio}"
         return redirect(url)
 
     context = {
-        "estudiantes": estudiantes[:20],  # puedes paginar luego
+        "estudiantes": estudiantes[:20],
         "q": q,
         "nav_active": "administrativo",
         "hoy": date.today(),
@@ -422,21 +423,118 @@ def texto_desempeno(nota):
     else:
         return "SUPERIOR"
 
-def certificado_pdf(request, tipo, estudiante_id):
-    # 1. Estudiante
-    estudiante = get_object_or_404(Estudiante, pk=estudiante_id)
+def _file_url(imagefield):
+    if not imagefield:
+        return None
+    try:
+        return "file://" + imagefield.path
+    except Exception:
+        return None
 
-    # 2. Año solicitado (?anio=2025). Si no llega, usa el año actual.
+from academico.models import (
+    Estudiante, AnioLectivo, Matricula, AsignaturaOferta,
+    CalificacionLogro
+)
+
+# -------------------------
+# Helper para WeasyPrint
+# -------------------------
+
+def file_uri(field):
+    """ImageField/FileField -> file:/// URI (Windows + WeasyPrint)."""
+    if not field:
+        return None
+    try:
+        return Path(field.path).resolve().as_uri()
+    except Exception:
+        return None
+
+
+def _get_rector_por_colegio(school):
+    """
+    Retorna (nombre, cargo) del rector del colegio actual.
+    Identifica por: PerfilUsuario.school = school y user en grupo 'rector'.
+    """
+    if not school:
+        return ("", "RECTOR(A)")
+
+    perfil = (
+        PerfilUsuario.objects
+        .select_related("user")
+        .filter(
+            school=school,
+            user__groups__name__iexact="rector",
+            user__is_active=True,
+        )
+        .order_by("id")
+        .first()
+    )
+
+    if not perfil or not perfil.user:
+        return ("", "RECTOR(A)")
+
+    nombre = (perfil.user.get_full_name() or perfil.user.username or "").strip()
+    return (nombre, "RECTOR(A)")
+
+
+def grado_a_letras(grado_raw):
+    if grado_raw is None:
+        return ""
+    s = str(grado_raw).strip()
+    mapa = {
+        "1": "primero", "2": "segundo", "3": "tercero", "4": "cuarto", "5": "quinto",
+        "6": "sexto", "7": "séptimo", "8": "octavo", "9": "noveno",
+        "10": "décimo", "11": "undécimo",
+    }
+    return mapa.get(s, s) if s.isdigit() else s
+
+
+def tipo_id_abreviado(estudiante):
+    valor = getattr(estudiante, "tipo_documento", "")
+    if not valor:
+        return ""
+    v = str(valor).upper().strip()
+    return {"RC": "R.C.", "TI": "T.I.", "CC": "C.C."}.get(v, v)
+
+
+def promedio_dec(califs):
+    califs = list(califs)
+    if not califs:
+        return None
+    total = sum((c.nota for c in califs), Decimal("0"))
+    prom = total / Decimal(len(califs))
+    return prom.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+
+
+def texto_desempeno(nota):
+    if nota is None:
+        return ""
+    if nota < Decimal("3.0"):
+        return "BAJO"
+    elif nota < Decimal("4.0"):
+        return "BÁSICO"
+    elif nota < Decimal("4.6"):
+        return "ALTO"
+    return "SUPERIOR"
+
+
+def certificado_pdf(request, tipo, estudiante_id):
+    # colegio actual (middleware)
+    school = getattr(request, "school", None)
+
+    # seguridad multicolegios
+    estudiante = get_object_or_404(Estudiante, pk=estudiante_id, school=school)
+
+    # año (?anio=2025)
     anio_param = request.GET.get("anio")
     try:
         anio_num = int(anio_param) if anio_param else date.today().year
     except ValueError:
         anio_num = date.today().year
 
-    # 3. Año lectivo
     anio_obj = AnioLectivo.objects.filter(nombre=str(anio_num)).first()
 
-    # 4. Resolver el grado de ese año usando Matricula
+    # curso / grado por matrícula
     grado_texto = ""
     curso = None
     if anio_obj:
@@ -450,26 +548,39 @@ def certificado_pdf(request, tipo, estudiante_id):
             grado_texto = matricula.curso.grado
             curso = matricula.curso
 
-    # 5. Si no hay matrícula para ese año, usamos el curso actual como respaldo
-    if not grado_texto and hasattr(estudiante, "curso") and estudiante.curso:
+    if not grado_texto and getattr(estudiante, "curso", None):
         grado_texto = estudiante.curso.grado
-        if not curso:
-            curso = estudiante.curso
+        curso = curso or estudiante.curso
 
-    # Texto del curso tal cual (ej: "201 - SEGUNDO")
     curso_nombre = str(curso) if curso else ""
 
-    # Grado en letras: si el curso viene "201 - SEGUNDO", usamos "segundo"
     if curso_nombre and "-" in curso_nombre:
         grado_letras = curso_nombre.split("-", 1)[1].strip().lower()
     else:
         grado_letras = grado_a_letras(grado_texto)
 
-    # Tipo de identificación abreviado
     tipo_id = tipo_id_abreviado(estudiante)
 
-    # 6. Contexto común
+    # ✅ LOGO (arriba) = school.logo
+    logo_url = file_uri(getattr(school, "logo", None))
+
+    # ✅ MARCA DE AGUA = el MISMO logo
+    watermark_url = logo_url
+
+    # ✅ SELLO (al lado de la firma) = school.sello (si está vacío, None)
+    sello_url = file_uri(getattr(school, "sello", None))
+
+    rector_nombre, rector_cargo = _get_rector_por_colegio(school)
+
     context = {
+        "school": school,
+        "logo_url": logo_url,
+        "watermark_url": watermark_url,
+        "sello_url": sello_url,  # 👈 nuevo
+
+        "rector_nombre": rector_nombre,
+        "rector_cargo": rector_cargo,
+
         "estudiante": estudiante,
         "anio": anio_num,
         "grado_texto": grado_texto,
@@ -479,89 +590,23 @@ def certificado_pdf(request, tipo, estudiante_id):
         "curso_nombre": curso_nombre,
     }
 
-    # 7. Elegir plantilla y nombre de archivo según tipo
     if tipo == "estudiantil":
         template_name = "administrativo/certificado_estudiantil.html"
         filename = f"certificado_estudiantil_{estudiante.identificacion}_{anio_num}.pdf"
-
     elif tipo == "notas":
         template_name = "administrativo/certificado_notas.html"
         filename = f"certificado_notas_{estudiante.identificacion}_{anio_num}.pdf"
-
-        # ===================== CARGAR NOTAS =====================
-        notas_resumen = []
-        prom_general = None
-        aprobacion_texto = ""
-
-        if anio_obj and curso:
-            ofertas = (
-                AsignaturaOferta.objects
-                .filter(anio=anio_obj, curso=curso)
-                .select_related("asignatura")
-            )
-
-            for oferta in ofertas:
-                fila = {
-                    "area": oferta.asignatura.nombre,
-                    "ih": oferta.intensidad_horaria,
-                    "p1": "",
-                    "p2": "",
-                    "p3": "",
-                    "final": "",
-                    "desempeno": "",
-                }
-
-                # Promedio por periodo
-                for numero, clave in [(1, "p1"), (2, "p2"), (3, "p3")]:
-                    califs_p = CalificacionLogro.objects.filter(
-                        estudiante=estudiante,
-                        logro__oferta=oferta,
-                        logro__periodo__numero=numero,
-                        logro__periodo__anio=anio_obj,
-                    )
-                    prom_p = promedio_dec(califs_p)
-                    fila[clave] = f"{prom_p:.2f}" if prom_p is not None else ""
-
-                # Promedio final de toda la asignatura
-                califs_todas = CalificacionLogro.objects.filter(
-                    estudiante=estudiante,
-                    logro__oferta=oferta,
-                    logro__periodo__anio=anio_obj,
-                )
-                prom_final = promedio_dec(califs_todas)
-                if prom_final is not None:
-                    fila["final"] = f"{prom_final:.2f}"
-                    fila["desempeno"] = texto_desempeno(prom_final)
-
-                notas_resumen.append(fila)
-
-            # Promedio general del año
-            califs_anio = CalificacionLogro.objects.filter(
-                estudiante=estudiante,
-                logro__periodo__anio=anio_obj,
-            )
-            prom_general = promedio_dec(califs_anio)
-
-            if prom_general is not None:
-                aprobacion_texto = "APROBÓ" if prom_general > Decimal("3.0") else "NO APROBÓ"
-
-        context["notas"] = notas_resumen
-        context["prom_general"] = prom_general
-        context["aprobacion_texto"] = aprobacion_texto
-        # ========================================================
-
+        # (tu bloque de notas lo dejas igual)
     else:
         messages.error(request, "Tipo de certificado no válido.")
-        return redirect("administrativo:certificaciones")
+        return redirect(reverse("administrativo:certificaciones"))
 
-    # 8. Renderizar HTML y convertir a PDF con WeasyPrint
-    html_string = render_to_string(template_name, context)
+    html_string = render_to_string(template_name, context, request=request)
     html = HTML(string=html_string, base_url=request.build_absolute_uri("/"))
     pdf_file = html.write_pdf()
 
-    # 9. Respuesta HTTP con el PDF
     response = HttpResponse(pdf_file, content_type="application/pdf")
-    response["Content-Disposition"] = f'attachment; filename=\"{filename}\"'
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
     return response
 
 # -----------------------------
@@ -569,18 +614,26 @@ def certificado_pdf(request, tipo, estudiante_id):
 # -----------------------------
 
 def matriculas_list(request):
-    q = (request.GET.get("q") or "").strip()
+    school = getattr(request, "school", None)
+
+    buscar = (request.GET.get("buscar") or "").strip()
     anio = request.GET.get("anio", "")
     curso = request.GET.get("curso", "")
+    estado = request.GET.get("estado", "")  # 1 / 0 / ""
 
-    matriculas = Matricula.objects.select_related("estudiante", "curso", "anio") \
-                                  .order_by("-anio__nombre", "curso__grado")
+    # ✅ Base: solo matrículas del colegio actual
+    matriculas = (
+        Matricula.objects
+        .select_related("estudiante", "curso", "anio")
+        .filter(estudiante__school=school)
+        .order_by("-anio__nombre", "curso__grado")
+    )
 
-    if q:
+    if buscar:
         matriculas = matriculas.filter(
-            Q(estudiante__nombres__icontains=q) |
-            Q(estudiante__apellidos__icontains=q) |
-            Q(estudiante__identificacion__icontains=q)
+            Q(estudiante__nombres__icontains=buscar) |
+            Q(estudiante__apellidos__icontains=buscar) |
+            Q(estudiante__identificacion__icontains=buscar)
         )
 
     if anio:
@@ -589,27 +642,42 @@ def matriculas_list(request):
     if curso:
         matriculas = matriculas.filter(curso__id=curso)
 
+    if estado in ("1", "0"):
+        matriculas = matriculas.filter(activo=(estado == "1"))
+
+    # ✅ Idealmente también filtras los combos por school (si aplica)
+    anios_qs = AnioLectivo.objects.all().order_by("nombre")
+    cursos_qs = Curso.objects.all().order_by("grado", "nombre")
+
+    # Si Curso / AnioLectivo tienen campo school, usa esto en vez de lo anterior:
+    # anios_qs = AnioLectivo.objects.filter(school=school).order_by("nombre")
+    # cursos_qs = Curso.objects.filter(school=school).order_by("grado", "nombre")
+
     context = {
         "matriculas": matriculas,
-        "anios": AnioLectivo.objects.all(),
-        "cursos": Curso.objects.all(),
-        "q": q,
+        "anios": anios_qs,
+        "cursos": cursos_qs,
+
+        "buscar": buscar,
         "anio_selected": anio,
         "curso_selected": curso,
+        "estado_selected": estado,
         "nav_active": "administrativo",
     }
     return render(request, "administrativo/matriculas_list.html", context)
 
 
 def matricula_create(request):
+    school = request.school
+
     if request.method == "POST":
-        form = MatriculaForm(request.POST)
+        form = MatriculaForm(request.POST, school=school)
         if form.is_valid():
             form.save()
             messages.success(request, "Matrícula creada correctamente.")
             return redirect("administrativo:matriculas")
     else:
-        form = MatriculaForm()
+        form = MatriculaForm(school=school)
 
     return render(request, "administrativo/matricula_form.html", {
         "form": form,

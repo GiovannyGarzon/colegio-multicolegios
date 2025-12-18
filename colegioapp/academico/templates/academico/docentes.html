@@ -1,29 +1,63 @@
 {% extends "colegioapp/base.html" %}
 {% load static %}
 
-{% block title %}Docentes | Centro Educativo Infantil GIN GABY{% endblock %}
+{% block title %}Docentes | {{ request.school.nombre|default:"Colegio" }}{% endblock %}
 
 {% block content %}
 <main>
-  <h2>Docentes</h2>
-  <div style="max-width:1000px; margin:10px auto 20px;">
+  <h2 style="max-width:1000px;margin:10px auto 16px;font-size:1.6rem;color:#111827;">
+    Docentes
+  </h2>
+
+  <div style="max-width:1000px; margin:0 auto 20px;">
     <a href="{% url 'academico:home' %}"
-       style="display:inline-block; background:#004d40; color:white;
-              padding:10px 16px; border-radius:8px; text-decoration:none;
-              transition:background 0.3s;">
+       style="
+         display:inline-block;
+         background:#2563eb;            /* azul neutro */
+         color:white;
+         padding:10px 16px;
+         border-radius:8px;
+         text-decoration:none;
+         font-size:0.95rem;
+         transition:background 0.2s, transform 0.1s;
+       "
+       onmouseover="this.style.background='#1d4ed8';"
+       onmouseout="this.style.background='#2563eb';"
+    >
        ← Volver al módulo académico
     </a>
   </div>
 
   <!-- Filtros -->
-  <form method="get" style="max-width:1000px;margin:0 auto 18px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+  <form method="get"
+        style="
+          max-width:1000px;
+          margin:0 auto 18px;
+          display:flex;
+          gap:10px;
+          align-items:center;
+          flex-wrap:wrap;
+        ">
     <input
       type="text" name="q" value="{{ q }}"
       placeholder="Buscar por nombre, apellido, identificación, correo o teléfono"
-      style="flex:1; padding:10px 12px; border:1px solid #cfd8dc; border-radius:8px;"
+      style="
+        flex:1;
+        min-width:220px;
+        padding:10px 12px;
+        border:1px solid #d1d5db;
+        border-radius:8px;
+        font-size:0.95rem;
+      "
     />
 
-    <select name="curso" style="padding:10px 12px; border:1px solid #cfd8dc; border-radius:8px;">
+    <select name="curso"
+            style="
+              padding:10px 12px;
+              border:1px solid #d1d5db;
+              border-radius:8px;
+              font-size:0.95rem;
+            ">
       <option value="">Todos los cursos</option>
       {% for c in cursos %}
         <option value="{{ c.id }}" {% if curso_selected|default:'' == c.id|stringformat:'s' %}selected{% endif %}>
@@ -32,51 +66,94 @@
       {% endfor %}
     </select>
 
-    <button type="submit" style="padding:10px 16px; background:#00796B; color:white; border:none; border-radius:8px; cursor:pointer;">
+    <button type="submit"
+            style="
+              padding:10px 16px;
+              background:#2563eb;      /* azul neutro */
+              color:white;
+              border:none;
+              border-radius:8px;
+              cursor:pointer;
+              font-size:0.95rem;
+            ">
       Filtrar
     </button>
 
-    <a href="{% url 'academico:docentes' %}" style="padding:10px 16px; background:#90a4ae; color:white; border-radius:8px; text-decoration:none;">
+    <a href="{% url 'academico:docentes' %}"
+       style="
+         padding:10px 16px;
+         background:#9ca3af;          /* gris neutro */
+         color:white;
+         border-radius:8px;
+         text-decoration:none;
+         font-size:0.95rem;
+       ">
       Limpiar
     </a>
+
     <a href="{% url 'academico:docente_create' %}"
-       style="padding:10px 16px; background:#00796B; color:white; text-decoration:none; border-radius:8px;">
+       style="
+         padding:10px 16px;
+         background:#16a34a;          /* verde neutro */
+         color:white;
+         text-decoration:none;
+         border-radius:8px;
+         font-size:0.95rem;
+       ">
        + Nuevo docente
     </a>
   </form>
 
   <!-- Tabla -->
   <div style="max-width:1000px;margin:0 auto;">
-    <div style="overflow-x:auto; background:white; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.06);">
-      <table style="width:100%; border-collapse:collapse;">
-        <thead style="background:#e0f2f1;">
+    <div style="
+      overflow-x:auto;
+      background:white;
+      border-radius:12px;
+      box-shadow:0 4px 12px rgba(15,23,42,0.06);
+      border:1px solid #e5e7eb;
+    ">
+      <table style="width:100%; border-collapse:collapse; font-size:0.95rem;">
+        <thead style="background:#eff6ff; border-bottom:1px solid #e5e7eb;">
           <tr>
-            <th style="text-align:left; padding:12px;">Identificación</th>
-            <th style="text-align:left; padding:12px;">Apellidos</th>
-            <th style="text-align:left; padding:12px;">Nombres</th>
-            <th style="text-align:left; padding:12px;">Curso asignado</th>
-            <th style="text-align:left; padding:12px;">Correo</th>
-            <th style="text-align:center; padding:12px;">Teléfono</th>
-            <th style="text-align:center; padding:12px;">Acciones</th>
+            <th style="text-align:left; padding:12px; color:#374151;">Identificación</th>
+            <th style="text-align:left; padding:12px; color:#374151;">Apellidos</th>
+            <th style="text-align:left; padding:12px; color:#374151;">Nombres</th>
+            <th style="text-align:left; padding:12px; color:#374151;">Curso asignado</th>
+            <th style="text-align:left; padding:12px; color:#374151;">Correo</th>
+            <th style="text-align:center; padding:12px; color:#374151;">Teléfono</th>
+            <th style="text-align:center; padding:12px; color:#374151;">Acciones</th>
           </tr>
         </thead>
         <tbody>
           {% if page_obj.object_list %}
             {% for d in page_obj.object_list %}
-            <tr style="border-top:1px solid #eceff1;">
-              <td style="padding:10px 12px;">{{ d.identificacion }}</td>
-              <td style="padding:10px 12px;">{{ d.apellidos }}</td>
-              <td style="padding:10px 12px;">{{ d.nombres }}</td>
-              <td style="padding:10px 12px;">
-                {% if d.curso_asignado %}{{ d.curso_asignado.grado }} - {{ d.curso_asignado.nombre }}{% else %}<em>—</em>{% endif %}
+            <tr style="border-top:1px solid #e5e7eb; {% if forloop.counter0|divisibleby:2 %}background:#f9fafb;{% endif %}">
+              <td style="padding:10px 12px; color:#111827;">{{ d.identificacion }}</td>
+              <td style="padding:10px 12px; color:#111827;">{{ d.apellidos }}</td>
+              <td style="padding:10px 12px; color:#111827;">{{ d.nombres }}</td>
+              <td style="padding:10px 12px; color:#4b5563;">
+                {% if d.curso_asignado %}
+                  {{ d.curso_asignado.grado }} - {{ d.curso_asignado.nombre }}
+                {% else %}
+                  <em style="color:#9ca3af;">—</em>
+                {% endif %}
               </td>
-              <td style="padding:10px 12px;">{{ d.correo|default:"" }}</td>
-              <td style="padding:10px 12px; text-align:center;">{{ d.telefono|default:"" }}</td>
+              <td style="padding:10px 12px; color:#4b5563;">{{ d.correo|default:"" }}</td>
+              <td style="padding:10px 12px; text-align:center; color:#4b5563;">
+                {{ d.telefono|default:"" }}
+              </td>
               <td style="padding:10px 12px; text-align:center; white-space:nowrap;">
-                <a href="{% url 'academico:docente_update' d.id %}" style="margin-right:6px; text-decoration:none;">✎ Editar</a>
-                <a href="{% url 'academico:docente_detail' d.id %}" style="margin-right:6px; text-decoration:none;">👁 Ver</a>
+                <a href="{% url 'academico:docente_update' d.id %}"
+                   style="margin-right:6px; text-decoration:none; color:#2563eb;">
+                   ✎ Editar
+                </a>
+                <a href="{% url 'academico:docente_detail' d.id %}"
+                   style="margin-right:6px; text-decoration:none; color:#0f766e;">
+                   👁 Ver
+                </a>
                 <a href="{% url 'academico:docente_delete' d.id %}"
-                   style="color:#c62828; text-decoration:none;"
+                   style="color:#b91c1c; text-decoration:none;"
                    onclick="return confirm('¿Seguro que deseas eliminar este docente?');">
                    🗑 Eliminar
                 </a>
@@ -85,7 +162,15 @@
             {% endfor %}
           {% else %}
             <tr>
-              <td colspan="6" style="padding:14px; text-align:center; color:#607d8b;">No se encontraron docentes.</td>
+              <td colspan="7"
+                  style="
+                    padding:14px;
+                    text-align:center;
+                    color:#6b7280;
+                    background:#f9fafb;
+                  ">
+                No se encontraron docentes.
+              </td>
             </tr>
           {% endif %}
         </tbody>
@@ -94,19 +179,31 @@
 
     <!-- Paginación -->
     {% if page_obj.paginator.num_pages > 1 %}
-    <div style="display:flex; justify-content:center; gap:6px; margin:18px 0;">
+    <div style="display:flex; justify-content:center; gap:6px; margin:18px 0; font-size:0.9rem;">
       {% if page_obj.has_previous %}
-        <a href="?page=1{% if querystring %}&{{ querystring }}{% endif %}" style="padding:8px 10px; border:1px solid #cfd8dc; border-radius:8px; text-decoration:none;">« Primero</a>
-        <a href="?page={{ page_obj.previous_page_number }}{% if querystring %}&{{ querystring }}{% endif %}" style="padding:8px 10px; border:1px solid #cfd8dc; border-radius:8px; text-decoration:none;">‹ Anterior</a>
+        <a href="?page=1{% if querystring %}&{{ querystring }}{% endif %}"
+           style="padding:8px 10px; border:1px solid #d1d5db; border-radius:8px; text-decoration:none; color:#374151;">
+          « Primero
+        </a>
+        <a href="?page={{ page_obj.previous_page_number }}{% if querystring %}&{{ querystring }}{% endif %}"
+           style="padding:8px 10px; border:1px solid #d1d5db; border-radius:8px; text-decoration:none; color:#374151;">
+          ‹ Anterior
+        </a>
       {% endif %}
 
-      <span style="padding:8px 10px; border:1px solid #cfd8dc; border-radius:8px; background:#f5f5f5;">
+      <span style="padding:8px 10px; border:1px solid #d1d5db; border-radius:8px; background:#f3f4f6; color:#374151;">
         Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
       </span>
 
       {% if page_obj.has_next %}
-        <a href="?page={{ page_obj.next_page_number }}{% if querystring %}&{{ querystring }}{% endif %}" style="padding:8px 10px; border:1px solid #cfd8dc; border-radius:8px; text-decoration:none;">Siguiente ›</a>
-        <a href="?page={{ page_obj.paginator.num_pages }}{% if querystring %}&{{ querystring }}{% endif %}" style="padding:8px 10px; border:1px solid #cfd8dc; border-radius:8px; text-decoration:none;">Última »</a>
+        <a href="?page={{ page_obj.next_page_number }}{% if querystring %}&{{ querystring }}{% endif %}"
+           style="padding:8px 10px; border:1px solid #d1d5db; border-radius:8px; text-decoration:none; color:#374151;">
+          Siguiente ›
+        </a>
+        <a href="?page={{ page_obj.paginator.num_pages }}{% if querystring %}&{{ querystring }}{% endif %}"
+           style="padding:8px 10px; border:1px solid #d1d5db; border-radius:8px; text-decoration:none; color:#374151;">
+          Última »
+        </a>
       {% endif %}
     </div>
     {% endif %}

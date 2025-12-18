@@ -3,71 +3,122 @@
 {% block title %}Asistencia · {{ curso }}{% endblock %}
 
 {% block content %}
-<main style="max-width:1000px;margin:0 auto;">
-  <h2>Asistencia - {{ curso.grado }} {{ curso.nombre }}</h2>
-  <p>
-    <strong>Año:</strong> {{ anio.nombre }} ·
-    <strong>Período:</strong> {{ periodo.nombre }} ·
+<main style="max-width:1000px;margin:0 auto;padding:20px;">
+
+  <h2 style="color:var(--primary-color);margin-bottom:6px;">
+    Asistencia — {{ curso.grado }} {{ curso.nombre }}
+  </h2>
+
+  <p style="color:var(--text-muted);margin-bottom:20px;">
+    <strong>Año:</strong> {{ anio.nombre }} &nbsp;•&nbsp;
+    <strong>Período:</strong> {{ periodo.nombre }} &nbsp;•&nbsp;
     <strong>Fecha:</strong> {{ fecha }}
   </p>
 
-  <form method="post" style="margin-top:18px;">
+  <form method="post">
     {% csrf_token %}
-    <table style="width:100%;border-collapse:collapse;font-size:0.95rem;">
-      <thead>
-        <tr style="background:#e5e7eb;">
-          <th style="border:1px solid #cbd5e1;padding:6px 8px;text-align:left;">#</th>
-          <th style="border:1px solid #cbd5e1;padding:6px 8px;text-align:left;">Estudiante</th>
-          <th style="border:1px solid #cbd5e1;padding:6px 8px;text-align:center;">Estado</th>
-          <th style="border:1px solid #cbd5e1;padding:6px 8px;text-align:left;">Observación</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for fila in filas %}
-          <tr>
-            <td style="border:1px solid #e5e7eb;padding:4px 6px;text-align:center;">
-              {{ forloop.counter }}
-            </td>
-            <td style="border:1px solid #e5e7eb;padding:4px 6px;">
-              {{ fila.estudiante.apellidos }} {{ fila.estudiante.nombres }}
-            </td>
-            <td style="border:1px solid #e5e7eb;padding:4px 6px;text-align:center;">
-              <select name="estado_{{ fila.estudiante.id }}"
-                      style="padding:4px 6px;border-radius:6px;border:1px solid #cbd5e1;">
-                <option value="P" {% if fila.estado == "P" %}selected{% endif %}>Presente</option>
-                <option value="A" {% if fila.estado == "A" %}selected{% endif %}>Ausente</option>
-                <option value="J" {% if fila.estado == "J" %}selected{% endif %}>Justificada</option>
-                <option value="T" {% if fila.estado == "T" %}selected{% endif %}>Tardanza</option>
-              </select>
-            </td>
-            <td style="border:1px solid #e5e7eb;padding:4px 6px;">
-              <input type="text"
-                     name="obs_{{ fila.estudiante.id }}"
-                     value="{{ fila.observacion }}"
-                     style="width:100%;padding:4px 6px;border-radius:6px;border:1px solid #cbd5e1;font-size:0.9rem;">
-            </td>
-          </tr>
-        {% empty %}
-          <tr>
-            <td colspan="4" style="text-align:center;padding:10px;">
-              No hay estudiantes registrados en este curso.
-            </td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
 
-    <div style="text-align:right;margin-top:14px;display:flex;justify-content:space-between;align-items:center;">
+    <div style="
+        overflow-x:auto;
+        background:#fff;
+        border-radius:12px;
+        box-shadow:0 4px 12px rgba(0,0,0,0.06);
+        border:1px solid var(--border-color);
+    ">
+      <table style="width:100%;border-collapse:collapse;font-size:0.95rem;">
+        <thead style="background:var(--bg-light);">
+          <tr>
+            <th style="border:1px solid var(--border-color);padding:10px;text-align:left;">#</th>
+            <th style="border:1px solid var(--border-color);padding:10px;text-align:left;">Estudiante</th>
+            <th style="border:1px solid var(--border-color);padding:10px;text-align:center;">Estado</th>
+            <th style="border:1px solid var(--border-color);padding:10px;text-align:left;">Observación</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {% for fila in filas %}
+            <tr style="border-top:1px solid var(--border-color);">
+              <!-- Contador -->
+              <td style="padding:8px 10px;text-align:center;">
+                {{ forloop.counter }}
+              </td>
+
+              <!-- Nombre estudiante -->
+              <td style="padding:8px 10px;">
+                {{ fila.estudiante.apellidos }} {{ fila.estudiante.nombres }}
+              </td>
+
+              <!-- Estado -->
+              <td style="padding:8px 10px;text-align:center;">
+                <select name="estado_{{ fila.estudiante.id }}"
+                        style="
+                          padding:6px 10px;
+                          border-radius:8px;
+                          border:1px solid var(--border-color);
+                          background:white;
+                        ">
+                  <option value="P" {% if fila.estado == "P" %}selected{% endif %}>Presente</option>
+                  <option value="A" {% if fila.estado == "A" %}selected{% endif %}>Ausente</option>
+                  <option value="J" {% if fila.estado == "J" %}selected{% endif %}>Justificada</option>
+                  <option value="T" {% if fila.estado == "T" %}selected{% endif %}>Tardanza</option>
+                </select>
+              </td>
+
+              <!-- Observación -->
+              <td style="padding:8px 10px;">
+                <input type="text"
+                       name="obs_{{ fila.estudiante.id }}"
+                       value="{{ fila.observacion }}"
+                       placeholder="Observación (opcional)…"
+                       style="
+                         width:100%;
+                         padding:6px 10px;
+                         border-radius:8px;
+                         border:1px solid var(--border-color);
+                       ">
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="4" style="padding:14px;text-align:center;color:var(--text-muted);">
+                No hay estudiantes registrados en este curso.
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Botones -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:20px;">
+
       <a href="{% url 'academico:asistencia_selector' %}"
-         style="text-decoration:none;padding:8px 14px;border-radius:8px;background:#9ca3af;color:#fff;">
+         style="
+           padding:10px 16px;
+           background:var(--secondary-color);
+           color:#fff;
+           text-decoration:none;
+           border-radius:8px;
+           font-weight:600;
+         ">
         ← Volver al selector
       </a>
 
       <button type="submit"
-              style="padding:8px 18px;border:none;border-radius:8px;background:#0f766e;color:#fff;cursor:pointer;">
+              style="
+                padding:10px 20px;
+                background:var(--primary-color);
+                color:white;
+                border:none;
+                border-radius:8px;
+                cursor:pointer;
+                font-weight:600;
+              ">
         Guardar asistencia
       </button>
+
     </div>
+
   </form>
 </main>
 {% endblock %}

@@ -1,474 +1,331 @@
 {% extends "sitio/base_publico.html" %}
 {% load static %}
 
-{% block title %}Inicio | CE GIN GABI{% endblock %}
+{% block title %}
+  {% if request.school %}Inicio | {{ request.school.name }}{% else %}Inicio{% endif %}
+{% endblock %}
 
-{# --- ESTILOS PROPIOS DE ESTA PÁGINA --- #}
 {% block extra_css %}
 <style>
-/* HERO */
-.hero-home {
-  position: relative;
-  min-height: 60vh;
-  background-size: cover;
-  background-position: center;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+/* ================= HERO ================= */
+.hero-home{
+  position:relative;
+  min-height:62vh;
+  background-size:cover;
+  background-position:center;
+  display:flex;
+  align-items:center;
+  justify-content:center;
 }
 
-.hero-overlay {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(120deg, rgba(0, 86, 92, 0.85), rgba(5, 150, 105, 0.6));
+/* Overlay usando colores del colegio */
+.hero-overlay{
+  position:absolute;
+  inset:0;
+  background: linear-gradient(
+    120deg,
+    var(--primary-color),
+    var(--secondary-color)
+  );
+  opacity:.78;
 }
 
-.hero-inner {
-  position: relative;
-  max-width: 1100px;
-  width: 100%;
-  padding: 40px 20px 60px;
-  color: #ffffff;
+.hero-inner{
+  position:relative;
+  max-width:1100px;
+  width:100%;
+  padding:56px 20px;
+  color:#fff;
 }
 
-.hero-text { max-width: 650px; }
+.hero-text{ max-width:720px; }
 
-.hero-kicker {
-  font-size: 0.9rem;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  opacity: 0.9;
+.hero-kicker{
+  font-size:.85rem;
+  text-transform:uppercase;
+  letter-spacing:.12em;
+  opacity:.95;
 }
 
-.hero-text h1 {
-  margin: 8px 0 10px;
-  font-size: 2.2rem;
-  font-weight: 700;
+.hero-text h1{
+  margin:10px 0 12px;
+  font-size:2.4rem;
+  font-weight:800;
 }
 
-.hero-text p {
-  max-width: 540px;
-  margin-bottom: 18px;
+.hero-text p{
+  max-width:620px;
+  margin-bottom:18px;
+  line-height:1.6;
 }
 
-.hero-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 18px;
+/* botones hero */
+.hero-actions{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-bottom:18px;
 }
 
-/* Botones */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 8px 18px;
-  border-radius: 999px;
-  font-size: 0.95rem;
-  border: none;
-  cursor: pointer;
-  text-decoration: none;
-  transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.1s ease;
+.btnx{
+  padding:10px 18px;
+  border-radius:999px;
+  text-decoration:none;
+  font-weight:700;
 }
 
-.btn-primary {
-  background: #0f766e;
-  color: #fff;
-  box-shadow: 0 8px 18px rgba(15, 118, 110, 0.35);
+.btnx-primary{
+  background: var(--button-color);
+  color:#fff;
 }
 
-.btn-outline {
-  background: transparent;
-  color: #e0f2f1;
-  border: 1px solid rgba(255, 255, 255, 0.7);
+.btnx-outline{
+  border:1px solid #fff;
+  color:#fff;
 }
 
-.btn-link {
-  padding: 0;
-  border-radius: 0;
-  background: none;
-  color: #0f766e;
-  font-weight: 600;
+/* métricas */
+.hero-metrics{
+  display:flex;
+  gap:22px;
+  flex-wrap:wrap;
+  font-size:.9rem;
+}
+.hero-metrics strong{
+  display:block;
+  font-size:1.15rem;
 }
 
-.btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 10px 22px rgba(15, 118, 110, 0.35);
+/* ================= BLOQUES ================= */
+.blocks{
+  display:flex;
+  flex-direction:column;
 }
 
-/* Métricas */
-.hero-metrics {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 18px;
-  font-size: 0.85rem;
+.block{
+  padding:70px 0;
 }
 
-.hero-metrics div strong {
-  display: block;
-  font-size: 1.1rem;
+/* colores dinámicos por colegio */
+.block:nth-child(odd){
+  background: var(--primary-color);
+}
+.block:nth-child(even){
+  background: var(--secondary-color);
 }
 
-/* === BANNER NAVIDEÑO / FIN DE AÑO === */
-.banner-navidad-wrap {
-  background: linear-gradient(135deg, #0f172a, #0f766e);
-  padding: 28px 0 34px;
+.block-inner{
+  max-width:1100px;
+  margin:auto;
+  padding:0 20px;
+  display:flex;
+  align-items:center;
+  gap:40px;
 }
 
-.banner-navidad-card {
-  max-width: 900px;
-  margin: 0 auto;
-  background: #ffffff;
-  border-radius: 18px;
-  padding: 18px 24px;
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  box-shadow: 0 12px 30px rgba(15,23,42,.25);
-  border: 1px solid #e5e7eb;
+.block:nth-child(even) .block-inner{
+  flex-direction:row-reverse;
 }
 
-.banner-navidad-icon {
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 30% 20%, #fecaca, #b91c1c);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 32px;
-  color: #fff;
-  flex-shrink: 0;
+/* IMAGEN */
+.block-media{
+  flex:0 0 440px;
+  max-width:440px;
+  height:320px;
+  border-radius:18px;
+  overflow:hidden;
+  box-shadow:0 18px 35px rgba(0,0,0,.35);
+}
+.block-media img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  object-position:center;
 }
 
-.banner-navidad-body h2 {
-  margin: 2px 0 6px;
-  font-size: 1.45rem;
-  font-weight: 700;
-  color: #0f172a;
+/* TEXTO */
+.block-text{
+  flex:1;
+  color:#fff;
+}
+.block-text h2{
+  font-size:2.1rem;
+  font-weight:800;
+  margin-bottom:12px;
+}
+.block-text p{
+  max-width:620px;
+  font-size:1.05rem;
+  line-height:1.6;
+  margin-bottom:18px;
 }
 
-.banner-navidad-kicker {
-  font-size: 0.8rem;
-  text-transform: uppercase;
-  letter-spacing: 0.15em;
-  color: #16a34a;
+/* CTA */
+.btn-cta{
+  background: var(--button-color);
+  color:#fff;
+  padding:12px 28px;
+  border-radius:999px;
+  font-weight:800;
+  text-decoration:none;
 }
 
-.banner-navidad-body p {
-  margin: 2px 0;
-  font-size: 0.95rem;
-  color: #374151;
+/* responsive */
+@media(max-width:980px){
+  .block-inner{ flex-direction:column; }
+  .block:nth-child(even) .block-inner{ flex-direction:column; }
+  .block-media{ width:100%; height:260px; }
 }
 
-.banner-navidad-footer {
-  margin-top: 4px;
-  font-size: 0.9rem;
-  font-style: italic;
-  color: #6b7280;
+/* ================= TARJETAS ================= */
+.home-main{
+  max-width:1100px;
+  margin:60px auto;
+  padding:0 20px;
 }
 
-/* Responsive banner navideño */
-@media (max-width: 768px) {
-  .banner-navidad-card {
-    flex-direction: column;
-    text-align: center;
-  }
-
-  .banner-navidad-icon {
-    margin-bottom: 4px;
-  }
-
-  .banner-navidad-body h2 {
-    font-size: 1.2rem;
-  }
+.home-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(230px,1fr));
+  gap:18px;
 }
 
-/* GRID PRINCIPAL */
-.home-main {
-  max-width: 1100px;
-  margin: 30px auto 60px;
-  padding: 0 20px;
+.home-card{
+  background:#fff;
+  border-radius:14px;
+  padding:18px;
+  box-shadow:0 10px 22px rgba(0,0,0,.08);
 }
 
-.home-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 18px;
+.home-card a{
+  color: var(--primary-color);
+  font-weight:700;
+  text-decoration:none;
 }
 
-.home-card {
-  background: #ffffff;
-  border-radius: 12px;
-  padding: 18px 16px;
-  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
-  border: 1px solid #e5e7eb;
-}
-
-/* WHATSAPP FLOTANTE */
-.btn-whatsapp {
-  position: fixed;
-  bottom: 18px;
-  right: 18px;
-  background: #25d366;
-  color: #fff;
-  padding: 10px 16px;
-  border-radius: 999px;
-  font-weight: 600;
-  text-decoration: none;
-  box-shadow: 0 8px 18px rgba(0,0,0,0.25);
-  z-index: 50;
-}
-
-.btn-whatsapp:hover { filter: brightness(1.05); }
-
-/* BANNER SECUNDARIO */
-.banner-secundario {
-  background: #083b55;
-  color: white;
-  padding: 60px 0;
-}
-
-.banner-content {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 40px;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 20px;
-}
-
-.banner-img img {
-  width: 500px;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-}
-
-.banner-text { max-width: 500px; }
-
-.banner-text h2 {
-  font-size: 32px;
-  margin-bottom: 10px;
-  font-weight: 700;
-}
-
-.banner-text p {
-  font-size: 18px;
-  line-height: 1.6;
-  margin-bottom: 25px;
-}
-
-.btn-cta {
-  display: inline-block;
-  background: #cc2a36;
-  color: white;
-  padding: 12px 28px;
-  border-radius: 30px;
-  text-decoration: none;
-  font-weight: bold;
-  transition: 0.3s;
-}
-
-.btn-cta:hover { background: #b9212b; }
-
-/* RESPONSIVE */
-@media (max-width: 768px) {
-  .hero-home { min-height: 70vh; }
-  .hero-text h1 { font-size: 1.7rem; }
-  .hero-metrics { gap: 10px; }
-
-  .banner-navidad-inner h2 {
-    font-size: 1.3rem;
-  }
+/* WhatsApp */
+.btn-whatsapp{
+  position:fixed;
+  bottom:18px;
+  right:18px;
+  background:#25d366;
+  color:#fff;
+  padding:10px 16px;
+  border-radius:999px;
+  font-weight:800;
+  text-decoration:none;
+  z-index:50;
 }
 </style>
-{% endblock extra_css %}
+{% endblock %}
 
 {% block content %}
 
-<!-- HERO PRINCIPAL -->
-<section id="hero-home" class="hero-home">
+<!-- HERO -->
+<section id="hero-home" class="hero-home"
+{% if slides and slides.0.image %}
+style="background-image:url('{{ slides.0.image.url }}');"
+{% endif %}
+>
   <div class="hero-overlay"></div>
 
   <div class="hero-inner">
     <div class="hero-text">
-      <span class="hero-kicker">Formando con amor, conocimiento y valores</span>
-      <h1>Centro Educativo Gin Gabi</h1>
-      <p>
-        Acompañamos los primeros años de tus hijos en un ambiente seguro,
-        cercano y con énfasis en el desarrollo emocional y académico.
-      </p>
+      <div class="hero-kicker">
+        {{ page.subtitle|default:"Formando con amor, conocimiento y valores" }}
+      </div>
+
+      <h1>{{ page.title|default:request.school.name }}</h1>
+
+      <p>{{ page.content|default:"Acompañamos los primeros años de tus hijos en un ambiente seguro, humano y pedagógico." }}</p>
 
       <div class="hero-actions">
-        <a class="btn btn-primary" href="{% url 'sitio:admisiones' %}">
+        <a href="{% url 'sitio:admisiones' %}" class="btnx btnx-primary">
           Proceso de admisiones
         </a>
-        <a class="btn btn-outline" href="{% url 'sitio:nosotros' %}">
+        <a href="{% url 'sitio:nosotros' %}" class="btnx btnx-outline">
           Conoce nuestro proyecto
         </a>
       </div>
 
       <div class="hero-metrics">
-        <div>
-          <strong>+10</strong>
-          <span>Años de experiencia</span>
-        </div>
-        <div>
-          <strong>Grupos</strong>
-          <span>Prejardín a transición</span>
-        </div>
-        <div>
-          <strong>Familias</strong>
-          <span>Acompañadas cada año</span>
-        </div>
+        <div><strong>+10</strong>Años de experiencia</div>
+        <div><strong>Grados</strong>Prejardín a transición</div>
+        <div><strong>Familias</strong>Acompañadas</div>
       </div>
     </div>
   </div>
 </section>
 
-{# ==== BANNER NAVIDEÑO / MENSAJE DE FIN DE AÑO ==== #}
-<section class="banner-navidad-wrap">
-  <div class="banner-navidad-card">
-    <div class="banner-navidad-icon">🎄</div>
+<!-- BLOQUES -->
+<section class="blocks">
+{% for b in blocks|slice:":2" %}
+  <section class="block">
+    <div class="block-inner">
+      <div class="block-media">
+        <img src="{{ b.image.url }}" alt="{{ b.title }}">
+      </div>
+      <div class="block-text">
+        <h2>{{ b.title }}</h2>
+        <p>{{ b.text|linebreaksbr }}</p>
 
-    <div class="banner-navidad-body">
-      <p class="banner-navidad-kicker">Mensaje especial de fin de año</p>
-      <h2>¡Gracias por acompañarnos en este año académico!</h2>
-
-      <p>
-        El <strong>Centro Educativo Gin Gabi</strong> felicita a toda nuestra comunidad educativa
-        por el esfuerzo, la dedicación y el compromiso demostrados durante este año escolar.
-      </p>
-      <p>
-        Deseamos a cada una de nuestras familias una <strong>Feliz Navidad</strong> y un
-        <strong>próspero año 2026</strong>, lleno de salud, paz, alegría y nuevos
-        aprendizajes para nuestros niños y niñas.
-      </p>
-
-      <p class="banner-navidad-footer">
-        Con cariño, Dirección, docentes y todo el equipo del Centro Educativo Gin Gabi.
-      </p>
+        {% if b.button_url %}
+          <a href="{{ b.button_url }}" class="btn-cta">
+            {{ b.button_text|default:"Conocer más" }}
+          </a>
+        {% endif %}
+      </div>
     </div>
-  </div>
+  </section>
+{% endfor %}
 </section>
 
-<section class="banner-secundario">
-  <div class="banner-content">
-    <div class="banner-img">
-      <img src="{% static 'img/banner_ninos.png' %}" alt="Niños CEI Gin Gaby">
-    </div>
-
-    <div class="banner-text">
-      <h2>Descubre Nuestro Proyecto Educativo</h2>
-      <p>
-        En el CE Gin Gabi formamos niños íntegros, felices y con grandes valores.
-        Nuestro enfoque pedagógico estimula el aprendizaje, la creatividad y
-        el desarrollo emocional.
-      </p>
-
-      <a href="{% url 'sitio:admisiones' %}" class="btn-cta">Conocer más</a>
-    </div>
-  </div>
-</section>
-
-<section class="banner-secundario" style="background:#004c6d;">
-  <div class="banner-content">
-
-    <div class="banner-img">
-      <img src="{% static 'img/ruta_escolarb.png' %}" alt="Servicio de Ruta Escolar CEI Gin Gaby">
-    </div>
-
-    <div class="banner-text">
-      <h2>Servicio de Ruta Escolar</h2>
-      <p>
-        Ofrecemos un servicio de transporte seguro y confiable para nuestros estudiantes.
-        Cumplimos con todos los estándares de seguridad y contamos con personal capacitado
-        para el acompañamiento de los niños durante el recorrido.
-      </p>
-
-      <p style="font-weight:bold; margin-top:10px;">
-        🚌 Conductor: Roer Peñaloza<br>
-        📞 300 259 85 68
-      </p>
-
-      <a href="https://wa.me/573002598568" class="btn-cta" target="_blank">
-        Contactar ruta escolar
-      </a>
-    </div>
-
-  </div>
-</section>
-
+<!-- TARJETAS -->
 <main class="home-main">
   <div class="home-grid">
     <div class="home-card">
       <h3>Proyecto Educativo</h3>
-      <p>Formación integral con enfoque en valores, juego y desarrollo socioemocional.</p>
-      <a class="btn btn-link" href="{% url 'sitio:nosotros' %}">Ver más</a>
+      <a href="{% url 'sitio:nosotros' %}">Ver más</a>
     </div>
-
     <div class="home-card">
-      <h3>Proceso de Admisiones</h3>
-      <p>Fechas, requisitos y pasos para postular a nuestros grados.</p>
-      <a class="btn btn-link" href="{% url 'sitio:admisiones' %}">Admisiones</a>
+      <h3>Admisiones</h3>
+      <a href="{% url 'sitio:admisiones' %}">Ver más</a>
     </div>
-
     <div class="home-card">
       <h3>Noticias</h3>
-      <p>Eventos, comunicados y actividades recientes de nuestra comunidad.</p>
-      <a class="btn btn-link" href="{% url 'sitio:noticias' %}">Ver noticias</a>
+      <a href="{% url 'sitio:noticias' %}">Ver más</a>
     </div>
-
     <div class="home-card">
       <h3>Contacto</h3>
-      <p>Dirección, teléfonos y formulario de contacto para resolver tus dudas.</p>
-      <a class="btn btn-link" href="{% url 'sitio:contacto' %}">Escríbenos</a>
+      <a href="{% url 'sitio:contacto' %}">Contactar</a>
     </div>
   </div>
 </main>
 
-<a
-  href="https://wa.me/573133144382?text=Hola,%20quiero%20información%20sobre%20admisiones%20en%20CEI%20Gin%20Gaby"
-  class="btn-whatsapp"
-  target="_blank"
-  rel="noopener"
->
+{% if config.whatsapp %}
+<a href="https://wa.me/{{ config.whatsapp|cut:'+' }}" class="btn-whatsapp">
   WhatsApp
 </a>
+{% endif %}
 
-{% endblock content %}
+{% endblock %}
 
 {% block extra_js %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-  const hero = document.getElementById('hero-home');
-  if (!hero) return;
-
-  const images = [
-    "{% static 'img/slider/slider1.jpg' %}",
-    "{% static 'img/slider/slider2c.jpg' %}",
-    "{% static 'img/slider/slider3.png' %}",
+document.addEventListener('DOMContentLoaded',()=>{
+  const hero=document.getElementById('hero-home');
+  const images=[
+    {% for s in slides %}
+      "{{ s.image.url }}"{% if not forloop.last %},{% endif %}
+    {% endfor %}
   ];
+  if(!images.length) return;
 
-  let index = 0;
-
-  function setBackground(idx) {
-    hero.style.backgroundImage = "url('" + images[idx] + "')";
-    hero.style.backgroundSize = "cover";
-    hero.style.backgroundPosition = "center center";
-    hero.style.transition = "background-image 1s ease-in-out";
-  }
-
-  // Primera imagen
-  setBackground(index);
-
-  // Cambiar cada 6 segundos
-  setInterval(function () {
-    index = (index + 1) % images.length;
-    setBackground(index);
-  }, 6000);
+  let i=0;
+  setInterval(()=>{
+    i=(i+1)%images.length;
+    hero.style.backgroundImage=`url('${images[i]}')`;
+  },6000);
 });
 </script>
-{% endblock extra_js %}
+{% endblock %}

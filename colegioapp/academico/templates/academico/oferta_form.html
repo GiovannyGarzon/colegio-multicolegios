@@ -1,30 +1,158 @@
 {% extends "colegioapp/base.html" %}
-{% block title %}{% if edit_mode %}Editar{% else %}Nueva{% endif %} Oferta | CEI GIN GABY{% endblock %}
+{% block title %}
+  {% if edit_mode %}Editar{% else %}Nueva{% endif %} Oferta | {{ request.school.nombre|default:"Institución Educativa" }}
+{% endblock %}
 
 {% block content %}
-<main style="max-width:700px;margin:0 auto;text-align:left;">
-  <h2 style="color:#00796B;">{% if edit_mode %}Editar{% else %}Registrar nueva{% endif %} oferta</h2>
+<main style="max-width:720px;margin:0 auto;padding:16px 10px;text-align:left;">
+  <h2 style="
+        color:var(--color-primary, #2563eb);
+        margin-bottom:18px;
+      ">
+    {% if edit_mode %}Editar{% else %}Registrar nueva{% endif %} oferta académica
+  </h2>
 
-  <form method="post" style="background:#fff;padding:25px;border-radius:12px;box-shadow:0 4px 10px rgba(0,0,0,0.1);">
+  <form method="post"
+        style="
+          background:#ffffff;
+          padding:22px;
+          border-radius:14px;
+          box-shadow:0 4px 12px rgba(15,23,42,0.12);
+          border:1px solid var(--color-muted-border, #e5e7eb);
+          display:grid;
+          gap:14px;
+        ">
     {% csrf_token %}
-    <div style="display:flex;flex-direction:column;gap:12px;">
-      <label style="font-weight:bold;">Año lectivo</label> {{ form.anio }}
-      <label style="font-weight:bold;">Curso</label> {{ form.curso }}
-      <label style="font-weight:bold;">Asignatura</label> {{ form.asignatura }}
-      <label style="font-weight:bold;">Docente (opcional)</label> {{ form.docente }}
-      <label style="font-weight:bold;">Intensidad horaria (horas/semana)</label> {{ form.intensidad_horaria }}
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+      <div>
+        <label class="lbl">Año lectivo</label>
+        {{ form.anio }}
+        {% if form.anio.errors %}
+          <div class="err-msg">{{ form.anio.errors }}</div>
+        {% endif %}
+      </div>
+
+      <div>
+        <label class="lbl">Curso</label>
+        {{ form.curso }}
+        {% if form.curso.errors %}
+          <div class="err-msg">{{ form.curso.errors }}</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div>
+      <label class="lbl">Asignatura</label>
+      {{ form.asignatura }}
+      {% if form.asignatura.errors %}
+        <div class="err-msg">{{ form.asignatura.errors }}</div>
+      {% endif %}
+    </div>
+
+    <div style="display:grid;grid-template-columns:2fr 1fr;gap:14px;">
+      <div>
+        <label class="lbl">Docente (opcional)</label>
+        {{ form.docente }}
+        {% if form.docente.errors %}
+          <div class="err-msg">{{ form.docente.errors }}</div>
+        {% endif %}
+      </div>
+      <div>
+        <label class="lbl">Intensidad horaria (horas/semana)</label>
+        {{ form.intensidad_horaria }}
+        {% if form.intensidad_horaria.errors %}
+          <div class="err-msg">{{ form.intensidad_horaria.errors }}</div>
+        {% endif %}
+      </div>
     </div>
 
     {% if form.non_field_errors %}
-      <div style="color:#c62828;margin-top:10px;">{{ form.non_field_errors }}</div>
+      <div class="err-msg" style="margin-top:4px;">
+        {{ form.non_field_errors }}
+      </div>
     {% endif %}
 
-    <div style="margin-top:20px;display:flex;gap:10px;">
-      <button type="submit" style="padding:10px 16px;background:#00796B;color:#fff;border:none;border-radius:8px;cursor:pointer;">
+    <div style="margin-top:6px;display:flex;gap:10px;justify-content:flex-end;">
+      <a href="{% url 'academico:ofertas' %}" class="btn-acad-muted">
+        Cancelar
+      </a>
+      <button type="submit" class="btn-acad">
         {% if edit_mode %}Actualizar{% else %}Guardar{% endif %}
       </button>
-      <a href="{% url 'academico:ofertas' %}" style="padding:10px 16px;background:#9e9e9e;color:#fff;border-radius:8px;text-decoration:none;">Cancelar</a>
     </div>
   </form>
 </main>
+
+<style>
+  /* Etiquetas y errores */
+  .lbl{
+    display:block;
+    font-size:0.9rem;
+    font-weight:600;
+    margin-bottom:4px;
+    color:#111827;
+  }
+  .err-msg{
+    margin-top:3px;
+    font-size:0.8rem;
+    color:#b91c1c;
+  }
+
+  /* Inputs del formulario (se aplican a los widgets que renderiza Django) */
+  main form input[type="text"],
+  main form input[type="number"],
+  main form select{
+    width:100%;
+    padding:9px 10px;
+    border-radius:8px;
+    border:1px solid #cbd5e1;
+    font-size:0.9rem;
+    background:#ffffff;
+  }
+  main form input:focus,
+  main form select:focus{
+    outline:none;
+    border-color:var(--color-primary, #2563eb);
+    box-shadow:0 0 0 1px rgba(37,99,235,0.18);
+  }
+
+  .btn-acad{
+    text-decoration:none;
+    background:var(--color-primary, #2563eb);
+    color:#ffffff;
+    padding:9px 16px;
+    border-radius:999px;
+    font-size:0.9rem;
+    border:1px solid transparent;
+    cursor:pointer;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    transition:background 0.15s ease, box-shadow 0.15s ease, transform 0.08s ease;
+  }
+  .btn-acad:hover{
+    background:var(--color-primary-dark, #1d4ed8);
+    box-shadow:0 3px 8px rgba(15,23,42,0.18);
+    transform:translateY(-1px);
+  }
+
+  .btn-acad-muted{
+    text-decoration:none;
+    background:var(--color-muted, #6b7280);
+    color:#ffffff;
+    padding:9px 16px;
+    border-radius:999px;
+    font-size:0.9rem;
+    border:1px solid transparent;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+  }
+  .btn-acad-muted:hover{
+    background:var(--color-muted-dark, #4b5563);
+  }
+</style>
 {% endblock %}

@@ -1,30 +1,45 @@
 {% extends "colegioapp/base.html" %}
-{% block title %}Captura de Notas • Selector | CEI GIN GABY{% endblock %}
+{% block title %}Captura de Notas • Selector | {{ request.school.name }}{% endblock %}
+
 {% block content %}
-<main>
-  <h2>Captura de Notas — Selección</h2>
+<main style="max-width:960px;margin:0 auto;padding:20px 10px;">
+
+  <h2 style="color:var(--primary-color);margin-bottom:6px;">
+    Captura de Notas — Selección
+  </h2>
 
   {% if docente and not user.is_staff and not user.is_superuser %}
-    <p style="margin-top:-4px;color:#607d8b;">
-      Solo se muestran los cursos y asignaturas que tiene asignados como docente.
+    <p style="margin-top:0;color:#607d8b;font-size:0.95rem;">
+      Solo se muestran los cursos y asignaturas que tienes asignados como docente.
     </p>
   {% else %}
-    <p>Elige el año, curso, la oferta (asignatura), y el periodo.</p>
+    <p style="margin-top:0;color:#4b5563;font-size:0.95rem;">
+      Elige el año lectivo, el curso, la oferta (asignatura) y el período para capturar las notas.
+    </p>
   {% endif %}
 
-  <!-- ===================================================== -->
-  <!-- FORMULARIO 1 — SELECCIÓN DE AÑO / CURSO / OFERTA / PERIODO -->
-  <!-- ===================================================== -->
+  {# ===================================================== #}
+  {#  FORMULARIO 1 — FILTROS: AÑO / CURSO / OFERTA / PERIODO #}
+  {# ===================================================== #}
   <form method="get"
         action="{% url 'academico:notas_selector' %}"
-        style="max-width:900px;margin:0 auto;background:#fff;padding:20px;border-radius:12px;box-shadow:0 4px 10px rgba(0,0,0,0.08);
-               display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        style="
+          margin-top:12px;
+          background:#ffffff;
+          padding:22px 20px;
+          border-radius:14px;
+          border:1px solid #e5e7eb;
+          box-shadow:0 4px 10px rgba(0,0,0,0.06);
+          display:grid;
+          grid-template-columns:1fr 1fr;
+          gap:16px;
+        ">
 
     <!-- Año lectivo -->
     <div>
-      <label style="font-weight:bold;">Año lectivo</label>
+      <label class="form-label">Año lectivo</label>
       <select name="anio" required onchange="this.form.submit()"
-              style="width:100%;padding:10px;border:1px solid #cfd8dc;border-radius:8px;">
+              class="acad-select">
         <option value="">Seleccione…</option>
         {% for a in anios %}
           <option value="{{ a.id }}" {% if anio_selected == a.id|stringformat:'s' %}selected{% endif %}>
@@ -36,11 +51,11 @@
 
     <!-- Curso -->
     <div>
-      <label style="font-weight:bold;">Curso</label>
+      <label class="form-label">Curso</label>
       <select name="curso" required
               {% if not anio_selected %}disabled{% endif %}
               onchange="this.form.submit()"
-              style="width:100%;padding:10px;border:1px solid #cfd8dc;border-radius:8px;">
+              class="acad-select">
         <option value="">Seleccione…</option>
         {% for c in cursos %}
           <option value="{{ c.id }}" {% if curso_selected == c.id|stringformat:'s' %}selected{% endif %}>
@@ -52,11 +67,11 @@
 
     <!-- Oferta -->
     <div>
-      <label style="font-weight:bold;">Oferta (Asignatura)</label>
+      <label class="form-label">Oferta (Asignatura)</label>
       <select name="oferta" required
               {% if not anio_selected or not curso_selected %}disabled{% endif %}
               onchange="this.form.submit()"
-              style="width:100%;padding:10px;border:1px solid #cfd8dc;border-radius:8px;">
+              class="acad-select">
         <option value="">Seleccione…</option>
         {% for o in ofertas %}
           <option value="{{ o.id }}" {% if oferta_selected == o.id|stringformat:'s' %}selected{% endif %}>
@@ -68,11 +83,11 @@
 
     <!-- Periodo -->
     <div>
-      <label style="font-weight:bold;">Periodo</label>
+      <label class="form-label">Periodo</label>
       <select name="periodo" required
               {% if not anio_selected %}disabled{% endif %}
               onchange="this.form.submit()"
-              style="width:100%;padding:10px;border:1px solid #cfd8dc;border-radius:8px;">
+              class="acad-select">
         <option value="">Seleccione…</option>
         {% for p in periodos %}
           <option value="{{ p.id }}" {% if periodo_selected == p.id|stringformat:'s' %}selected{% endif %}>
@@ -82,42 +97,108 @@
       </select>
     </div>
 
-    <!-- Botón para volver -->
-    <div style="grid-column:1/-1;display:flex;gap:10px;justify-content:flex-end;margin-top:4px;">
-      <a href="{% url 'academico:hub' %}"
-         style="padding:10px 16px;background:#9e9e9e;color:#fff;border-radius:8px;text-decoration:none;">
+    <!-- Botón volver -->
+    <div style="grid-column:1/-1;display:flex;justify-content:flex-end;margin-top:4px;">
+      <a href="{% url 'academico:hub' %}" class="btn-acad-muted">
         Ir a gestión académica avanzada
       </a>
     </div>
   </form>
 
-  <!-- ===================================================== -->
-  <!-- FORMULARIO 2 — BOTONES PARA ACTUAR -->
-  <!-- SOLO APARECE CUANDO LA SELECCIÓN ESTÁ COMPLETA -->
-  <!-- ===================================================== -->
+  {# ===================================================== #}
+  {#  FORMULARIO 2 — ACCIONES (LOGROS / SABER SER)         #}
+  {#  SOLO SI YA HAY SELECCIÓN COMPLETA                    #}
+  {# ===================================================== #}
 
   {% if anio_selected and curso_selected and oferta_selected and periodo_selected %}
-    <div style="max-width:900px;margin:14px auto;display:flex;justify-content:flex-end;gap:10px;">
+    <div style="max-width:900px;margin:16px auto 0;display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap;">
 
-      <!-- Botón: Captura de notas de LOGROS -->
+      <!-- Captura de notas por Logros -->
       <form method="get" action="{% url 'academico:notas_capturar' %}">
         <input type="hidden" name="anio" value="{{ anio_selected }}">
         <input type="hidden" name="curso" value="{{ curso_selected }}">
         <input type="hidden" name="oferta" value="{{ oferta_selected }}">
         <input type="hidden" name="periodo" value="{{ periodo_selected }}">
-        <button type="submit"
-                style="padding:10px 16px;background:#00796B;color:#fff;border:none;border-radius:8px;cursor:pointer;">
+        <button type="submit" class="btn-acad">
           Capturar notas de Logros
         </button>
       </form>
 
-      <!-- Botón: Saber Ser -->
+      <!-- Captura Saber Ser -->
       <a href="{% url 'academico:saber_ser_capturar' oferta_selected periodo_selected %}"
-         style="padding:10px 16px;background:#455A64;color:#fff;border-radius:8px;text-decoration:none;">
+         class="btn-acad-alt">
         Capturar Saber Ser
       </a>
 
     </div>
   {% endif %}
+
 </main>
+
+<style>
+  .form-label{
+    display:block;
+    font-weight:600;
+    margin-bottom:4px;
+    color:#111827;
+    font-size:0.9rem;
+  }
+  .acad-select{
+    width:100%;
+    padding:9px 10px;
+    border-radius:8px;
+    border:1px solid #cfd8dc;
+    font-size:0.9rem;
+    background:#ffffff;
+  }
+
+  .btn-acad{
+    background:var(--primary-color);
+    color:#fff;
+    padding:9px 16px;
+    border:none;
+    border-radius:10px;
+    cursor:pointer;
+    font-size:0.9rem;
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    transition:0.15s ease;
+  }
+  .btn-acad:hover{
+    filter:brightness(1.07);
+  }
+
+  .btn-acad-alt{
+    background:#0f766e; /* tonalidad alternativa pero igual temática */
+    color:#fff;
+    padding:9px 16px;
+    border-radius:10px;
+    text-decoration:none;
+    font-size:0.9rem;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    transition:0.15s ease;
+  }
+  .btn-acad-alt:hover{
+    filter:brightness(1.07);
+  }
+
+  .btn-acad-muted{
+    background:#9ca3af;
+    color:#fff;
+    padding:9px 16px;
+    border-radius:10px;
+    text-decoration:none;
+    font-size:0.9rem;
+    display:inline-flex;
+    align-items:center;
+    transition:0.15s ease;
+  }
+  .btn-acad-muted:hover{
+    background:#6b7280;
+  }
+</style>
 {% endblock %}

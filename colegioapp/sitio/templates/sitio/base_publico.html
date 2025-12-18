@@ -4,82 +4,147 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>{% block title %}CE GIN GABI | Sitio oficial{% endblock %}</title>
+
+  <title>
+    {% block title %}
+      {% if request.school %}{{ request.school.name }}{% else %}Sitio oficial{% endif %}
+    {% endblock %}
+  </title>
 
   <style>
-    /* --- Layout básico + sticky footer --- */
-    html, body { height: 100%; margin: 0; padding: 0; }
-    body { font-family: "Segoe UI", Arial, sans-serif; background:#f7faf9; color:#233; }
-    .page-container { min-height: 100vh; display: flex; flex-direction: column; }
-    .content-wrap { flex: 1; } /* empuja el footer al fondo */
+    :root{
+      --primary-color: {% if request.school %}{{ request.school.primary_color }}{% else %}#0077B6{% endif %};
+      --secondary-color:{% if request.school %}{{ request.school.secondary_color }}{% else %}#009688{% endif %};
+      --button-color: {% if request.school %}{{ request.school.button_color }}{% else %}#00796B{% endif %};
+      --bg-color: {% if request.school %}{{ request.school.background_color }}{% else %}#f7faf9{% endif %};
+      --text-color: #233;
+      --muted: rgba(255,255,255,.85);
+    }
 
-    /* Header / nav / footer */
+    html, body { height: 100%; margin: 0; padding: 0; }
+    body { font-family: "Segoe UI", Arial, sans-serif; background:var(--bg-color); color:var(--text-color); }
+
+    .page-container { min-height: 100vh; display: flex; flex-direction: column; }
+    .content-wrap { flex: 1; }
+
     header{
-      background:linear-gradient(90deg,#0077B6,#009688);
+      background:linear-gradient(90deg, var(--primary-color), var(--secondary-color));
       color:#fff; padding:16px 24px; display:flex; gap:16px; align-items:center;
     }
     header img{ width:70px; height:auto; }
-    header h1{ margin:0; font-size:1.4rem; }
-    nav{ background:#004d40; display:flex; gap:14px; align-items:center; padding:10px 16px; }
-    nav a{ color:#fff; text-decoration:none; }
+    header h1{ margin:0; font-size:1.4rem; letter-spacing:.3px; }
+    header small{ color: var(--muted); display:block; margin-top:4px; }
+
+    nav{
+      background: var(--primary-color);
+      display:flex; gap:14px; align-items:center; padding:10px 16px;
+    }
+    nav a{ color:#fff; text-decoration:none; font-weight:500; }
     nav a:hover{ color:#80cbc4; }
     .spacer{ flex:1; }
-    .btn{ background:#00796B; color:#fff; padding:8px 12px; border-radius:8px; text-decoration:none; }
+    .btn{
+      background: var(--button-color);
+      color:#fff; padding:8px 12px; border-radius:8px; text-decoration:none;
+      box-shadow: 0 2px 8px rgba(0,0,0,.12);
+    }
+
+    /* utilidades comunes */
+    .hero{ background:#e0f2f1; padding:42px 16px; text-align:center; }
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+      gap:16px; max-width:1100px; margin:0 auto;
+    }
+    .card{ background:#fff; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,.06); padding:18px; }
 
     footer{
-      background:#004d40; color:#c8e6c9; text-align:center; padding:12px 10px;
+      background: var(--primary-color);
+      color:#c8e6c9;
+      text-align:center;
+      padding:18px 10px;
       font-size:0.9rem;
     }
 
-    /* Utilidades comunes para páginas */
-    .hero{ background:#e0f2f1; padding:42px 16px; text-align:center; }
-    .grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
-           gap:16px; max-width:1100px; margin:0 auto; }
-    .card{ background:#fff; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,.06); padding:18px; }
-    footer {
-    background: #004d40;
-    color: #c8e6c9;
-    text-align: center;
-    padding: 18px 10px;
-    font-size: 0.9rem;
-  }
+    .footer-content {
+      max-width: 1000px;
+      margin: 0 auto;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
 
-  .footer-content {
-    max-width: 900px;
-    margin: 0 auto;
-  }
+    .footer-social { margin-bottom: 2px; }
+    .footer-social a { display: inline-block; margin: 0 10px; }
+    .footer-social img {
+      width: 32px; height: 32px;
+      filter: brightness(0) invert(1);
+      transition: 0.3s ease;
+    }
+    .footer-social img:hover { transform: scale(1.15); filter: brightness(1.2); }
 
-  .footer-social {
-    margin-bottom: 12px;
-  }
+    .footer-meta{
+      display:flex;
+      justify-content:center;
+      flex-wrap:wrap;
+      gap:12px;
+      opacity:.95;
+      font-size:.92rem;
+    }
+    .footer-meta span{ color:#d9f7ea; }
 
-  .footer-social a {
-    display: inline-block;
-    margin: 0 10px;
-  }
-
-  .footer-social img {
-    width: 32px;
-    height: 32px;
-    filter: brightness(0) invert(1); /* mantiene iconos blancos si lo deseas */
-    transition: 0.3s ease;
-  }
-
-  .footer-social img:hover {
-    transform: scale(1.15);
-    filter: brightness(1.2);
-  }
+    /* ✅ FIX GLOBAL: el contenido siempre arriba */
+    main.content-wrap{
+      position: relative;
+      z-index: 50;
+    }
+    footer{
+      position: relative;
+      z-index: 10;
+    }
   </style>
 
   {% block extra_css %}{% endblock %}
+
+  {# ✅ FIX SOLO PÁGINAS INTERNAS: desactiva overlays del slider/dots #}
+  {% if request.resolver_match and request.resolver_match.url_name != 'home_publico' %}
+  <style>
+    /* Estos suelen quedar “encima” capturando clics */
+    .slick-slider, .slick-list, .slick-track, .slick-dots,
+    .swiper, .swiper-wrapper, .swiper-slide, .swiper-pagination,
+    .carousel, .slider {
+      pointer-events: none !important;
+    }
+
+    /* pero permitimos clic en botones del slider si existieran */
+    .slick-dots button,
+    .swiper-pagination-bullet,
+    .swiper-button-next,
+    .swiper-button-prev {
+      pointer-events: auto !important;
+    }
+  </style>
+  {% endif %}
 </head>
-<body>
+
+<body class="{% if request.resolver_match %}page-{{ request.resolver_match.url_name }}{% endif %}">
   <div class="page-container">
+
     <header>
-      <img src="{% static 'img/logo.png' %}" alt="Logo CEI GIN GABY" />
+      <img
+        src="{% if request.school and request.school.logo %}{{ request.school.logo.url }}{% else %}{% static 'img/logo.png' %}{% endif %}"
+        alt="Logo"
+      />
       <div>
-        <h1>CENTRO EDUCATIVO GIN GABI</h1>
-        <small>EDUCAMOS CON AMOR A QUIENES CONSTRUIRÁN EL MAÑANA</small>
+        <h1>
+          {% if request.school %}{{ request.school.name }}{% else %}CENTRO EDUCATIVO{% endif %}
+        </h1>
+        <small>
+          {% if request.school and request.school.slogan %}
+            {{ request.school.slogan }}
+          {% else %}
+            EDUCAMOS CON AMOR A QUIENES CONSTRUIRÁN EL MAÑANA
+          {% endif %}
+        </small>
       </div>
     </header>
 
@@ -93,31 +158,59 @@
       <a class="btn" href="{% url 'login' %}">Ingresar al sistema</a>
     </nav>
 
-    <!-- 👇 Aquí va SIEMPRE el contenido de cada página -->
     <main class="content-wrap">
       {% block content %}{% endblock %}
     </main>
 
     <footer class="footer">
-  <div class="footer-content">
+      <div class="footer-content">
 
-    <div class="footer-social">
-      <a href="https://www.facebook.com/share/1A7etNj4vG/?mibextid=wwXIfr" target="_blank" rel="noopener">
-        <img src="{% static 'img/social/facebook.svg' %}" alt="Facebook">
-      </a>
+        <div class="footer-social">
+          {% if config and config.facebook_url %}
+            <a href="{{ config.facebook_url }}" target="_blank" rel="noopener">
+              <img src="{% static 'img/social/facebook.svg' %}" alt="Facebook">
+            </a>
+          {% endif %}
 
-      <a href="https://instagram.com/centroeducativogingabi" target="_blank" rel="noopener">
-        <img src="{% static 'img/social/instagram.svg' %}" alt="Instagram">
-      </a>
+          {% if config and config.instagram_url %}
+            <a href="{{ config.instagram_url }}" target="_blank" rel="noopener">
+              <img src="{% static 'img/social/instagram.svg' %}" alt="Instagram">
+            </a>
+          {% endif %}
 
-      <a href="https://www.youtube.com/watch?v=-rqPxO4G2yk" target="_blank" rel="noopener">
-        <img src="{% static 'img/social/youtube.svg' %}" alt="YouTube">
-      </a>
-    </div>
+          {% if config and config.youtube_url %}
+            <a href="{{ config.youtube_url }}" target="_blank" rel="noopener">
+              <img src="{% static 'img/social/youtube.svg' %}" alt="YouTube">
+            </a>
+          {% endif %}
+        </div>
 
-    <p>&copy; {% now "Y" %} CE GIN GABI · Todos los derechos reservados.</p>
-  </div>
-</footer>
+        <div class="footer-meta">
+          {% if request.school and request.school.address %}
+            <span>📍 {{ request.school.address }}</span>
+          {% endif %}
+          {% if request.school and request.school.phone %}
+            <span>☎️ {{ request.school.phone }}</span>
+          {% endif %}
+          {% if config and config.email_public %}
+            <span>✉️ {{ config.email_public }}</span>
+          {% endif %}
+          {% if config and config.whatsapp %}
+            <span>💬 WhatsApp: {{ config.whatsapp }}</span>
+          {% endif %}
+          {% if config and config.schedule_text %}
+            <span>🕒 {{ config.schedule_text }}</span>
+          {% endif %}
+        </div>
+
+        <p style="margin:0;">
+          &copy; {% now "Y" %}
+          {% if request.school %}{{ request.school.name }}{% else %}CE GIN GABI{% endif %}
+          · Todos los derechos reservados.
+        </p>
+      </div>
+    </footer>
+
   </div>
 
   {% block extra_js %}{% endblock %}

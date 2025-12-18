@@ -1,33 +1,94 @@
-<h2>Boletín bloqueado por cartera</h2>
-<p>
-  El estudiante {{ estudiante }} no puede visualizar el boletín
-  del {{ trimestre }}º trimestre porque presenta obligaciones económicas pendientes.
-</p>
+{% extends "colegioapp/base.html" %}
 
-<p>Fecha límite del trimestre: {{ deadline|date:"d/m/Y" }}</p>
+{% block title %}Boletín bloqueado • Cartera{% endblock %}
 
-{% if deudas_trimestre %}
-  <h3>Deudas del trimestre</h3>
-  <ul>
-    {% for cta in deudas_trimestre %}
-      <li>
-        {{ cta.concepto.nombre }} - mes {{ cta.mes }}:
-        ${{ cta.saldo_pendiente }}
-      </li>
-    {% endfor %}
-  </ul>
-{% endif %}
+{% block content %}
+<main style="max-width:900px;margin:0 auto;padding:20px;">
 
-{% if deudas_otros %}
-  <h3>Otros conceptos pendientes en el año</h3>
-  <ul>
-    {% for cta in deudas_otros %}
-      <li>
-        {{ cta.concepto.nombre }}{% if cta.mes %} (mes {{ cta.mes }}){% endif %}:
-        ${{ cta.saldo_pendiente }}
-      </li>
-    {% endfor %}
-  </ul>
-{% endif %}
+  <h2 style="color:var(--danger-color);margin-bottom:10px;">
+    Boletín bloqueado por cartera
+  </h2>
 
-<p><strong>Total pendiente:</strong> ${{ total_pendiente }}</p>
+  <div style="
+      background:#fff;
+      padding:20px;
+      border-radius:12px;
+      box-shadow:0 4px 12px rgba(0,0,0,0.06);
+      border:1px solid var(--border-color);
+      margin-bottom:20px;
+  ">
+    <p style="font-size:1rem;color:var(--text-color);">
+      El estudiante <strong>{{ estudiante }}</strong> no puede visualizar el boletín
+      del <strong>{{ trimestre }}º trimestre</strong> porque presenta
+      <span style="color:var(--danger-color);font-weight:600;">obligaciones económicas pendientes.</span>
+    </p>
+
+    <p style="margin-top:6px;color:var(--text-muted);">
+      <strong>Fecha límite del trimestre:</strong> {{ deadline|date:"d/m/Y" }}
+    </p>
+  </div>
+
+  {% if deudas_trimestre %}
+  <div style="
+      background:#fff;
+      padding:20px;
+      border-radius:12px;
+      box-shadow:0 4px 12px rgba(0,0,0,0.06);
+      border:1px solid var(--border-color);
+      margin-bottom:20px;
+  ">
+    <h3 style="color:var(--primary-color);margin-top:0;">Deudas del trimestre</h3>
+    <ul style="margin:0;padding-left:20px;color:var(--text-color);">
+      {% for cta in deudas_trimestre %}
+        <li style="margin-bottom:6px;">
+          {{ cta.concepto.nombre }} — mes {{ cta.mes }}:
+          <strong style="color:var(--danger-color);">
+            ${{ cta.saldo_pendiente }}
+          </strong>
+        </li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  {% if deudas_otros %}
+  <div style="
+      background:#fff;
+      padding:20px;
+      border-radius:12px;
+      box-shadow:0 4px 12px rgba(0,0,0,0.06);
+      border:1px solid var(--border-color);
+      margin-bottom:20px;
+  ">
+    <h3 style="color:var(--primary-color);margin-top:0;">Otros conceptos pendientes en el año</h3>
+    <ul style="margin:0;padding-left:20px;color:var(--text-color);">
+      {% for cta in deudas_otros %}
+        <li style="margin-bottom:6px;">
+          {{ cta.concepto.nombre }}
+          {% if cta.mes %}(mes {{ cta.mes }}){% endif %}:
+          <strong style="color:var(--danger-color);">
+            ${{ cta.saldo_pendiente }}
+          </strong>
+        </li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  <div style="
+      background:var(--bg-light);
+      padding:20px;
+      border-radius:12px;
+      border:1px solid var(--border-color);
+      text-align:center;
+  ">
+    <p style="font-size:1.1rem;margin:0;">
+      <strong>Total pendiente:</strong>
+      <span style="color:var(--danger-color);font-weight:700;">
+        ${{ total_pendiente }}
+      </span>
+    </p>
+  </div>
+
+</main>
+{% endblock %}

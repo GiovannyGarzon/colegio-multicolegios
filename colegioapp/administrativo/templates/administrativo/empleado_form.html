@@ -1,11 +1,23 @@
 {% extends "colegioapp/base.html" %}
-{% block title %}{% if edit_mode %}Editar Empleado{% else %}Nuevo Empleado{% endif %} | CEI GIN GABY{% endblock %}
+
+{% block title %}
+  {% if edit_mode %}Editar Empleado{% else %}Nuevo Empleado{% endif %} |
+  {% if request.school %}{{ request.school.name }}{% else %}Centro Educativo{% endif %}
+{% endblock %}
 
 {% block content %}
 <main style="max-width:820px;margin:0 auto;text-align:left;">
-  <h2 style="color:#00796B;">{% if edit_mode %}Editar empleado{% else %}Registrar nuevo empleado{% endif %}</h2>
+  <h2 style="color: var(--primary-color);">
+    {% if edit_mode %}Editar empleado{% else %}Registrar nuevo empleado{% endif %}
+  </h2>
 
-  <form method="post" style="background:#fff;padding:22px;border-radius:12px;box-shadow:0 4px 10px rgba(0,0,0,0.08);">
+  <form method="post"
+        style="
+          background:#fff;
+          padding:22px;
+          border-radius:12px;
+          box-shadow:0 4px 10px rgba(0,0,0,0.08);
+        ">
     {% csrf_token %}
 
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
@@ -13,6 +25,7 @@
         <label style="font-weight:600;">Nombres</label>
         {{ form.nombres }}
       </div>
+
       <div>
         <label style="font-weight:600;">Apellidos</label>
         {{ form.apellidos }}
@@ -22,6 +35,7 @@
         <label style="font-weight:600;">Identificación</label>
         {{ form.identificacion }}
       </div>
+
       <div>
         <label style="font-weight:600;">Cargo</label>
         {{ form.cargo }}
@@ -31,6 +45,7 @@
         <label style="font-weight:600;">Teléfono</label>
         {{ form.telefono }}
       </div>
+
       <div>
         <label style="font-weight:600;">Correo</label>
         {{ form.correo }}
@@ -45,6 +60,7 @@
         <label style="font-weight:600;">Fecha de ingreso</label>
         {{ form.fecha_ingreso }}
       </div>
+
       <div>
         <label style="font-weight:600;">Salario</label>
         {{ form.salario }}
@@ -56,14 +72,32 @@
     </div>
 
     {% if form.non_field_errors %}
-      <div style="color:#c62828;margin-top:10px;">{{ form.non_field_errors }}</div>
+      <div style="color: var(--danger-color, #c62828); margin-top:10px;">
+        {{ form.non_field_errors }}
+      </div>
     {% endif %}
 
     <div style="margin-top:18px;display:flex;gap:10px;">
-      <button type="submit" style="padding:10px 16px;background:#00796B;color:white;border:none;border-radius:8px;cursor:pointer;">
+      <button type="submit"
+              style="
+                padding:10px 16px;
+                background: var(--primary-color);
+                color:white;
+                border:none;
+                border-radius:8px;
+                cursor:pointer;
+              ">
         {% if edit_mode %}Actualizar{% else %}Guardar{% endif %}
       </button>
-      <a href="{% url 'administrativo:empleados' %}" style="padding:10px 16px;background:#9e9e9e;color:white;border-radius:8px;text-decoration:none;">
+
+      <a href="{% url 'administrativo:empleados' %}"
+         style="
+           padding:10px 16px;
+           background:#9e9e9e;
+           color:white;
+           border-radius:8px;
+           text-decoration:none;
+         ">
         Cancelar
       </a>
     </div>

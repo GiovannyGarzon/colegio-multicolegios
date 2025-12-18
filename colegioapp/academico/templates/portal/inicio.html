@@ -1,14 +1,29 @@
 {% extends "colegioapp/base.html" %}
 {% load extras %}
-{% block title %}Mi portal{% endblock %}
+{% block title %}Mi portal | Sistema Académico{% endblock %}
 
 {% block navbar %}
   {{ block.super }}
-  <nav style="background:#004d40; padding:10px 0;">
+  <nav style="background:var(--color-primary, #004d40); padding:10px 0;">
     <ul style="list-style:none; display:flex; justify-content:center; gap:18px; margin:0; padding:0;">
-      <li><a href="{% url 'academico:portal' %}" style="color:white; text-decoration:none;">🏠 Inicio</a></li>
-      <li><a href="#boletin" onclick="document.getElementById('boletinForm').scrollIntoView({behavior:'smooth'});" style="color:white; text-decoration:none;">📊 Ver boletín</a></li>
-      <li><a href="{% url 'logout' %}" style="color:white; text-decoration:none;">🔒 Salir</a></li>
+      <li>
+        <a href="{% url 'academico:portal' %}"
+           style="color:white; text-decoration:none;">
+          🏠 Inicio
+        </a>
+      </li>
+      <li>
+        <a href="#boletin"
+           onclick="document.getElementById('boletinForm')?.scrollIntoView({behavior:'smooth'});"
+           style="color:white; text-decoration:none;">
+          📊 Ver boletín
+        </a>
+      </li>
+      <li>
+        <a href="{% url 'logout' %}" style="color:white; text-decoration:none;">
+          🔒 Salir
+        </a>
+      </li>
     </ul>
   </nav>
 {% endblock %}
@@ -41,7 +56,10 @@
         </div>
 
         {% if anio %}
-          <form id="boletinForm" method="get" action="{% url 'academico:portal_boletin' %}" class="toolbar">
+          <form id="boletinForm"
+                method="get"
+                action="{% url 'academico:portal_boletin' %}"
+                class="toolbar">
             <input type="hidden" name="anio" value="{{ anio.id }}">
             <input type="hidden" name="curso" value="{{ est.curso.id }}">
             <input type="hidden" name="estudiante" value="{{ est.id }}">
@@ -55,9 +73,11 @@
             </select>
 
             <button type="submit" class="btn">Ver mi boletín</button>
-            <button class="btn btn-ghost" id="btnPdf">Descargar PDF</button>
+            <button type="button" class="btn btn-ghost" id="btnPdf">Descargar PDF</button>
           </form>
-          <small class="muted">El PDF se descarga por curso y período. Asegúrate de seleccionar un período.</small>
+          <small class="muted">
+            El PDF se descarga por curso y período. Asegúrate de seleccionar un período.
+          </small>
         {% else %}
           <p class="muted">Activa primero un año lectivo para consultar tu boletín.</p>
         {% endif %}
@@ -96,7 +116,7 @@
         {% endif %}
       </div>
 
-      <!-- 🔹 Tarjeta: Asistencia (fallas y retardos) -->
+      <!-- Tarjeta: Asistencia -->
       <div class="card">
         <div class="card-head">
           <span class="chip chip-warn">📅 Asistencia</span>
@@ -112,7 +132,9 @@
             <span class="label">Retardos:</span>
             <span class="value-strong">{{ tardanzas_anio|default:"0" }}</span>
           </p>
-          <small class="muted">Contabilizado con base en los pases de lista del año lectivo actual.</small>
+          <small class="muted">
+            Contabilizado con base en los pases de lista del año lectivo actual.
+          </small>
         {% else %}
           <p class="empty">No es posible calcular asistencia sin año lectivo activo.</p>
         {% endif %}
@@ -146,23 +168,32 @@
         {% endif %}
       </div>
 
-      <!-- Horario compacto por nivel -->
+      <!-- Horario compacto -->
       <div class="card card-horario-simple">
         <div class="card-head">
           <span class="chip chip-info">⏰ Horario</span>
           <h3>Horario de la jornada</h3>
         </div>
 
-        <div class="horario-simple">
-          {% for key, data in horarios_nivel.items %}
-            <div class="horario-line {% if key == nivel_horario %}horario-line-activo{% endif %}">
-              <div class="horario-nivel">{{ data.titulo }}</div>
-              <div class="horario-horas">
-                {{ data.inicio }} – {{ data.fin }}
-              </div>
+        {# ✅ ARREGLO: no asumir que horarios_nivel existe o trae datos #}
+        {% if anio %}
+          {% if horarios_nivel %}
+            <div class="horario-simple">
+              {% for key, data in horarios_nivel.items %}
+                <div class="horario-line {% if key == nivel_horario %}horario-line-activo{% endif %}">
+                  <div class="horario-nivel">{{ data.titulo }}</div>
+                  <div class="horario-horas">
+                    {{ data.inicio }} – {{ data.fin }}
+                  </div>
+                </div>
+              {% endfor %}
             </div>
-          {% endfor %}
-        </div>
+          {% else %}
+            <p class="empty">No hay horario configurado para mostrar.</p>
+          {% endif %}
+        {% else %}
+          <p class="empty">No hay año lectivo activo para mostrar el horario.</p>
+        {% endif %}
       </div>
     </div>
   </section>
@@ -172,7 +203,7 @@
 /* ===== Layout ===== */
 .portal-wrap{ max-width:1100px; margin:0 auto; padding:28px 18px; }
 .hero{ text-align:center; margin-bottom:18px; }
-.hero h2{ color:#00695c; font-size:28px; margin:0; }
+.hero h2{ color:var(--color-primary, #00695c); font-size:28px; margin:0; }
 .hero .hl{ color:#004d40; }
 .meta{ color:#607d8b; margin:6px 0 0; }
 .meta .dot{ margin:0 6px; }
@@ -205,7 +236,7 @@ select{
   padding:8px 10px; border-radius:10px; border:1px solid #cfd8dc; background:#fafafa;
 }
 .btn{
-  background:#004d40; color:#fff; border:none; border-radius:10px;
+  background:var(--color-primary, #004d40); color:#fff; border:none; border-radius:10px;
   padding:8px 14px; cursor:pointer;
 }
 .btn:hover{ filter:brightness(1.05); }
@@ -284,48 +315,50 @@ select{
   border:1px solid #81c784;
 }
 
-/* ===== Horario ===== */
-.card-horario{
-  max-height:540px;
-  overflow-y:auto;
-}
-.horario-dia{
-  font-weight:700;
-  color:#004d40;
-  padding:10px 12px 4px;
+/* ===== Horario simple ===== */
+.horario-simple{ display:flex; flex-direction:column; gap:6px; margin-top:6px; }
+.horario-line{
+  display:flex; justify-content:space-between; align-items:center;
+  padding:6px 10px; border-radius:8px; background:#f8fafc; border:1px solid #e2e8f0;
   font-size:14px;
 }
-.horario-tag-receso{
-  display:inline-block;
-  padding:2px 8px;
-  border-radius:999px;
-  font-size:12px;
-  background:#fff3e0;
-  color:#ef6c00;
-  border:1px solid #ffcc80;
+.horario-line-activo{
+  background:#e0f2f1;
+  border-color:var(--color-primary, #004d40);
 }
-.horario-desc{
-  font-size:12px;
-  color:#607d8b;
-  margin-left:2px;
+.horario-nivel{ font-weight:600; color:#004d40; }
+.horario-horas{ color:#455a64; }
+
+@media (max-width: 640px){
+  .toolbar{ flex-direction:column; align-items:flex-start; }
+  .horario-line{ flex-direction:column; align-items:flex-start; gap:2px; }
 }
 </style>
 
 <script>
-  // Espera a que cargue el DOM y activa el botón PDF
+  // Botón PDF: incluye anio, curso y estudiante
   document.addEventListener('DOMContentLoaded', function () {
-    const btn = document.getElementById('btnPdf');
-    const sel = document.getElementById('periodo');
-    if (btn && sel) {
+    const btn   = document.getElementById('btnPdf');
+    const sel   = document.getElementById('periodo');
+    const form  = document.getElementById('boletinForm');
+
+    if (btn && sel && form) {
       btn.addEventListener('click', function (ev) {
         ev.preventDefault();
+
         const per = sel.value;
         if (!per) {
           alert('Selecciona un período para descargar el PDF.');
           return;
         }
-        const url = "{% url 'academico:portal_boletin_pdf' %}" + "?periodo=" + per;
-        window.location = url;
+
+        const anio  = form.querySelector('input[name="anio"]').value;
+        const curso = form.querySelector('input[name="curso"]').value;
+        const est   = form.querySelector('input[name="estudiante"]').value;
+
+        const baseUrl = "{% url 'academico:portal_boletin_pdf' %}";
+        const qs = `?anio=${encodeURIComponent(anio)}&curso=${encodeURIComponent(curso)}&estudiante=${encodeURIComponent(est)}&periodo=${encodeURIComponent(per)}`;
+        window.location = baseUrl + qs;
       });
     }
   });

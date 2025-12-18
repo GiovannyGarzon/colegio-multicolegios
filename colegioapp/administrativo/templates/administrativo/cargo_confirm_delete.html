@@ -1,17 +1,44 @@
 {% extends "colegioapp/base.html" %}
-{% block title %}Eliminar Cargo | CEI GIN GABY{% endblock %}
+
+{% block title %}
+  Eliminar Cargo |
+  {% if request.school %}{{ request.school.name }}{% else %}Centro Educativo{% endif %}
+{% endblock %}
 
 {% block content %}
 <main style="max-width:700px;margin:0 auto;">
-  <h2 style="color:#c62828;">Eliminar cargo</h2>
-  <p>¿Seguro deseas eliminar el cargo <strong>{{ obj.nombre }}</strong>? Esta acción no se puede deshacer.</p>
+  <h2 style="color: var(--danger-color, #c62828);">Eliminar cargo</h2>
+
+  <p>
+    ¿Seguro deseas eliminar el cargo
+    <strong>{{ obj.nombre }}</strong>?
+    Esta acción no se puede deshacer.
+  </p>
 
   <form method="post" style="margin-top:12px;">
     {% csrf_token %}
-    <button type="submit" style="padding:10px 16px;background:#c62828;color:#fff;border:none;border-radius:8px;cursor:pointer;">
+
+    <button type="submit"
+            style="
+              padding:10px 16px;
+              background: var(--danger-color, #c62828);
+              color:#fff;
+              border:none;
+              border-radius:8px;
+              cursor:pointer;
+            ">
       Sí, eliminar
     </button>
-    <a href="{% url 'administrativo:cargos' %}" style="padding:10px 16px;background:#9e9e9e;color:#fff;border-radius:8px;text-decoration:none;margin-left:8px;">
+
+    <a href="{% url 'administrativo:cargos' %}"
+       style="
+         padding:10px 16px;
+         background: #9e9e9e;
+         color:#fff;
+         border-radius:8px;
+         text-decoration:none;
+         margin-left:8px;
+       ">
       Cancelar
     </a>
   </form>

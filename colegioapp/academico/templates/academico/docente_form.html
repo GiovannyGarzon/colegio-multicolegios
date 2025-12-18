@@ -1,76 +1,108 @@
 {% extends "colegioapp/base.html" %}
 {% load static %}
 
-{% block title %}{{ title }} | Centro Educativo Infantil GIN GABY{% endblock %}
+{% block title %}{{ title }} | {{ request.school.nombre|default:"Colegio" }}{% endblock %}
 
 {% block content %}
-<main>
-  <h2>{{ title }}</h2>
+<main style="max-width:900px; margin:0 auto; padding:20px;">
+
+  <h2 style="text-align:center; margin-bottom:25px; color:#111827;">
+    {{ title }}
+  </h2>
 
   <form method="post"
         enctype="multipart/form-data"
-        style="max-width:900px;margin:0 auto;display:grid;gap:16px;">
+        style="
+          max-width:900px;
+          margin:0 auto;
+          display:grid;
+          gap:16px;
+          background:white;
+          padding:24px;
+          border-radius:10px;
+          border:1px solid #e5e7eb;
+          box-shadow:0 2px 12px rgba(15,23,42,0.08);
+        ">
     {% csrf_token %}
 
     <div style="display:grid;grid-template-columns:2fr 1fr;gap:20px;align-items:flex-start;">
       <div style="display:grid;gap:12px;">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
           <div>
-            <label>Nombres</label>
+            <label style="font-weight:600; color:#374151;">Nombres</label>
             {{ form.nombres }}
-            {% if form.nombres.errors %}<div style="color:#c62828;">{{ form.nombres.errors }}</div>{% endif %}
+            {% if form.nombres.errors %}
+              <div style="color:#dc2626;">{{ form.nombres.errors }}</div>
+            {% endif %}
           </div>
           <div>
-            <label>Apellidos</label>
+            <label style="font-weight:600; color:#374151;">Apellidos</label>
             {{ form.apellidos }}
-            {% if form.apellidos.errors %}<div style="color:#c62828;">{{ form.apellidos.errors }}</div>{% endif %}
+            {% if form.apellidos.errors %}
+              <div style="color:#dc2626;">{{ form.apellidos.errors }}</div>
+            {% endif %}
           </div>
         </div>
 
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
           <div>
-            <label>Identificación</label>
+            <label style="font-weight:600; color:#374151;">Identificación</label>
             {{ form.identificacion }}
-            {% if form.identificacion.errors %}<div style="color:#c62828;">{{ form.identificacion.errors }}</div>{% endif %}
+            {% if form.identificacion.errors %}
+              <div style="color:#dc2626;">{{ form.identificacion.errors }}</div>
+            {% endif %}
           </div>
           <div>
-            <label>Teléfono</label>
+            <label style="font-weight:600; color:#374151;">Teléfono</label>
             {{ form.telefono }}
-            {% if form.telefono.errors %}<div style="color:#c62828;">{{ form.telefono.errors }}</div>{% endif %}
+            {% if form.telefono.errors %}
+              <div style="color:#dc2626;">{{ form.telefono.errors }}</div>
+            {% endif %}
           </div>
         </div>
 
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
           <div>
-            <label>Correo</label>
+            <label style="font-weight:600; color:#374151;">Correo</label>
             {{ form.correo }}
-            {% if form.correo.errors %}<div style="color:#c62828;">{{ form.correo.errors }}</div>{% endif %}
+            {% if form.correo.errors %}
+              <div style="color:#dc2626;">{{ form.correo.errors }}</div>
+            {% endif %}
           </div>
           <div>
-            <label>Curso asignado</label>
+            <label style="font-weight:600; color:#374151;">Curso asignado</label>
             {{ form.curso_asignado }}
-            {% if form.curso_asignado.errors %}<div style="color:#c62828;">{{ form.curso_asignado.errors }}</div>{% endif %}
+            {% if form.curso_asignado.errors %}
+              <div style="color:#dc2626;">{{ form.curso_asignado.errors }}</div>
+            {% endif %}
           </div>
         </div>
 
         <div>
-          <label>Usuario del sistema</label>
+          <label style="font-weight:600; color:#374151;">Usuario del sistema</label>
           {{ form.usuario }}
-          {% if form.usuario.errors %}<div style="color:#c62828;">{{ form.usuario.errors }}</div>{% endif %}
+          {% if form.usuario.errors %}
+            <div style="color:#dc2626;">{{ form.usuario.errors }}</div>
+          {% endif %}
         </div>
       </div>
 
       <!-- Columna derecha: foto tipo carnet -->
       <div style="text-align:center;">
-        <label>Foto tipo carné</label>
+        <label style="font-weight:600; color:#374151;">Foto tipo carné</label>
         <div style="margin:6px 0 10px;">
           {% if form.instance.foto %}
             <img src="{{ form.instance.foto.url }}"
                  alt="Foto del docente"
-                 style="width:120px;height:150px;object-fit:cover;border-radius:8px;border:1px solid #d1d5db;">
+                 style="width:120px;height:150px;object-fit:cover;
+                        border-radius:8px;border:1px solid #d1d5db;">
           {% else %}
-            <div style="width:120px;height:150px;border-radius:8px;border:1px dashed #d1d5db;
-                        display:flex;align-items:center;justify-content:center;font-size:12px;color:#9ca3af;">
+            <div style="
+                  width:120px;height:150px;
+                  border-radius:8px;border:1px dashed #d1d5db;
+                  display:flex;align-items:center;justify-content:center;
+                  font-size:12px;color:#9ca3af;
+                ">
               Sin foto
             </div>
           {% endif %}
@@ -79,17 +111,34 @@
         <p style="font-size:11px;color:#6b7280;margin-top:4px;">
           Formato JPG/PNG, orientación vertical tipo carné.
         </p>
-        {% if form.foto.errors %}<div style="color:#c62828;">{{ form.foto.errors }}</div>{% endif %}
+        {% if form.foto.errors %}
+          <div style="color:#dc2626;">{{ form.foto.errors }}</div>
+        {% endif %}
       </div>
     </div>
 
     <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:12px;">
       <a href="{% url 'academico:docentes' %}"
-         style="padding:10px 16px; background:#90a4ae; color:#fff; text-decoration:none; border-radius:8px;">
+         style="
+           padding:10px 16px;
+           background:#6b7280;
+           color:#fff;
+           text-decoration:none;
+           border-radius:8px;
+           font-size:0.95rem;
+         ">
         Cancelar
       </a>
       <button type="submit"
-              style="padding:10px 16px; background:#00796B; color:white; border:none; border-radius:8px; cursor:pointer;">
+              style="
+                padding:10px 16px;
+                background:#2563eb;
+                color:white;
+                border:none;
+                border-radius:8px;
+                cursor:pointer;
+                font-size:0.95rem;
+              ">
         Guardar
       </button>
     </div>

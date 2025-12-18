@@ -4,7 +4,18 @@ from .models import Estudiante, Docente, Curso, AsignaturaOferta, AnioLectivo, A
 from decimal import Decimal
 from django.contrib.auth.models import User, Group
 from cuentas.models import PerfilUsuario
+from django.utils import timezone
 
+def password_por_colegio_y_anio(school):
+    anio = timezone.now().year
+
+    if not school:
+        return f"Clave{anio}"
+
+    base = (getattr(school, "slug", None) or school.name or "Colegio").strip()
+    base = "".join(ch for ch in base if ch.isalnum())
+
+    return f"{base}{anio}"
 
 class EstudianteForm(forms.ModelForm):
     fecha_nacimiento = forms.DateField(
@@ -23,20 +34,6 @@ class EstudianteForm(forms.ModelForm):
             "direccion", "telefono", "correo", "curso", "acudiente",
             "foto"
         ]
-        widgets = {
-            "nombres": forms.TextInput(attrs={"class": "form-input"}),
-            "apellidos": forms.TextInput(attrs={"class": "form-input"}),
-            "identificacion": forms.TextInput(attrs={"class": "form-input"}),
-            "direccion": forms.TextInput(attrs={"class": "form-input"}),
-            "telefono": forms.TextInput(attrs={"class": "form-input"}),
-            "correo": forms.EmailInput(attrs={"class": "form-input"}),
-            "curso": forms.Select(attrs={"class": "form-select"}),
-            "acudiente": forms.TextInput(attrs={"class": "form-input"}),
-            "foto": forms.FileInput(attrs={
-                "class": "form-input",
-                "accept": "image/*"
-            }),
-        }
 
     def clean_identificacion(self):
         identificacion = (self.cleaned_data.get("identificacion") or "").strip()
@@ -44,81 +41,22 @@ class EstudianteForm(forms.ModelForm):
         if self.instance.pk:
             qs = qs.exclude(pk=self.instance.pk)
         if qs.exists():
-            raise forms.ValidationError("Ya existe un estudiante con esa identificación.")
+            raise ValidationError("Ya existe un estudiante con esa identificación.")
         return identificacion
 
     def save(self, commit=True):
-        """
-        - Guarda el Estudiante
-        - Si no tiene user asociado, crea:
-            - User con:
-                username = identificación
-                password = GinGaby2025
-            - Lo mete al grupo 'Estudiante'
-            - Crea Perfil copiando fecha_nacimiento, telefono, direccion y foto
-        """
         estudiante = super().save(commit=False)
-
-        creando = estudiante.pk is None  # True si es nuevo
-
         if commit:
             estudiante.save()
-
-        # Solo crear usuario/perfil cuando el estudiante es nuevo
-        if creando and estudiante.user is None:
-            ident = estudiante.identificacion.strip()
-
-            # Opcional: asegurarnos que no haya ya un User con ese username
-            if User.objects.filter(username=ident).exists():
-                # Si quieres ser más estricto, puedes lanzar ValidationError en vez de reutilizar
-                raise forms.ValidationError(
-                    f"Ya existe un usuario con el nombre de usuario {ident}."
-                )
-
-            user = User.objects.create_user(
-                username=ident,
-                password="GinGaby2025",
-                first_name=estudiante.nombres,
-                last_name=estudiante.apellidos,
-                email=estudiante.correo or "",
-            )
-
-            # Grupo Estudiante
-            grupo, _ = Group.objects.get_or_create(name="Estudiante")
-            user.groups.add(grupo)
-
-            # Vincular al modelo Estudiante
-            estudiante.user = user
-            estudiante.save()
-
-            # Crear Perfil con los datos del estudiante
-            PerfilUsuario.objects.get_or_create(
-                user=user,
-                defaults={
-                    "fecha_nacimiento": estudiante.fecha_nacimiento,
-                    "telefono": estudiante.telefono,
-                    "direccion": estudiante.direccion,
-                    "foto": estudiante.foto,
-                }
-            )
-
         return estudiante
 
 class DocenteForm(forms.ModelForm):
     class Meta:
         model = Docente
-        # 👇 OJO: quitamos "usuario"
-        fields = ["nombres", "apellidos", "identificacion",
-                  "correo", "telefono", "curso_asignado", "foto"]
-        widgets = {
-            "nombres": forms.TextInput(attrs={"class": "form-input"}),
-            "apellidos": forms.TextInput(attrs={"class": "form-input"}),
-            "identificacion": forms.TextInput(attrs={"class": "form-input"}),
-            "correo": forms.EmailInput(attrs={"class": "form-input"}),
-            "telefono": forms.TextInput(attrs={"class": "form-input"}),
-            "curso_asignado": forms.Select(attrs={"class": "form-select"}),
-            "foto": forms.ClearableFileInput(attrs={"class": "form-input"}),
-        }
+        fields = [
+            "nombres", "apellidos", "identificacion",
+            "correo", "telefono", "curso_asignado", "foto"
+        ]
 
     def clean_identificacion(self):
         identificacion = (self.cleaned_data.get("identificacion") or "").strip()
@@ -126,58 +64,13 @@ class DocenteForm(forms.ModelForm):
         if self.instance.pk:
             qs = qs.exclude(pk=self.instance.pk)
         if qs.exists():
-            raise forms.ValidationError("Ya existe un docente con esa identificación.")
+            raise ValidationError("Ya existe un docente con esa identificación.")
         return identificacion
 
     def save(self, commit=True):
-        """
-        - Guarda el Docente
-        - Si no tiene usuario asociado, crea:
-            - User con:
-                username = identificación
-                password = GinGaby2025
-            - Grupo 'Docente'
-            - Perfil con telefono y foto (lo que tenemos en Docente)
-        """
         docente = super().save(commit=False)
-
-        creando = docente.pk is None
-
         if commit:
             docente.save()
-
-        if creando and docente.usuario is None:
-            ident = docente.identificacion.strip()
-
-            if User.objects.filter(username=ident).exists():
-                raise forms.ValidationError(
-                    f"Ya existe un usuario con el nombre de usuario {ident}."
-                )
-
-            user = User.objects.create_user(
-                username=ident,
-                password="GinGaby2025",
-                first_name=docente.nombres,
-                last_name=docente.apellidos,
-                email=docente.correo or "",
-            )
-
-            grupo, _ = Group.objects.get_or_create(name="Docente")
-            user.groups.add(grupo)
-
-            docente.usuario = user
-            docente.save()
-
-            # Crear Perfil para el docente (solo tenemos teléfono y foto aquí)
-            PerfilUsuario.objects.get_or_create(
-                user=user,
-                defaults={
-                    "telefono": docente.telefono,
-                    "foto": docente.foto,
-                    # "direccion" y "fecha_nacimiento" las puedes agregar luego manualmente
-                }
-            )
-
         return docente
 
 class CursoForm(forms.ModelForm):

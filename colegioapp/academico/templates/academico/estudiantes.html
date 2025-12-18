@@ -1,22 +1,33 @@
 {% extends "colegioapp/base.html" %}
 {% load static %}
 
-{% block title %}Estudiantes | Centro Educativo Infantil GIN GABY{% endblock %}
+{% block title %}
+  Estudiantes |
+  {% if request.school %}{{ request.school.name }}{% else %}Centro Educativo Infantil GIN GABY{% endif %}
+{% endblock %}
 
 {% block content %}
 <main>
-  <h2>Estudiantes</h2>
+  <h2 style="color: var(--primary-color);">Estudiantes</h2>
+
   <div style="max-width:1000px; margin:10px auto 20px;">
     <a href="{% url 'academico:home' %}"
-       style="display:inline-block; background:#004d40; color:white;
-              padding:10px 16px; border-radius:8px; text-decoration:none;
-              transition:background 0.3s;">
+       style="
+          display:inline-block;
+          background: var(--primary-color);
+          color:white;
+          padding:10px 16px;
+          border-radius:8px;
+          text-decoration:none;
+          transition:background 0.3s;
+       ">
        ← Volver al módulo académico
     </a>
   </div>
 
   <!-- Filtros -->
-  <form method="get" style="max-width:1000px;margin:0 auto 18px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+  <form method="get"
+        style="max-width:1000px;margin:0 auto 18px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
     <input
       type="text" name="q" value="{{ q }}"
       placeholder="Buscar por nombre, apellido o identificación"
@@ -33,25 +44,31 @@
       {% endfor %}
     </select>
 
-    <button type="submit" style="padding:10px 16px; background:#00796B; color:white; border:none; border-radius:8px; cursor:pointer;">
+    <button type="submit"
+            style="padding:10px 16px; background: var(--primary-color);
+                   color:white; border:none; border-radius:8px; cursor:pointer;">
       Filtrar
     </button>
-    <a href="{% url 'academico:estudiantes' %}" style="padding:10px 16px; background:#90a4ae; color:white; border-radius:8px; text-decoration:none;">
+
+    <a href="{% url 'academico:estudiantes' %}"
+       style="padding:10px 16px; background:#90a4ae; color:white;
+              border-radius:8px; text-decoration:none;">
       Limpiar
     </a>
 
     <a href="{% url 'academico:estudiante_create' %}"
-       style="padding:10px 16px; background:#00796B; color:white; text-decoration:none; border-radius:8px;">
+       style="padding:10px 16px; background: var(--primary-color);
+              color:white; text-decoration:none; border-radius:8px;">
          + Nuevo estudiante
     </a>
-
   </form>
 
   <!-- Tabla -->
   <div style="max-width:1000px;margin:0 auto;">
-    <div style="overflow-x:auto; background:white; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.06);">
+    <div style="overflow-x:auto; background:white; border-radius:12px;
+                box-shadow:0 4px 12px rgba(0,0,0,0.06);">
       <table style="width:100%; border-collapse:collapse;">
-        <thead style="background:#e0f2f1;">
+        <thead style="background: var(--secondary-color, #e0f2f1);">
           <tr>
             <th style="text-align:left; padding:12px;">Identificación</th>
             <th style="text-align:left; padding:12px;">Apellidos</th>
@@ -75,8 +92,14 @@
               <td style="padding:10px 12px;">{{ e.acudiente|default:"" }}</td>
               <td style="padding:10px 12px; text-align:center;">{{ e.telefono|default:"" }}</td>
               <td style="padding:10px 12px; text-align:center; white-space:nowrap;">
-                <a href="{% url 'academico:estudiante_update' e.id %}" style="margin-right:6px; text-decoration:none;">✎ Editar</a>
-                <a href="{% url 'academico:estudiante_detail' e.id %}" style="margin-right:6px; text-decoration:none;">👁 Ver</a>
+                <a href="{% url 'academico:estudiante_update' e.id %}"
+                   style="margin-right:6px; text-decoration:none; color: var(--primary-color);">
+                   ✎ Editar
+                </a>
+                <a href="{% url 'academico:estudiante_detail' e.id %}"
+                   style="margin-right:6px; text-decoration:none; color: var(--primary-color);">
+                   👁 Ver
+                </a>
                 <a href="{% url 'academico:estudiante_delete' e.id %}"
                    style="color:#c62828; text-decoration:none;"
                    onclick="return confirm('¿Seguro que deseas eliminar este estudiante?');">
@@ -87,7 +110,10 @@
             {% endfor %}
           {% else %}
             <tr>
-              <td colspan="6" style="padding:14px; text-align:center; color:#607d8b;">No se encontraron estudiantes.</td>
+              <td colspan="7"
+                  style="padding:14px; text-align:center; color:#607d8b;">
+                  No se encontraron estudiantes.
+              </td>
             </tr>
           {% endif %}
         </tbody>
@@ -98,17 +124,34 @@
     {% if page_obj.paginator.num_pages > 1 %}
     <div style="display:flex; justify-content:center; gap:6px; margin:18px 0;">
       {% if page_obj.has_previous %}
-        <a href="?page=1{% if querystring %}&{{ querystring }}{% endif %}" style="padding:8px 10px; border:1px solid #cfd8dc; border-radius:8px; text-decoration:none;">« Primero</a>
-        <a href="?page={{ page_obj.previous_page_number }}{% if querystring %}&{{ querystring }}{% endif %}" style="padding:8px 10px; border:1px solid #cfd8dc; border-radius:8px; text-decoration:none;">‹ Anterior</a>
+        <a href="?page=1{% if querystring %}&{{ querystring }}{% endif %}"
+           style="padding:8px 10px; border:1px solid #cfd8dc;
+                  border-radius:8px; text-decoration:none;">
+          « Primero
+        </a>
+        <a href="?page={{ page_obj.previous_page_number }}{% if querystring %}&{{ querystring }}{% endif %}"
+           style="padding:8px 10px; border:1px solid #cfd8dc;
+                  border-radius:8px; text-decoration:none;">
+          ‹ Anterior
+        </a>
       {% endif %}
 
-      <span style="padding:8px 10px; border:1px solid #cfd8dc; border-radius:8px; background:#f5f5f5;">
+      <span style="padding:8px 10px; border:1px solid #cfd8dc;
+                   border-radius:8px; background:#f5f5f5;">
         Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
       </span>
 
       {% if page_obj.has_next %}
-        <a href="?page={{ page_obj.next_page_number }}{% if querystring %}&{{ querystring }}{% endif %}" style="padding:8px 10px; border:1px solid #cfd8dc; border-radius:8px; text-decoration:none;">Siguiente ›</a>
-        <a href="?page={{ page_obj.paginator.num_pages }}{% if querystring %}&{{ querystring }}{% endif %}" style="padding:8px 10px; border:1px solid #cfd8dc; border-radius:8px; text-decoration:none;">Última »</a>
+        <a href="?page={{ page_obj.next_page_number }}{% if querystring %}&{{ querystring }}{% endif %}"
+           style="padding:8px 10px; border:1px solid #cfd8dc;
+                  border-radius:8px; text-decoration:none;">
+          Siguiente ›
+        </a>
+        <a href="?page={{ page_obj.paginator.num_pages }}{% if querystring %}&{{ querystring }}{% endif %}"
+           style="padding:8px 10px; border:1px solid #cfd8dc;
+                  border-radius:8px; text-decoration:none;">
+          Última »
+        </a>
       {% endif %}
     </div>
     {% endif %}

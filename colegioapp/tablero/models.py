@@ -1,8 +1,10 @@
 from django.db import models
 from django.contrib.auth.models import User
 from academico.models import Estudiante, CalificacionLogro, Observador
+from myapp.models import School
 
 class Noticia(models.Model):
+    school = models.ForeignKey(School, on_delete=models.CASCADE)
     titulo = models.CharField(max_length=200)
     resumen = models.TextField(blank=True)               # opcional: texto corto
     cuerpo = models.TextField()                          # texto completo

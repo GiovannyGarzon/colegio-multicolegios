@@ -1,16 +1,19 @@
 {% extends "colegioapp/base.html" %}
 {% load static %}
 
-{% block title %}Matrículas | Centro Educativo Infantil GIN GABY{% endblock %}
+{% block title %}
+  Matrículas |
+  {% if request.school %}{{ request.school.name }}{% else %}Centro Educativo{% endif %}
+{% endblock %}
 
 {% block content %}
 <main>
-  <h2>Matrículas</h2>
+  <h2 style="color: var(--primary-color);">Matrículas</h2>
 
   <!-- Botón volver -->
   <div style="max-width:1000px; margin:10px auto 20px;">
     <a href="{% url 'administrativo:home' %}"
-       style="display:inline-block; background:#004d40; color:white;
+       style="display:inline-block; background: var(--primary-color); color:white;
               padding:10px 16px; border-radius:8px; text-decoration:none;
               transition:background 0.3s;">
        ← Volver al módulo administrativo
@@ -52,7 +55,7 @@
     </select>
 
     <button type="submit"
-            style="padding:10px 16px; background:#00796B; color:white;
+            style="padding:10px 16px; background: var(--primary-color); color:white;
                    border:none; border-radius:8px; cursor:pointer;">
       Filtrar
     </button>
@@ -64,12 +67,13 @@
     </a>
 
     <a href="{% url 'administrativo:matricula_create' %}"
-       style="padding:10px 16px; background:#00796B; color:white;
+       style="padding:10px 16px; background: var(--primary-color); color:white;
               text-decoration:none; border-radius:8px;">
       + Nueva matrícula
     </a>
+
     <a href="{% url 'administrativo:matriculas_promocionar' %}"
-       style="padding:10px 16px; background:#004d40; color:white;
+       style="padding:10px 16px; background: var(--primary-color); color:white;
               text-decoration:none; border-radius:8px;">
       ⇧ Promocionar matrículas
     </a>
@@ -81,7 +85,7 @@
                 box-shadow:0 4px 12px rgba(0,0,0,0.06);">
 
       <table style="width:100%; border-collapse:collapse;">
-        <thead style="background:#e0f2f1;">
+        <thead style="background-color: var(--secondary-color, #e0f2f1);">
           <tr>
             <th style="padding:12px;text-align:left;">Estudiante</th>
             <th style="padding:12px;text-align:left;">Identificación</th>
@@ -108,7 +112,7 @@
               {% if m.activo %}
                 <span style="color:#2e7d32; font-weight:bold;">Sí</span>
               {% else %}
-                <span style="color:#c62828; font-weight:bold;">No</span>
+                <span style="color: var(--danger-color, #c62828); font-weight:bold;">No</span>
               {% endif %}
             </td>
             <td style="padding:10px 12px; text-align:center; white-space:nowrap;">
@@ -117,7 +121,7 @@
 
               <a href="{% url 'administrativo:matricula_delete' m.id %}"
                  onclick="return confirm('¿Seguro que deseas eliminar esta matrícula?');"
-                 style="color:#c62828; text-decoration:none;">
+                 style="color: var(--danger-color, #c62828); text-decoration:none;">
                  🗑 Eliminar
               </a>
             </td>

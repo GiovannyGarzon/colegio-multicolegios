@@ -1,65 +1,97 @@
 {% extends "colegioapp/base.html" %}
-{% block title %}{% if edit_mode %}Editar{% else %}Nuevo{% endif %} Concepto | CEI GIN GABY{% endblock %}
+
+{% block title %}
+  {% if edit_mode %}Editar{% else %}Nuevo{% endif %} Concepto |
+  {% if request.school %}{{ request.school.name }}{% else %}Centro Educativo{% endif %}
+{% endblock %}
 
 {% block content %}
 <main style="max-width:800px;margin:0 auto;">
-  <h2 style="color:#00796B;">{% if edit_mode %}Editar{% else %}Nuevo{% endif %} Concepto de Pago</h2>
 
-  <form method="post" style="background:#fff;padding:24px;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,.08);">
+  <h2 style="color: var(--primary-color);">
+    {% if edit_mode %}Editar{% else %}Nuevo{% endif %} Concepto de Pago
+  </h2>
+
+  <form method="post"
+        style="background:#fff;padding:24px;border-radius:12px;
+               box-shadow:0 4px 12px rgba(0,0,0,.08);">
     {% csrf_token %}
 
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+
+      <!-- Nombre -->
       <div>
-        <label><strong>Nombre</strong></label>
+        <label style="font-weight:700;">Nombre</label>
         {{ form.nombre }}
         {{ form.nombre.errors }}
       </div>
 
+      <!-- Año -->
       <div>
-        <label><strong>Año</strong></label>
+        <label style="font-weight:700;">Año económico</label>
         {{ form.anio }}
         {{ form.anio.errors }}
       </div>
 
+      <!-- Valor -->
       <div>
-        <label><strong>Valor</strong></label>
+        <label style="font-weight:700;">Valor</label>
         {{ form.valor }}
         {{ form.valor.errors }}
       </div>
 
+      <!-- Recurrente -->
       <div>
-        <label style="display:block;"><strong>Recurrente</strong></label>
+        <label style="display:block;font-weight:700;">Recurrente</label>
         {{ form.recurrente }}
         {{ form.recurrente.errors }}
       </div>
 
+      <!-- Activo -->
       <div>
-        <label style="display:block;"><strong>Activo</strong></label>
+        <label style="display:block;font-weight:700;">Activo</label>
         {{ form.activo }}
         {{ form.activo.errors }}
       </div>
 
+      <!-- Descripción -->
       <div style="grid-column:1/-1;">
-        <label><strong>Descripción</strong></label>
+        <label style="font-weight:700;">Descripción</label>
         {{ form.descripcion }}
         {{ form.descripcion.errors }}
       </div>
+
     </div>
 
     {% if form.non_field_errors %}
-      <div style="margin-top:10px;color:#c62828;">{{ form.non_field_errors }}</div>
+      <div style="margin-top:12px;color: var(--danger-color, #c62828);">
+        {{ form.non_field_errors }}
+      </div>
     {% endif %}
 
-    <div style="margin-top:18px;display:flex;gap:10px;">
-      <button type="submit" style="background:#00796B;color:#fff;padding:10px 16px;border:none;border-radius:8px;cursor:pointer;">
+    <!-- Botones -->
+    <div style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap;">
+      <button type="submit"
+              style="background: var(--button-color); color:#fff;
+                     padding:10px 16px; border:none; border-radius:8px;
+                     cursor:pointer; font-weight:800;">
         {% if edit_mode %}Actualizar{% else %}Guardar{% endif %}
       </button>
-      <a href="{% url 'cartera:conceptos' %}" style="background:#9e9e9e;color:#fff;padding:10px 16px;border-radius:8px;text-decoration:none;">Cancelar</a>
+
+      <a href="{% url 'cartera:conceptos' %}"
+         style="background:#90a4ae;color:#fff;padding:10px 16px;
+                border-radius:8px;text-decoration:none;font-weight:700;">
+        Cancelar
+      </a>
     </div>
   </form>
 
   <div style="margin-top:16px;">
-    <a href="{% url 'cartera:conceptos' %}" style="text-decoration:none;">← Volver a Conceptos</a>
+    <a href="{% url 'cartera:conceptos' %}"
+       style="text-decoration:none;color: var(--primary-color);font-weight:700;">
+      ← Volver a Conceptos
+    </a>
   </div>
+
 </main>
 {% endblock %}

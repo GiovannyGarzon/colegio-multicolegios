@@ -1,12 +1,14 @@
 {% extends "colegioapp/base.html" %}
 
-{% block title %}Cargos | Centro Educativo Infantil GIN GABY{% endblock %}
+{% block title %}
+  Cargos |
+  {% if request.school %}{{ request.school.name }}{% else %}Centro Educativo{% endif %}
+{% endblock %}
 
 {% block content %}
 <main>
 
-
-  <h2>Gestión de Cargos</h2>
+  <h2 style="color: var(--primary-color);">Gestión de Cargos</h2>
   <p>Consulta, filtra y administra los cargos registrados en la institución.</p>
 
   <!-- Filtros -->
@@ -16,22 +18,26 @@
     <input type="text" name="q" value="{{ q }}"
            placeholder="Buscar por nombre o descripción"
            style="flex:1;padding:10px 12px;border:1px solid #cfd8dc;border-radius:8px;"/>
+
     <select name="activo"
             style="padding:10px 12px;border:1px solid #cfd8dc;border-radius:8px;">
       <option value="">Todos</option>
       <option value="1" {% if activo == '1' %}selected{% endif %}>Activos</option>
       <option value="0" {% if activo == '0' %}selected{% endif %}>Inactivos</option>
     </select>
+
     <button type="submit"
-            style="padding:10px 16px;background:#00796B;color:white;
+            style="padding:10px 16px;background: var(--primary-color);color:white;
                    border:none;border-radius:8px;cursor:pointer;">
       Filtrar
     </button>
+
     <a href="{% url 'administrativo:cargos' %}"
        style="padding:10px 16px;background:#90a4ae;color:white;border-radius:8px;
               text-decoration:none;">Limpiar</a>
+
     <a href="{% url 'administrativo:cargo_create' %}"
-       style="display:inline-block;background:#00796B;color:#fff;
+       style="display:inline-block;background: var(--primary-color);color:#fff;
               padding:10px 14px;border-radius:8px;text-decoration:none;">
        + Nuevo cargo
     </a>
@@ -42,7 +48,7 @@
     <div style="overflow-x:auto;background:white;border-radius:12px;
                 box-shadow:0 4px 12px rgba(0,0,0,0.06);">
       <table style="width:100%;border-collapse:collapse;">
-        <thead style="background:#e0f2f1;">
+        <thead style="background-color: var(--secondary-color, #e0f2f1);">
           <tr>
             <th style="text-align:left;padding:12px;">Nombre</th>
             <th style="text-align:left;padding:12px;">Descripción</th>
@@ -56,24 +62,32 @@
               <tr style="border-top:1px solid #eceff1;">
                 <td style="padding:10px 12px;">{{ c.nombre }}</td>
                 <td style="padding:10px 12px;">{{ c.descripcion|default:"—" }}</td>
+
                 <td style="text-align:center;padding:10px 12px;">
                   {% if c.activo %}
                     <span style="background:#e8f5e9;color:#2e7d32;padding:4px 8px;
                                  border-radius:12px;">Activo</span>
                   {% else %}
-                    <span style="background:#ffebee;color:#c62828;padding:4px 8px;
+                    <span style="background:#ffebee;color: var(--danger-color, #c62828);padding:4px 8px;
                                  border-radius:12px;">Inactivo</span>
                   {% endif %}
                 </td>
+
                 <td style="padding:10px 12px; text-align:center; white-space:nowrap;">
-                  <a href="{% url 'administrativo:cargo_update' c.id %}" style="text-decoration:none; margin-right:8px;">✏️ Editar</a>
-                  <a href="{% url 'administrativo:cargo_delete' c.id %}" style="text-decoration:none; color:#c62828;">🗑 Eliminar</a>
+                  <a href="{% url 'administrativo:cargo_update' c.id %}"
+                     style="text-decoration:none; margin-right:8px;">
+                    ✏️ Editar
+                  </a>
+                  <a href="{% url 'administrativo:cargo_delete' c.id %}"
+                     style="text-decoration:none; color: var(--danger-color, #c62828);">
+                    🗑 Eliminar
+                  </a>
                 </td>
               </tr>
             {% endfor %}
           {% else %}
             <tr>
-              <td colspan="3"
+              <td colspan="4"
                   style="padding:14px;text-align:center;color:#607d8b;">
                 No se encontraron cargos.
               </td>
@@ -106,13 +120,15 @@
       </div>
     {% endif %}
   </div>
+
   <!-- Botón de regreso -->
   <div style="max-width:900px; margin:10px auto 20px;">
     <a href="{% url 'administrativo:home' %}"
-       style="display:inline-block; background:#004d40; color:white;
+       style="display:inline-block; background: var(--primary-color); color:white;
               padding:10px 16px; border-radius:8px; text-decoration:none;">
        ← Volver al módulo administrativo
     </a>
   </div>
+
 </main>
 {% endblock content %}

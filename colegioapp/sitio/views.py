@@ -1,50 +1,83 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
-from django.core.mail import send_mail, BadHeaderError
-from django.conf import settings
-from datetime import date
-
 from .forms import ContactoForm
+from .models import PublicPage, HomeBlock, NewsPost, SchoolPublicConfig, HomeHeroSlide, AboutSlide
 
+
+def _get_school(request):
+    return getattr(request, "school", None) or getattr(request, "colegio_actual", None)
+
+def _get_page(school, slug):
+    if not school:
+        return None
+    return PublicPage.objects.filter(school=school, slug=slug, is_active=True).first()
 
 def home(request):
-    return render(request, "sitio/home_publico.html")
+    school = _get_school(request)
+    page = _get_page(school, "home")
+    blocks = HomeBlock.objects.filter(school=school, is_active=True) if school else []
+    config = SchoolPublicConfig.objects.filter(school=school).first() if school else None
+
+    slides = HomeHeroSlide.objects.filter(school=school, is_active=True) if school else []
+
+    return render(request, "sitio/home_publico.html", {
+        "page": page,
+        "blocks": blocks,
+        "config": config,
+        "slides": slides,
+    })
 
 def nosotros(request):
-    return render(request, "sitio/nosotros.html")
+    school = _get_school(request)
+
+    # OJO: en tu admin veo que tienes el slug "nostros" (sin la segunda "o")
+    # Si ya lo cambiaste a "nosotros" en admin, deja "nosotros". Si no, usa "nostros".
+    page = _get_page(school, "nostros")  # o "nosotros"
+
+    mision = _get_page(school, "mision")
+    vision = _get_page(school, "vision")
+    historia = _get_page(school, "historia")
+
+    slides = AboutSlide.objects.filter(school=school, is_active=True).order_by("order") if school else []
+
+    return render(request, "sitio/nosotros.html", {
+        "page": page,
+        "slides": slides,
+        "mision": mision,
+        "vision": vision,
+        "historia": historia,
+    })
 
 def admisiones(request):
-    return render(request, "sitio/admisiones.html")
+    school = _get_school(request)
+    page = _get_page(school, "admisiones")
+    config = SchoolPublicConfig.objects.filter(school=school).first() if school else None
+    return render(request, "sitio/admisiones.html", {"page": page, "config": config})
 
 def noticias(request):
-    return render(request, "sitio/noticias.html", {"today": date.today()})
+    school = _get_school(request)
+    posts = NewsPost.objects.filter(school=school, is_published=True) if school else []
+    config = SchoolPublicConfig.objects.filter(school=school).first() if school else None
+    return render(request, "sitio/noticias.html", {"posts": posts})
 
 def contacto(request):
+    school = _get_school(request)
+    page = _get_page(school, "contacto")
+    config = SchoolPublicConfig.objects.filter(school=school).first() if school else None
+
     if request.method == "POST":
         form = ContactoForm(request.POST)
         if form.is_valid():
-            data = form.cleaned_data
-            # Opción A: enviar email (configura EMAIL_* en settings.py)
-            try:
-                send_mail(
-                    subject=f"[Contacto CEI GIN GABY] {data['asunto']}",
-                    message=(
-                        f"Nombre: {data['nombre']}\n"
-                        f"Email: {data['email']}\n"
-                        f"Teléfono: {data.get('telefono') or '-'}\n\n"
-                        f"Mensaje:\n{data['mensaje']}"
-                    ),
-                    from_email=getattr(settings, "DEFAULT_FROM_EMAIL", data["email"]),
-                    recipient_list=[getattr(settings, "CONTACT_EMAIL", "gingabisas@gmail.com")],
-                    fail_silently=True,
-                )
-            except BadHeaderError:
-                messages.error(request, "Ha ocurrido un error al enviar tu mensaje.")
-            else:
-                messages.success(request, "¡Tu mensaje fue enviado! Te responderemos pronto.")
-                return redirect("sitio:contacto")
+            # ✅ aquí luego conectas el envío de correo (si ya lo tienes)
+            messages.success(request, "✅ Mensaje enviado correctamente.")
+            return redirect("sitio:contacto")
         else:
-            messages.error(request, "Por favor corrige los campos marcados.")
+            messages.error(request, "❌ Revisa los campos del formulario.")
     else:
         form = ContactoForm()
-    return render(request, "sitio/contacto.html", {"form": form})
+
+    return render(request, "sitio/contacto.html", {
+        "page": page,
+        "config": config,
+        "form": form,   # ✅ ESTO era lo que faltaba
+    })

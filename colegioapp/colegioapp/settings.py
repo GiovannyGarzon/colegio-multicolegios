@@ -4,7 +4,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent  # E:\colegio
 
 SECRET_KEY = 'django-insecure-rwgq=o$oyq(_&(&4dza=bpm^anaw^6m^2qs8=ydna7wi%=%qu8'
 DEBUG = True
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
+ALLOWED_HOSTS = [
+    '127.0.0.1',
+    'localhost',
+    'giongabi.local',
+    'sannicolas.local',
+]
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -30,8 +35,10 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'myapp.middleware.SchoolMiddleware',        # ← primero: pone request.colegio_actual
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'myapp.middleware.SchoolAccessMiddleware',  # ← segundo: candado por colegio
 ]
 
 ROOT_URLCONF = 'colegioapp.urls'
@@ -47,6 +54,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'sitio.context_processors.public_config',
             ],
         },
     },

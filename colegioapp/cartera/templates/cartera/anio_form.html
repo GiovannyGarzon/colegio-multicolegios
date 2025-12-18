@@ -1,43 +1,65 @@
 {% extends "colegioapp/base.html" %}
-{% block title %}{% if edit_mode %}Editar Año Económico{% else %}Nuevo Año Económico{% endif %} | CEI GIN GABY{% endblock %}
+
+{% block title %}
+  {% if edit_mode %}Editar Año Económico{% else %}Nuevo Año Económico{% endif %} |
+  {% if request.school %}{{ request.school.name }}{% else %}Centro Educativo{% endif %}
+{% endblock %}
 
 {% block content %}
 <main style="max-width:720px;margin:0 auto;text-align:left;">
-  <h2 style="color:#00796B;">{% if edit_mode %}Editar año económico{% else %}Registrar nuevo año económico{% endif %}</h2>
 
-  <form method="post" style="background:#fff;padding:22px;border-radius:12px;box-shadow:0 4px 10px rgba(0,0,0,0.08);">
+  <h2 style="color: var(--primary-color);">
+    {% if edit_mode %}Editar año económico{% else %}Registrar nuevo año económico{% endif %}
+  </h2>
+
+  <form method="post"
+        style="background:#fff;padding:22px;border-radius:12px;box-shadow:0 4px 10px rgba(0,0,0,0.08);">
     {% csrf_token %}
 
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+
       <div style="grid-column:1 / -1;">
         <label style="font-weight:600;">Nombre (ej: 2025)</label>
         {{ form.nombre }}
       </div>
+
       <div>
         <label style="font-weight:600;">Fecha inicio</label>
         {{ form.fecha_inicio }}
       </div>
+
       <div>
         <label style="font-weight:600;">Fecha fin</label>
         {{ form.fecha_fin }}
       </div>
+
       <div style="grid-column:1 / -1; display:flex; align-items:center; gap:8px; margin-top:6px;">
-        {{ form.activo }} <label style="font-weight:600;">Marcar como activo</label>
+        {{ form.activo }}
+        <label style="font-weight:600;">Marcar como activo</label>
       </div>
+
     </div>
 
     {% if form.non_field_errors %}
-      <div style="color:#c62828;margin-top:10px;">{{ form.non_field_errors }}</div>
+      <div style="color: var(--danger-color, #c62828); margin-top:10px;">
+        {{ form.non_field_errors }}
+      </div>
     {% endif %}
 
-    <div style="margin-top:18px;display:flex;gap:10px;">
-      <button type="submit" style="padding:10px 16px;background:#00796B;color:white;border:none;border-radius:8px;cursor:pointer;">
+    <div style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap;">
+      <button type="submit"
+              style="padding:10px 16px;background: var(--button-color); color:white;
+                     border:none;border-radius:8px;cursor:pointer;font-weight:700;">
         {% if edit_mode %}Actualizar{% else %}Guardar{% endif %}
       </button>
-      <a href="{% url 'cartera:anios' %}" style="padding:10px 16px;background:#9e9e9e;color:white;border-radius:8px;text-decoration:none;">
+
+      <a href="{% url 'cartera:anios' %}"
+         style="padding:10px 16px;background:#90a4ae;color:white;border-radius:8px;
+                text-decoration:none;font-weight:600;">
         Cancelar
       </a>
     </div>
+
   </form>
 </main>
 {% endblock %}

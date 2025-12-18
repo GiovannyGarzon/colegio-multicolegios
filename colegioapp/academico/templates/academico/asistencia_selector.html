@@ -1,69 +1,111 @@
 {% extends "colegioapp/base.html" %}
 
-{% block title %}Asistencia · Selector{% endblock %}
+{% block title %}Asistencia · Selector | {{ request.school.name }}{% endblock %}
 
 {% block content %}
-<main style="max-width:900px;margin:0 auto;">
-  <h2>Registrar asistencia</h2>
-  <p>Selecciona el año lectivo, curso, período y fecha para pasar lista.</p>
+<main style="max-width:900px;margin:0 auto;padding:20px;">
 
-  <form method="get" action="{% url 'academico:asistencia_tomar' %}"
-        style="margin-top:20px;display:grid;gap:14px;">
+  <h2 style="color:var(--primary-color); margin-bottom:10px;">
+    Registrar asistencia
+  </h2>
 
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-      <div style="text-align:left;">
-        <label><strong>Año lectivo</strong></label><br>
-        <select name="anio" style="width:100%;padding:6px 8px;border-radius:6px;border:1px solid #cbd5e1;">
-          <option value="">-- Selecciona año --</option>
+  <p style="color:var(--text-muted);margin-bottom:20px;">
+    Selecciona el año lectivo, curso, período y fecha para pasar lista.
+  </p>
+
+  <form method="get"
+        action="{% url 'academico:asistencia_tomar' %}"
+        style="
+          background:#ffffff;
+          padding:22px;
+          border-radius:12px;
+          box-shadow:0 4px 12px rgba(0,0,0,0.06);
+          border:1px solid var(--border-color);
+          display:grid;
+          gap:18px;
+        ">
+
+    <!-- Año y Curso -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+
+      <!-- Año lectivo -->
+      <div>
+        <label style="font-weight:600;">Año lectivo</label>
+        <select name="anio"
+                style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border-color);">
+          <option value="">Seleccione…</option>
           {% for a in anios %}
-            <option value="{{ a.id }}" {% if a.id|stringformat:"s" == anio_selected %}selected{% endif %}>
+            <option value="{{ a.id }}"
+              {% if a.id|stringformat:'s' == anio_selected %}selected{% endif %}>
               {{ a.nombre }}{% if a.activo %} (activo){% endif %}
             </option>
           {% endfor %}
         </select>
       </div>
 
-      <div style="text-align:left;">
-        <label><strong>Curso</strong></label><br>
-        <select name="curso" style="width:100%;padding:6px 8px;border-radius:6px;border:1px solid #cbd5e1;">
-          <option value="">-- Selecciona curso --</option>
+      <!-- Curso -->
+      <div>
+        <label style="font-weight:600;">Curso</label>
+        <select name="curso"
+                style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border-color);">
+          <option value="">Seleccione…</option>
           {% for c in cursos %}
-            <option value="{{ c.id }}" {% if c.id|stringformat:"s" == curso_selected %}selected{% endif %}>
-              {{ c.grado }} {{ c.nombre }}
+            <option value="{{ c.id }}"
+              {% if c.id|stringformat:'s' == curso_selected %}selected{% endif %}>
+              {{ c.grado }} - {{ c.nombre }}
             </option>
           {% endfor %}
         </select>
       </div>
+
     </div>
 
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-      <div style="text-align:left;">
-        <label><strong>Período</strong></label><br>
-        <select name="periodo" style="width:100%;padding:6px 8px;border-radius:6px;border:1px solid #cbd5e1;">
-          <option value="">-- Selecciona período --</option>
+    <!-- Periodo y Fecha -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+
+      <!-- Periodo -->
+      <div>
+        <label style="font-weight:600;">Período</label>
+        <select name="periodo"
+                style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border-color);">
+          <option value="">Seleccione…</option>
           {% for p in periodos %}
-            <option value="{{ p.id }}" {% if p.id|stringformat:"s" == periodo_selected %}selected{% endif %}>
+            <option value="{{ p.id }}"
+              {% if p.id|stringformat:'s' == periodo_selected %}selected{% endif %}>
               {{ p.anio.nombre }} - {{ p.nombre }}
             </option>
           {% endfor %}
         </select>
       </div>
 
-      <div style="text-align:left;">
-        <label><strong>Fecha</strong></label><br>
+      <!-- Fecha -->
+      <div>
+        <label style="font-weight:600;">Fecha</label>
         <input type="date"
                name="fecha"
                value="{{ fecha_selected }}"
-               style="width:100%;padding:6px 8px;border-radius:6px;border:1px solid #cbd5e1;">
+               style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border-color);">
       </div>
+
     </div>
 
-    <div style="text-align:right;margin-top:10px;">
+    <!-- Botón -->
+    <div style="text-align:right;">
       <button type="submit"
-              style="padding:8px 16px;border:none;border-radius:8px;background:#0f766e;color:#fff;cursor:pointer;">
+              style="
+                padding:10px 20px;
+                background:var(--primary-color);
+                color:#fff;
+                border:none;
+                border-radius:8px;
+                cursor:pointer;
+                font-weight:600;
+              ">
         Ir a pasar lista
       </button>
     </div>
+
   </form>
+
 </main>
 {% endblock %}

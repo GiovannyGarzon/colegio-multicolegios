@@ -2,20 +2,27 @@
 {% load static %}
 
 {% block title %}
-    {% if edit_mode %}Editar matrícula{% else %}Nueva matrícula{% endif %}
+  {% if edit_mode %}Editar matrícula{% else %}Nueva matrícula{% endif %} |
+  {% if request.school %}{{ request.school.name }}{% else %}Centro Educativo{% endif %}
 {% endblock %}
 
 {% block content %}
 <main>
 
-  <h2>Matrículas</h2>
+  <h2 style="color: var(--primary-color);">Matrículas</h2>
 
   <!-- Botón volver -->
   <div style="max-width:1000px; margin:10px auto 20px;">
     <a href="{% url 'administrativo:matriculas' %}"
-       style="display:inline-block; background:#004d40; color:white;
-              padding:10px 16px; border-radius:8px; text-decoration:none;
-              transition:background .3s;">
+       style="
+         display:inline-block;
+         background: var(--primary-color);
+         color:white;
+         padding:10px 16px;
+         border-radius:8px;
+         text-decoration:none;
+         transition:background .3s;
+       ">
       ← Volver al listado
     </a>
   </div>
@@ -41,11 +48,16 @@
       <!-- Mensajes -->
       {% if messages %}
         {% for message in messages %}
-          <div style="padding:10px 14px; border-radius:8px; margin-bottom:12px;
-                      background:{% if message.tags == 'success' %}#e8f5e9
-                                 {% elif message.tags == 'error' %}#ffebee
-                                 {% else %}#eceff1{% endif %};
-                      color:#263238;">
+          <div style="
+              padding:10px 14px;
+              border-radius:8px;
+              margin-bottom:12px;
+              background:
+                {% if message.tags == 'success' %}#e8f5e9
+                {% elif message.tags == 'error' %}#ffebee
+                {% else %}#eceff1{% endif %};
+              color:#263238;
+          ">
             {{ message }}
           </div>
         {% endfor %}
@@ -58,7 +70,6 @@
         <!-- Estudiante -->
         <div style="margin-bottom:20px;">
           <label class="form-label" style="font-weight:600;">Estudiante</label>
-          <!-- SOLO el campo, sin <select> extra -->
           {{ form.estudiante }}
         </div>
 
@@ -90,14 +101,25 @@
         <!-- Botones -->
         <div style="display:flex; justify-content:flex-end; gap:12px;">
           <button type="submit"
-                  style="padding:10px 20px; background:#00796B; color:white;
-                         border:none; border-radius:8px; cursor:pointer;">
+                  style="
+                    padding:10px 20px;
+                    background: var(--primary-color);
+                    color:white;
+                    border:none;
+                    border-radius:8px;
+                    cursor:pointer;
+                  ">
             Guardar matrícula
           </button>
 
           <a href="{% url 'administrativo:matriculas' %}"
-             style="padding:10px 20px; background:#cfd8dc; color:#000;
-                    border-radius:8px; text-decoration:none;">
+             style="
+               padding:10px 20px;
+               background:#cfd8dc;
+               color:#000;
+               border-radius:8px;
+               text-decoration:none;
+             ">
             Cancelar
           </a>
         </div>

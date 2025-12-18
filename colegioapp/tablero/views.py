@@ -10,7 +10,9 @@ from datetime import date
 from academico.models import Periodo, AnioLectivo, AsignaturaOferta, CalificacionLogro
 
 
-def es_staff(u): return u.is_staff or u.is_superuser
+def es_staff(u):
+    return u.is_staff or u.is_superuser
+
 
 def _edad(desde):
     if not desde:
@@ -18,14 +20,28 @@ def _edad(desde):
     hoy = date.today()
     return hoy.year - desde.year - ((hoy.month, hoy.day) < (desde.month, desde.day))
 
+
 @login_required
 def tablero_home(request):
-    # Noticias (máx 5 activas)
-    noticias_qs = Noticia.objects.filter(activo=True).order_by("-fecha_publicacion")[:5]
+    # =======================
+    # 1) Noticias por colegio
+    # =======================
+    qs = Noticia.objects.filter(activo=True)
+
+    school = getattr(request, "school", None)
+    if school is not None:
+        qs = qs.filter(school=school)
+
+    qs = qs.order_by("-fecha_publicacion")
+
+    # máximo 5
+    noticias_qs = qs[:5]
     noticia_destacada = noticias_qs[0] if noticias_qs else None
     noticias_restantes = noticias_qs[1:] if len(noticias_qs) > 1 else []
 
-    # Perfil base
+    # =======================
+    # 2) Perfil base
+    # =======================
     perfil = {
         "nombre": request.user.get_full_name() or request.user.username,
         "usuario": request.user.username,
@@ -55,14 +71,17 @@ def tablero_home(request):
                 curso=estudiante.curso,
             )
             for of in ofertas:
-                qs = CalificacionLogro.objects.filter(estudiante=estudiante, logro__oferta=of)
-                if qs.exists():
-                    prom = qs.aggregate(p=Avg("nota"))["p"]
+                qs_notas = CalificacionLogro.objects.filter(
+                    estudiante=estudiante,
+                    logro__oferta=of
+                )
+                if qs_notas.exists():
+                    prom = qs_notas.aggregate(p=Avg("nota"))["p"]
                     promedios_tablero.append(
                         {"asignatura": of.asignatura.nombre, "promedio": prom}
                     )
 
-            # Tomamos el último período del año activo (por ejemplo P3, P4, etc.)
+            # Último período del año activo
             periodo_actual = (
                 Periodo.objects.filter(anio=anio_activo).order_by("-numero").first()
             )
@@ -72,8 +91,6 @@ def tablero_home(request):
             Observador.objects.filter(estudiante=estudiante)
             .order_by("-fecha")[:5]
         )
-
-    # (Si luego manejas docentes con user, lo puedes añadir aquí.)
 
     ctx = {
         "noticia_destacada": noticia_destacada,
@@ -88,11 +105,17 @@ def tablero_home(request):
     }
     return render(request, "tablero/tablero_home.html", ctx)
 
+
 @login_required
 def archivo(request):
-    # ver todas (activas e inactivas)
+    # ver todas (activas e inactivas) PERO del colegio actual
     qs = Noticia.objects.all()
+    school = getattr(request, "school", None)
+    if school is not None:
+        qs = qs.filter(school=school)
+    qs = qs.order_by("-fecha_publicacion")
     return render(request, "tablero/archivo.html", {"noticias": qs})
+
 
 @login_required
 @user_passes_test(es_staff)
@@ -102,6 +125,8 @@ def crear(request):
         if form.is_valid():
             n = form.save(commit=False)
             n.publicado_por = request.user
+            # 🔴 MUY IMPORTANTE: asignar colegio
+            n.school = getattr(request, "school", None)
             n.save()
             messages.success(request, "Noticia publicada.")
             return redirect("tablero:home")
@@ -109,10 +134,12 @@ def crear(request):
         form = NoticiaForm()
     return render(request, "tablero/form.html", {"form": form, "title": "Nueva noticia"})
 
+
 @login_required
 @user_passes_test(es_staff)
 def editar(request, pk):
-    n = get_object_or_404(Noticia, pk=pk)
+    school = getattr(request, "school", None)
+    n = get_object_or_404(Noticia, pk=pk, school=school)
     if request.method == "POST":
         form = NoticiaForm(request.POST, request.FILES, instance=n)
         if form.is_valid():
@@ -123,10 +150,12 @@ def editar(request, pk):
         form = NoticiaForm(instance=n)
     return render(request, "tablero/form.html", {"form": form, "title": f"Editar: {n.titulo}"})
 
+
 @login_required
 @user_passes_test(es_staff)
 def eliminar(request, pk):
-    n = get_object_or_404(Noticia, pk=pk)
+    school = getattr(request, "school", None)
+    n = get_object_or_404(Noticia, pk=pk, school=school)
     if request.method == "POST":
         n.delete()
         messages.success(request, "Noticia eliminada.")

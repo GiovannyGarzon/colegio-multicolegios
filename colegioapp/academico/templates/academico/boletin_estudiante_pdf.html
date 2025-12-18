@@ -4,7 +4,10 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Boletín {{ estudiante.apellidos }} {{ estudiante.nombres }}</title>
+  <title>
+    Boletín {{ estudiante.apellidos }} {{ estudiante.nombres }}
+    {% if colegio %}- {{ colegio.nombre }}{% endif %}
+  </title>
   <style>
     @page {
       size: A4;
@@ -107,7 +110,7 @@
     }
 
     .area-row td {
-      background: var(--azul-claro);;
+      background: var(--azul-claro);
       font-weight: bold;
       text-transform: uppercase;
     }
@@ -133,6 +136,7 @@
     .consolidado-block span.label{
       font-weight:bold;
     }
+
     /* ----- Consolidado horizontal por asignatura ----- */
     .col-consolidado {
       padding: 0;
@@ -167,6 +171,7 @@
     .tabla-consolidado-asig th.promedio{
       width: 18%;
     }
+
     /* ------------ BLOQUES FINALES ------------ */
     .bloque-final {
       margin-top: 10px;
@@ -215,7 +220,8 @@
     .bloques-asistencia-escala .bloque-final{
       margin-top:0;
     }
-/* ---- Tabla de asistencia ---- */
+
+    /* ---- Tabla de asistencia ---- */
     .tabla-asistencia{
       border-collapse: collapse;
       font-size: 10px;
@@ -237,6 +243,7 @@
       text-align: center;
       width: 60px;
     }
+
     /* ---------- FIRMAS ---------- */
     .firmas {
       margin-top: 26px;
@@ -247,11 +254,12 @@
     .firmas strong{
       font-size:10px;
     }
-/* ---------- TABLA PROMEDIOS + PUESTOS ---------- */
+
+    /* ---------- TABLA PROMEDIOS + PUESTOS ---------- */
     .tabla-promedios {
       border-collapse: collapse;
       font-size: 10px;
-      margin: 0 auto;           /* centrada */
+      margin: 0 auto;
       margin-top: 4px;
     }
 
@@ -272,32 +280,38 @@
 <div class="page">
 
   <!-- ===========================
-       ENCABEZADO NUEVO
+       ENCABEZADO (multi-colegio)
        =========================== -->
   <table style="margin-bottom:10px;">
     <tr>
 
       <!-- ESCUDO -->
       <td style="width:80px; text-align:left;">
-        <img src="{{ logo_url }}" style="height:70px;">
+        {% if logo_url %}
+          <img src="{{ logo_url }}" style="height:70px;">
+        {% endif %}
       </td>
 
       <!-- TITULO CENTRADO -->
       <td style="text-align:center;">
         <h1 style="margin:0; font-size:16px; font-weight:bold;">
-          CENTRO EDUCATIVO GIN GABI
+          {{ colegio.nombre|default:"CENTRO EDUCATIVO GIN GABI" }}
         </h1>
         <p style="margin:0; font-size:10px;">
-          "EDUCAMOS CON AMOR A QUIENES CONSTRUIRÁN EL MAÑANA"
+          "{{ colegio.lema|default:"EDUCAMOS CON AMOR A QUIENES CONSTRUIRÁN EL MAÑANA" }}"
         </p>
         <p style="margin:0; font-size:9px;">
-          Resolución de aprobación N°1358 - 1240
+          {{ colegio.resolucion|default:"Resolución de aprobación N°1358 - 1240" }}
         </p>
 
-        <p style="margin:4px 0 0; font-size:13px; font-weight:bold; text-transform:uppercase;
-            background: yellow;
-            display:inline-block;
-            padding:2px 4px;
+        <p style="
+          margin:4px 0 0;
+          font-size:13px;
+          font-weight:bold;
+          text-transform:uppercase;
+          background: yellow;
+          display:inline-block;
+          padding:2px 4px;
         ">
           {{ periodo.nombre }} – REGISTRO ESCOLAR VALORATIVO
         </p>
@@ -421,7 +435,7 @@
   </div>
 
   <!-- ===========================
-       FALLAS
+       FALLAS + ESCALA
        =========================== -->
   <div class="bloque-final">
     <table class="bloques-asistencia-escala">

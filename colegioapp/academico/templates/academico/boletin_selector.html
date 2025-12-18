@@ -1,19 +1,27 @@
 {# academico/templates/academico/boletin_selector.html #}
 {% extends "colegioapp/base.html" %}
-{% block title %}Boletines | CEI GIN GABY{% endblock %}
+
+{% block title %}
+  Boletines | {{ colegio.nombre|default:"Sistema Académico" }}
+{% endblock %}
 
 {% block content %}
-<main style="max-width:900px;margin:0 auto;">
-  <h2 style="color:#00796B;">Boletines académicos</h2>
-  <p>
+<main class="boletin-selector-main">
+  <h2 class="boletin-selector-title">
+    Boletines académicos
+    {% if colegio %}· {{ colegio.nombre }}{% endif %}
+  </h2>
+
+  <p class="boletin-selector-text">
     Selecciona <strong>año</strong>, <strong>curso</strong> y <strong>periodo</strong>.
     Luego verás el listado de estudiantes con su botón para ver el boletín
     y, si tienes permisos, podrás descargar varios boletines en un solo ZIP.
   </p>
 
-  <form method="get" style="background:#fff;padding:16px;border-radius:12px;box-shadow:0 4px 10px rgba(0,0,0,0.08); display:grid; grid-template-columns: 1fr 1fr 1fr auto; gap:10px; align-items:end;">
-    <div>
-      <label style="font-weight:600;">Año lectivo</label>
+  {# ============ FILTROS ============ #}
+  <form method="get" class="boletin-filter-card">
+    <div class="boletin-filter-field">
+      <label class="boletin-filter-label">Año lectivo</label>
       <select name="anio" class="form-select" required onchange="this.form.submit()">
         <option value="">— Seleccionar —</option>
         {% for a in anios %}
@@ -24,8 +32,8 @@
       </select>
     </div>
 
-    <div>
-      <label style="font-weight:600;">Curso</label>
+    <div class="boletin-filter-field">
+      <label class="boletin-filter-label">Curso</label>
       <select name="curso" class="form-select" required {% if not anio_selected %}disabled{% endif %}>
         <option value="">— Seleccionar —</option>
         {% for c in cursos %}
@@ -36,8 +44,8 @@
       </select>
     </div>
 
-    <div>
-      <label style="font-weight:600;">Periodo</label>
+    <div class="boletin-filter-field">
+      <label class="boletin-filter-label">Periodo</label>
       <select name="periodo" class="form-select" required {% if not anio_selected %}disabled{% endif %}>
         <option value="">— Seleccionar —</option>
         {% for p in periodos %}
@@ -48,72 +56,76 @@
       </select>
     </div>
 
-    <div>
-      <button type="submit" class="btn" style="width:100%;">Filtrar</button>
+    <div class="boletin-filter-field boton-filtrar">
+      <button type="submit" class="btn-main btn-block">Filtrar</button>
     </div>
   </form>
 
+  {# ============ LISTADO DE ESTUDIANTES ============ #}
   {% if estudiantes and anio_selected and periodo_selected %}
-    <div style="margin-top:18px;">
-      <h3 style="margin:0 0 10px 0;">Estudiantes del curso ({{ estudiantes|length }})</h3>
+    <div class="boletin-list-wrapper">
+      <h3 class="boletin-list-title">
+        Estudiantes del curso ({{ estudiantes|length }})
+      </h3>
 
       {# === FORM MASIVO === #}
       <form method="post" action="{% url 'academico:boletines_masivos' %}">
         {% csrf_token %}
-        {# Pasamos filtros para que la vista los tenga #}
         <input type="hidden" name="anio" value="{{ anio_selected }}">
         <input type="hidden" name="curso" value="{{ curso_selected }}">
         <input type="hidden" name="periodo" value="{{ periodo_selected }}">
 
-        <div style="overflow-x:auto; background:#fff; border-radius:12px; box-shadow:0 4px 10px rgba(0,0,0,0.06);">
-          <table style="width:100%; border-collapse:collapse;">
-            <thead style="background:#e0f2f1;">
+        <div class="boletin-table-shell">
+          <table class="boletin-table">
+            <thead>
               <tr>
                 {% if tiene_permiso_masivo %}
-                  <th style="text-align:center; padding:10px; width:40px;">
+                  <th class="col-check">
                     <input type="checkbox" id="check_todos"
                            onclick="document.querySelectorAll('.chk-est').forEach(c => c.checked = this.checked)">
                   </th>
                 {% endif %}
-                <th style="text-align:left; padding:10px;">Identificación</th>
-                <th style="text-align:left; padding:10px;">Apellidos</th>
-                <th style="text-align:left; padding:10px;">Nombres</th>
-                <th style="text-align:center; padding:10px;">Boletín</th>
+                <th>Identificación</th>
+                <th>Apellidos</th>
+                <th>Nombres</th>
+                <th class="col-boletin">Boletín</th>
               </tr>
             </thead>
             <tbody>
               {% for e in estudiantes %}
-                <tr style="border-top:1px solid #eceff1;">
+                <tr>
                   {% if tiene_permiso_masivo %}
-                    <td style="padding:10px; text-align:center;">
+                    <td class="col-check">
                       <input type="checkbox" class="chk-est" name="estudiantes" value="{{ e.id }}">
                     </td>
                   {% endif %}
-                  <td style="padding:10px;">{{ e.identificacion }}</td>
-                  <td style="padding:10px;">{{ e.apellidos }}</td>
-                  <td style="padding:10px;">{{ e.nombres }}</td>
-                  <td style="padding:8px; text-align:center;">
-                    {# Este sigue siendo el botón individual (versión web) #}
+                  <td>{{ e.identificacion }}</td>
+                  <td>{{ e.apellidos }}</td>
+                  <td>{{ e.nombres }}</td>
+                  <td class="col-boletin">
                     <a
                       href="{% url 'academico:boletin_estudiante' %}?anio={{ anio_selected }}&curso={{ curso_selected }}&periodo={{ periodo_selected }}&estudiante={{ e.id }}"
-                      class="btn"
-                      style="text-decoration:none; padding:8px 12px; border-radius:8px; display:inline-block;"
+                      class="btn-main btn-pill"
                       title="Ver boletín"
-                    >Ver boletín</a>
+                    >
+                      Ver boletín
+                    </a>
                   </td>
                 </tr>
               {% empty %}
-                <tr><td colspan="5" style="padding:12px; text-align:center; color:#607d8b;">Sin estudiantes en este curso.</td></tr>
+                <tr>
+                  <td colspan="5" class="boletin-empty">
+                    Sin estudiantes en este curso.
+                  </td>
+                </tr>
               {% endfor %}
             </tbody>
           </table>
         </div>
 
         {% if tiene_permiso_masivo %}
-          <div style="margin-top:10px; text-align:right;">
-            <button type="submit"
-                    class="btn"
-                    style="padding:8px 14px;border-radius:8px;">
+          <div class="boletin-mass-actions">
+            <button type="submit" class="btn-main">
               Descargar boletines seleccionados (ZIP)
             </button>
           </div>
@@ -121,22 +133,167 @@
       </form>
     </div>
   {% elif curso_selected %}
-    <p style="margin-top:12px; color:#607d8b;">
+    <p class="boletin-hint">
       Selecciona también el <strong>Periodo</strong> para habilitar los boletines.
     </p>
   {% endif %}
 
-  <div style="display:flex;justify-content:center;margin-top:18px;gap:10px;">
-    <a href="{% url 'academico:hub' %}"
-       style="padding:10px 16px;background:#9e9e9e;color:#fff;border-radius:8px;text-decoration:none;">
+  <div class="boletin-footer-actions">
+    <a href="{% url 'academico:hub' %}" class="btn-neutral">
       Ir a gestión académica avanzada
     </a>
   </div>
 </main>
 
 <style>
-  .btn{ background:#00796B; color:white; border:none; cursor:pointer; }
-  .btn-sec{ text-decoration:none; background:#9e9e9e; color:#fff; padding:10px 16px; border-radius:10px; }
-  .form-select{ width:100%; padding:8px 10px; border:1px solid #cfd8dc; border-radius:8px; }
+  :root{
+    /* Colores tomados del colegio si existen */
+    --color-primary: var(--colegio-color-primario, #00796B);
+    --color-primary-dark: var(--colegio-color-primario-oscuro, #005f54);
+    --color-neutral: var(--colegio-color-neutro, #9e9e9e);
+    --color-surface: #ffffff;
+    --color-border: #cfd8dc;
+    --color-header-bg: #e0f2f1;
+    --color-text-muted: #607d8b;
+  }
+
+  .boletin-selector-main{
+    max-width:900px;
+    margin:0 auto;
+  }
+  .boletin-selector-title{
+    color:var(--color-primary);
+    margin-bottom:4px;
+  }
+  .boletin-selector-text{
+    color:var(--color-text-muted);
+    margin-bottom:14px;
+  }
+
+  .boletin-filter-card{
+    background:var(--color-surface);
+    padding:16px;
+    border-radius:12px;
+    box-shadow:0 4px 10px rgba(0,0,0,0.08);
+    display:grid;
+    grid-template-columns:1fr 1fr 1fr auto;
+    gap:10px;
+    align-items:end;
+  }
+  .boletin-filter-field{
+    text-align:left;
+  }
+  .boletin-filter-label{
+    font-weight:600;
+    font-size:0.9rem;
+    display:block;
+    margin-bottom:4px;
+  }
+
+  .form-select{
+    width:100%;
+    padding:8px 10px;
+    border:1px solid var(--color-border);
+    border-radius:8px;
+    font-size:0.9rem;
+  }
+
+  .btn-main,
+  .btn-neutral{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:8px 14px;
+    border-radius:8px;
+    border:none;
+    text-decoration:none;
+    font-size:0.9rem;
+    cursor:pointer;
+    transition:background 0.15s ease, color 0.15s ease, transform 0.05s;
+  }
+  .btn-main{
+    background:var(--color-primary);
+    color:#fff;
+  }
+  .btn-main:hover{
+    background:var(--color-primary-dark);
+    transform:translateY(-1px);
+  }
+  .btn-neutral{
+    background:var(--color-neutral);
+    color:#fff;
+  }
+  .btn-neutral:hover{
+    background:#6b7280;
+  }
+  .btn-block{ width:100%; }
+  .btn-pill{ border-radius:999px; }
+
+  .boletin-list-wrapper{
+    margin-top:18px;
+  }
+  .boletin-list-title{
+    margin:0 0 10px 0;
+  }
+
+  .boletin-table-shell{
+    overflow-x:auto;
+    background:#fff;
+    border-radius:12px;
+    box-shadow:0 4px 10px rgba(0,0,0,0.06);
+  }
+  .boletin-table{
+    width:100%;
+    border-collapse:collapse;
+    font-size:0.9rem;
+  }
+  .boletin-table thead th{
+    background:var(--color-header-bg);
+    padding:10px;
+    text-align:left;
+  }
+  .boletin-table tbody td{
+    padding:10px;
+    border-top:1px solid #eceff1;
+  }
+  .col-check{
+    text-align:center;
+    width:40px;
+  }
+  .col-boletin{
+    text-align:center;
+    width:150px;
+  }
+  .boletin-empty{
+    padding:12px;
+    text-align:center;
+    color:var(--color-text-muted);
+  }
+
+  .boletin-mass-actions{
+    margin-top:10px;
+    text-align:right;
+  }
+
+  .boletin-hint{
+    margin-top:12px;
+    color:var(--color-text-muted);
+  }
+
+  .boletin-footer-actions{
+    display:flex;
+    justify-content:center;
+    margin-top:18px;
+    gap:10px;
+  }
+
+  @media (max-width: 768px){
+    .boletin-filter-card{
+      grid-template-columns:1fr;
+    }
+    .col-boletin{
+      width:auto;
+    }
+  }
 </style>
 {% endblock %}

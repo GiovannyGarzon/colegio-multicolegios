@@ -1,25 +1,76 @@
 {% extends "colegioapp/base.html" %}
 {% load static %}
 
-{% block title %}Detalle Estudiante | GIN GABY{% endblock %}
+{% block title %}Detalle del Estudiante | {{ request.school.name }}{% endblock %}
 
 {% block content %}
-<main>
-  <h2>Detalle del estudiante</h2>
-  <div style="max-width:800px;margin:0 auto;background:#fff;padding:16px;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.06);">
+<main style="max-width:820px;margin:0 auto;padding:20px 10px;">
+
+  <h2 style="color:var(--primary-color); margin-bottom:18px;">
+    Detalle del estudiante
+  </h2>
+
+  <div style="
+      background:#fff;
+      padding:20px 24px;
+      border-radius:12px;
+      box-shadow:0 4px 12px rgba(0,0,0,0.06);
+      display:grid;
+      gap:10px;
+  ">
     <p><strong>Nombre:</strong> {{ e.apellidos }} {{ e.nombres }}</p>
     <p><strong>Identificación:</strong> {{ e.identificacion }}</p>
-    <p><strong>Fecha nacimiento:</strong> {{ e.fecha_nacimiento|date:"Y-m-d" }}</p>
-    <p><strong>Curso:</strong> {% if e.curso %}{{ e.curso.grado }} - {{ e.curso.nombre }}{% else %}—{% endif %}</p>
-    <p><strong>Acudiente:</strong> {{ e.acudiente|default:"" }}</p>
-    <p><strong>Teléfono:</strong> {{ e.telefono|default:"" }}</p>
-    <p><strong>Correo:</strong> {{ e.correo|default:"" }}</p>
-    <p><strong>Dirección:</strong> {{ e.direccion|default:"" }}</p>
+    <p><strong>Fecha de nacimiento:</strong> {{ e.fecha_nacimiento|date:"Y-m-d" }}</p>
+
+    <p>
+      <strong>Curso:</strong>
+      {% if e.curso %}
+        {{ e.curso.grado }} - {{ e.curso.nombre }}
+      {% else %}
+        <em>Sin curso asignado</em>
+      {% endif %}
+    </p>
+
+    <p><strong>Acudiente:</strong> {{ e.acudiente|default:"—" }}</p>
+    <p><strong>Teléfono:</strong> {{ e.telefono|default:"—" }}</p>
+    <p><strong>Correo:</strong> {{ e.correo|default:"—" }}</p>
+    <p><strong>Dirección:</strong> {{ e.direccion|default:"—" }}</p>
   </div>
 
-  <div style="margin-top:16px; display:flex; gap:8px; justify-content:center;">
-    <a href="{% url 'academico:estudiante_update' e.id %}" style="padding:10px 16px; background:#00796B; color:#fff; text-decoration:none; border-radius:8px;">Editar</a>
-    <a href="{% url 'academico:estudiantes' %}" style="padding:10px 16px; background:#004d40; color:#fff; text-decoration:none; border-radius:8px;">Volver</a>
+  <div style="margin-top:20px; display:flex; gap:12px; justify-content:center;">
+    <a href="{% url 'academico:estudiante_update' e.id %}" class="btn-acad">
+      ✎ Editar
+    </a>
+
+    <a href="{% url 'academico:estudiantes' %}" class="btn-acad-muted">
+      ← Volver
+    </a>
   </div>
+
 </main>
+
+<style>
+  .btn-acad{
+    background:var(--primary-color);
+    color:#fff;
+    padding:10px 18px;
+    border-radius:999px;
+    text-decoration:none;
+    font-size:0.9rem;
+    transition:.15s;
+  }
+  .btn-acad:hover{ filter:brightness(1.07); }
+
+  .btn-acad-muted{
+    background:#9ca3af;
+    color:#fff;
+    padding:10px 18px;
+    border-radius:999px;
+    text-decoration:none;
+    font-size:0.9rem;
+    transition:.15s;
+  }
+  .btn-acad-muted:hover{ background:#6b7280; }
+</style>
+
 {% endblock content %}

@@ -29,17 +29,23 @@
     <!-- ENCABEZADO INSTITUCIONAL -->
     <header class="boletin-header">
       <div class="boletin-header-left">
-        <!-- logo del colegio si quieres (opcional) -->
-        {% comment %}
-          Si tuvieras un logo estático:
-          <img src="{% static 'img/logo.png' %}" alt="Logo" class="logo-colegio">
-        {% endcomment %}
+        {% if colegio.logo %}
+          <img src="{{ colegio.logo.url }}" alt="{{ colegio.nombre }}" class="logo-colegio">
+        {% endif %}
       </div>
 
       <div class="boletin-header-center">
-        <h1>CENTRO EDUCATIVO GIN GABI</h1>
-        <p class="slogan">"EDUCAMOS CON AMOR A QUIENES CONSTRUIRÁN EL MAÑANA"</p>
-        <p class="subinfo">Resolución de aprobación N°1358 - 1240</p>
+        <h1>
+          {{ colegio.nombre|default:"CENTRO EDUCATIVO GIN GABI" }}
+        </h1>
+
+        <p class="slogan">
+          "{{ colegio.lema|default:"EDUCAMOS CON AMOR A QUIENES CONSTRUIRÁN EL MAÑANA" }}"
+        </p>
+
+        <p class="subinfo">
+          {{ colegio.resolucion|default:"Resolución de aprobación N°1358 - 1240" }}
+        </p>
 
         <p class="periodo-pill">
           {{ periodo.nombre }} – Registro escolar valorativo
@@ -57,9 +63,9 @@
 
     <div class="header-divider"></div>
 
-    <!-- DATOS DEL ESTUDIANTE -->
+    <!-- DATOS DEL ESTUDIANTE EN HORIZONTAL -->
     <section class="datos-card">
-      <div class="fila-datos">
+      <div class="fila-datos fila-datos-horizontal">
         <div class="dato">
           <span class="label">Nombre</span>
           <span class="valor">{{ estudiante.nombres }} {{ estudiante.apellidos }}</span>
@@ -68,8 +74,6 @@
           <span class="label">Documento</span>
           <span class="valor">{{ estudiante.identificacion|default:"—" }}</span>
         </div>
-      </div>
-      <div class="fila-datos">
         <div class="dato">
           <span class="label">Grado</span>
           <span class="valor">{{ curso.grado }} {{ curso.nombre }}</span>
@@ -198,7 +202,7 @@
       </div>
     </section>
 
-    <!-- OBSERVACIÓN GENERAL -->
+    <!-- OBSERVACIÓN GENERAL + ASISTENCIA + ESCALA -->
     <section class="bloque">
       <div class="bloque-flex">
         <div class="bloque-col">
@@ -269,16 +273,17 @@
 
 <style>
   :root{
-    --verde: #00796B;
-    --verde-oscuro: #005f54;
-    --azul-claro: #d7e3ff;
-    --gris-claro: #f3f4f6;
-    --borde: #d1d5db;
+    --boletin-primary: var(--primary-color, #00796B);
+    --boletin-primary-dark: var(--primary-color-dark, #005f54);
+    --boletin-accent: var(--accent-color, #facc15);
+    --boletin-soft-bg: var(--soft-bg, #f1f5f9);
+    --boletin-border: var(--border-color, #d1d5db);
+    --boletin-muted: var(--muted-text, #6b7280);
   }
 
   .boletin-page{
     padding: 16px 10px 24px;
-    background: #f1f5f9;
+    background: var(--boletin-soft-bg);
   }
 
   .boletin-card{
@@ -318,16 +323,16 @@
     transition: all .15s ease;
   }
   .btn-primary{
-    background:var(--verde);
+    background:var(--boletin-primary);
     color:#fff;
   }
   .btn-primary:hover{
-    background:var(--verde-oscuro);
+    background:var(--boletin-primary-dark);
   }
   .btn-outline-print{
     background: #ffffff;
-    color: var(--verde);
-    border:1px solid var(--verde);
+    color: var(--boletin-primary);
+    border:1px solid var(--boletin-primary);
   }
   .btn-outline-print:hover{
     background:#ecfdf5;
@@ -348,9 +353,14 @@
   /* ENCABEZADO */
   .boletin-header{
     display:grid;
-    grid-template-columns:80px 1fr 80px;
+    grid-template-columns:100px minmax(0,1fr) 100px;
     gap:10px;
     align-items:center;
+    justify-items:center;   /* centra logo, texto y foto */
+  }
+  .boletin-header-left,
+  .boletin-header-right{
+    justify-self:center;
   }
   .boletin-header-center{
     text-align:center;
@@ -372,11 +382,17 @@
     margin-top:6px;
     display:inline-block;
     padding:3px 8px;
-    background: #facc15;
+    background: var(--boletin-accent);
     border-radius: 999px;
     font-size:11px;
     font-weight:600;
     text-transform:uppercase;
+  }
+
+  .logo-colegio{
+    width:70px;
+    height:70px;
+    object-fit:contain;
   }
 
   .foto-estudiante{
@@ -402,12 +418,12 @@
     margin:8px 0 10px;
     height:4px;
     border-radius:999px;
-    background:var(--verde);
+    background:var(--boletin-primary);
   }
 
   /* DATOS DEL ESTUDIANTE */
   .datos-card{
-    border:1px solid var(--borde);
+    border:1px solid var(--boletin-border);
     border-radius:10px;
     padding:8px 10px;
     background:#f9fafb;
@@ -417,12 +433,22 @@
     display:flex;
     flex-wrap:wrap;
     gap:18px;
-    margin-bottom:4px;
   }
-  .fila-datos:last-child{ margin-bottom:0; }
-  .dato{
-    min-width: 180px;
+  /* versión horizontal: 4 columnas iguales */
+  .fila-datos-horizontal{
+    display:grid;
+    grid-template-columns:repeat(4, minmax(0,1fr));
+    gap:0;
+    text-align:center;
   }
+  .fila-datos-horizontal .dato{
+    border-right:1px solid var(--boletin-border);
+    padding:4px 8px;
+  }
+  .fila-datos-horizontal .dato:last-child{
+    border-right:none;
+  }
+
   .dato .label{
     display:block;
     font-size:11px;
@@ -460,7 +486,7 @@
     font-size:12px;
   }
   .tabla-notas-web thead th{
-    background:var(--azul-claro);
+    background:#d7e3ff;
     border:1px solid #cbd5e1;
     padding:6px 8px;
     text-align:center;
@@ -487,7 +513,7 @@
   .asig-chip{
     display:inline-block;
     padding:2px 6px;
-    background:var(--azul-claro);
+    background:#d7e3ff;
     border-radius:4px;
     font-weight:600;
     border:1px solid #9fb6ff;
@@ -538,7 +564,7 @@
   }
 
   .muted{
-    color:#9ca3af;
+    color:var(--boletin-muted);
     font-size:11px;
   }
 
@@ -621,7 +647,7 @@
     font-weight:600;
   }
 
-  /* IMPRESIÓN: mantenemos algo limpio */
+  /* IMPRESIÓN */
   @media print{
     header, nav, footer, .boletin-actions{ display:none !important; }
     .boletin-page{
@@ -654,6 +680,11 @@
     .boletin-actions-right{
       width:100%;
       justify-content:flex-end;
+    }
+
+    .fila-datos-horizontal{
+      grid-template-columns:repeat(2, minmax(0,1fr));
+      row-gap:6px;
     }
   }
 </style>

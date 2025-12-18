@@ -1,76 +1,144 @@
 {% extends "colegioapp/base.html" %}
 
 {% block title %}
-  {% if edit_mode %}Editar año lectivo{% else %}Nuevo año lectivo{% endif %} | Centro Educativo Infantil GIN GABY
+  {% if edit_mode %}Editar año lectivo{% else %}Nuevo año lectivo{% endif %} | {{ request.school.name }}
 {% endblock %}
 
 {% block content %}
-<main>
-  <h2>Años lectivos</h2>
+<main style="max-width:720px;margin:0 auto;padding:20px;">
+
+  <h2 style="color:var(--primary-color, #00796B);margin-bottom:8px;">
+    Años lectivos
+  </h2>
 
   <!-- Botón volver -->
-  <div style="max-width:700px; margin:10px auto 20px;">
+  <div style="margin:10px 0 20px;">
     <a href="{% url 'academico:anios_lectivos' %}"
-       style="display:inline-block; background:#004d40; color:white;
-              padding:10px 16px; border-radius:8px; text-decoration:none;">
+       style="
+         display:inline-block;
+         background:var(--secondary-color, #004d40);
+         color:#ffffff;
+         padding:10px 16px;
+         border-radius:8px;
+         text-decoration:none;
+         font-size:0.95rem;
+       ">
       ← Volver al listado
     </a>
   </div>
 
-  <div style="max-width:700px; margin:0 auto 40px;">
-    <div style="background:white; padding:24px; border-radius:12px;
-                box-shadow:0 4px 12px rgba(0,0,0,0.06);">
-      <h3 style="margin-top:0;">
+  <div>
+    <div style="
+      background:#ffffff;
+      padding:24px 22px;
+      border-radius:12px;
+      box-shadow:0 4px 12px rgba(0,0,0,0.06);
+      border:1px solid var(--border-color, #e2e8f0);
+    ">
+      <h3 style="margin-top:0;color:var(--primary-strong, #004d40);font-size:1.15rem;margin-bottom:12px;">
         {% if edit_mode %}Editar año lectivo{% else %}Nuevo año lectivo{% endif %}
       </h3>
 
       {% if messages %}
         {% for message in messages %}
-          <div style="padding:10px 14px; border-radius:8px; margin-bottom:12px;
-                      background:#e0f2f1; color:#263238;">
+          <div style="
+            padding:10px 14px;
+            border-radius:8px;
+            margin-bottom:12px;
+            background:var(--info-bg, #e0f2fe);
+            color:var(--info-text, #0f172a);
+            border:1px solid var(--info-border, #bfdbfe);
+            font-size:0.95rem;
+          ">
             {{ message }}
           </div>
         {% endfor %}
       {% endif %}
 
-      <form method="post">
+      <form method="post" novalidate>
         {% csrf_token %}
 
+        <!-- Nombre -->
         <div style="margin-bottom:14px;">
-          <label><strong>Año (nombre)</strong></label>
+          <label style="display:block;font-weight:600;margin-bottom:4px;">Año (nombre)</label>
           {{ form.nombre }}
+          {% if form.nombre.errors %}
+            <div style="color:var(--danger-color, #c62828);font-size:0.9rem;margin-top:4px;">
+              {{ form.nombre.errors }}
+            </div>
+          {% endif %}
         </div>
 
-        <div style="display:flex; gap:16px; margin-bottom:14px;">
-          <div style="flex:1;">
-            <label><strong>Fecha inicio</strong></label>
+        <!-- Fechas -->
+        <div style="display:flex;gap:16px;margin-bottom:14px;flex-wrap:wrap;">
+          <div style="flex:1;min-width:180px;">
+            <label style="display:block;font-weight:600;margin-bottom:4px;">Fecha inicio</label>
             {{ form.fecha_inicio }}
+            {% if form.fecha_inicio.errors %}
+              <div style="color:var(--danger-color, #c62828);font-size:0.9rem;margin-top:4px;">
+                {{ form.fecha_inicio.errors }}
+              </div>
+            {% endif %}
           </div>
-          <div style="flex:1;">
-            <label><strong>Fecha fin</strong></label>
+          <div style="flex:1;min-width:180px;">
+            <label style="display:block;font-weight:600;margin-bottom:4px;">Fecha fin</label>
             {{ form.fecha_fin }}
+            {% if form.fecha_fin.errors %}
+              <div style="color:var(--danger-color, #c62828);font-size:0.9rem;margin-top:4px;">
+                {{ form.fecha_fin.errors }}
+              </div>
+            {% endif %}
           </div>
         </div>
 
-        <div style="margin-bottom:14px;">
-          <label style="display:flex; align-items:center; gap:8px;">
-            {{ form.activo }} Año lectivo activo
+        <!-- Activo -->
+        <div style="margin-bottom:10px;">
+          <label style="display:flex;align-items:center;gap:8px;font-weight:500;">
+            {{ form.activo }}
+            <span>Año lectivo activo</span>
           </label>
+          {% if form.activo.errors %}
+            <div style="color:var(--danger-color, #c62828);font-size:0.9rem;margin-top:4px;">
+              {{ form.activo.errors }}
+            </div>
+          {% endif %}
         </div>
 
-        <hr style="margin:20px 0;">
+        {% if form.non_field_errors %}
+          <div style="color:var(--danger-color, #c62828);font-size:0.9rem;margin:12px 0;">
+            {{ form.non_field_errors }}
+          </div>
+        {% endif %}
 
-        <div style="display:flex; justify-content:flex-end; gap:10px;">
-          <button type="submit"
-                  style="padding:10px 20px; background:#00796B; color:white;
-                         border:none; border-radius:8px; cursor:pointer;">
-            Guardar
-          </button>
+        <hr style="margin:18px 0;border:none;border-top:1px solid var(--border-color, #e5e7eb);">
+
+        <!-- Botones -->
+        <div style="display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap;">
           <a href="{% url 'academico:anios_lectivos' %}"
-             style="padding:10px 20px; background:#cfd8dc; color:#000;
-                    border-radius:8px; text-decoration:none;">
+             style="
+               padding:10px 20px;
+               background:var(--muted-button-bg, #e5e7eb);
+               color:var(--muted-button-text, #111827);
+               border-radius:8px;
+               text-decoration:none;
+               font-size:0.95rem;
+             ">
             Cancelar
           </a>
+
+          <button type="submit"
+                  style="
+                    padding:10px 20px;
+                    background:var(--primary-color, #00796B);
+                    color:#ffffff;
+                    border:none;
+                    border-radius:8px;
+                    cursor:pointer;
+                    font-weight:600;
+                    font-size:0.95rem;
+                  ">
+            Guardar
+          </button>
         </div>
       </form>
     </div>

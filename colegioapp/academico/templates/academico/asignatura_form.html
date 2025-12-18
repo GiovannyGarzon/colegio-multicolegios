@@ -1,32 +1,164 @@
 {% extends "colegioapp/base.html" %}
-{% block title %}{% if edit_mode %}Editar{% else %}Nueva{% endif %} Asignatura | CEI GIN GABY{% endblock %}
+
+{% block title %}
+  {% if edit_mode %}
+    Editar Asignatura | {{ request.school.nombre|default:"Institución Educativa" }}
+  {% else %}
+    Nueva Asignatura | {{ request.school.nombre|default:"Institución Educativa" }}
+  {% endif %}
+{% endblock %}
 
 {% block content %}
-<main style="max-width:700px;margin:0 auto;text-align:left;">
-  <h2 style="color:#00796B;">{% if edit_mode %}Editar{% else %}Registrar nueva{% endif %} asignatura</h2>
+<main style="max-width:720px;margin:0 auto;padding:20px 12px;">
 
-  <form method="post" style="background:#fff;padding:25px;border-radius:12px;box-shadow:0 4px 10px rgba(0,0,0,0.1);">
+  <h2 style="
+        text-align:center;
+        margin-bottom:20px;
+        color:var(--color-primary, #2563eb);
+      ">
+    {% if edit_mode %}Editar asignatura{% else %}Registrar nueva asignatura{% endif %}
+  </h2>
+
+  <form method="post"
+        style="
+          background:#ffffff;
+          padding:22px 20px 24px;
+          border-radius:14px;
+          box-shadow:0 4px 14px rgba(15,23,42,0.12);
+          border:1px solid var(--color-muted-border, #e5e7eb);
+          display:grid;
+          gap:16px;
+        ">
     {% csrf_token %}
-    <div style="display:flex;flex-direction:column;gap:12px;">
-      <label style="font-weight:bold;">Nombre</label>
-      {{ form.nombre }}
 
-      <label style="font-weight:bold;">Área (opcional)</label>
-      {{ form.area }}
+    <div style="display:grid;gap:14px;">
+      <div>
+        <label for="{{ form.nombre.id_for_label }}" class="fld-label">
+          Nombre de la asignatura
+        </label>
+        {{ form.nombre }}
+        {% if form.nombre.errors %}
+          <div class="fld-error">{{ form.nombre.errors }}</div>
+        {% endif %}
+      </div>
+
+      <div>
+        <label for="{{ form.area.id_for_label }}" class="fld-label">
+          Área (opcional)
+        </label>
+        {{ form.area }}
+        {% if form.area.errors %}
+          <div class="fld-error">{{ form.area.errors }}</div>
+        {% endif %}
+        <p style="margin-top:4px;font-size:0.8rem;color:#6b7280;">
+          Ejemplo: Matemáticas, Lenguaje, Ciencias Naturales…
+        </p>
+      </div>
     </div>
 
     {% if form.non_field_errors %}
-      <div style="color:#c62828;margin-top:10px;">{{ form.non_field_errors }}</div>
+      <div class="fld-error" style="margin-top:4px;">
+        {{ form.non_field_errors }}
+      </div>
     {% endif %}
 
-    <div style="margin-top:20px;display:flex;gap:10px;">
-      <button type="submit" style="padding:10px 16px;background:#00796B;color:white;border:none;border-radius:8px;cursor:pointer;">
-        {% if edit_mode %}Actualizar{% else %}Guardar{% endif %}
-      </button>
-      <a href="{% url 'academico:asignaturas' %}" style="padding:10px 16px;background:#9e9e9e;color:white;border-radius:8px;text-decoration:none;">
+    <div style="margin-top:10px;display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;">
+      <a href="{% url 'academico:asignaturas' %}" class="btn-acad-muted">
         Cancelar
       </a>
+
+      <button type="submit" class="btn-acad">
+        {% if edit_mode %}Actualizar{% else %}Guardar{% endif %}
+      </button>
     </div>
   </form>
+
+  <div style="text-align:center;margin-top:20px;">
+    <a href="{% url 'academico:asignaturas' %}" class="btn-acad-sec">
+      ← Volver al listado
+    </a>
+  </div>
 </main>
+
+<style>
+  /* Etiquetas de campos */
+  .fld-label{
+    display:inline-block;
+    margin-bottom:4px;
+    font-size:0.9rem;
+    font-weight:600;
+    color:#111827;
+  }
+
+  /* Errores de validación */
+  .fld-error{
+    margin-top:4px;
+    font-size:0.82rem;
+    color:#b91c1c;
+  }
+
+  /* Botón principal */
+  .btn-acad{
+    text-decoration:none;
+    background:var(--color-primary, #2563eb);
+    color:#ffffff;
+    padding:9px 16px;
+    border-radius:999px;
+    font-size:0.9rem;
+    border:1px solid transparent;
+    cursor:pointer;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    transition:background 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
+  }
+  .btn-acad:hover{
+    background:var(--color-primary-dark, #1d4ed8);
+    box-shadow:0 3px 8px rgba(15,23,42,0.22);
+    transform:translateY(-1px);
+  }
+
+  /* Botón gris (cancelar) */
+  .btn-acad-muted{
+    text-decoration:none;
+    background:var(--color-muted, #6b7280);
+    color:#ffffff;
+    padding:9px 16px;
+    border-radius:999px;
+    font-size:0.9rem;
+    border:1px solid transparent;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    transition:background 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
+  }
+  .btn-acad-muted:hover{
+    background:var(--color-muted-dark, #4b5563);
+    box-shadow:0 3px 8px rgba(15,23,42,0.22);
+    transform:translateY(-1px);
+  }
+
+  /* Botón secundario (volver abajo) */
+  .btn-acad-sec{
+    text-decoration:none;
+    background:var(--color-muted-soft, #9ca3af);
+    color:#ffffff;
+    padding:8px 16px;
+    border-radius:999px;
+    font-size:0.88rem;
+    border:1px solid transparent;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    transition:background 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
+  }
+  .btn-acad-sec:hover{
+    background:var(--color-muted, #6b7280);
+    box-shadow:0 3px 8px rgba(15,23,42,0.18);
+    transform:translateY(-1px);
+  }
+</style>
 {% endblock %}

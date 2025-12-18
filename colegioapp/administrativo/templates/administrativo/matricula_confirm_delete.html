@@ -1,11 +1,16 @@
-{% extends "base.html" %}
+{% extends "colegioapp/base.html" %}
 
-{% block title %}Eliminar matrícula{% endblock %}
+{% block title %}
+  Eliminar matrícula |
+  {% if request.school %}{{ request.school.name }}{% else %}Centro Educativo{% endif %}
+{% endblock %}
 
 {% block content %}
 <div class="container mt-4">
 
-    <h2 class="mb-3">Eliminar matrícula</h2>
+    <h2 class="mb-3" style="color: var(--danger-color, #c62828);">
+        Eliminar matrícula
+    </h2>
 
     <div class="alert alert-warning">
         <p>
@@ -21,9 +26,11 @@
 
     <form method="post">
         {% csrf_token %}
+
         <button type="submit" class="btn btn-danger">
             Sí, eliminar
         </button>
+
         <a href="{% url 'administrativo:matriculas' %}" class="btn btn-secondary">
             Cancelar
         </a>

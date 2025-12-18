@@ -1,65 +1,100 @@
 {% extends "colegioapp/base.html" %}
-{% block title %}Pensiones | Selector{% endblock %}
+
+{% block title %}
+  Pensiones | Selector |
+  {% if request.school %}{{ request.school.name }}{% else %}Centro Educativo{% endif %}
+{% endblock %}
 
 {% block content %}
 <main style="max-width:900px;margin:0 auto;">
 
-    <h2>Generación de Cargos Mensuales</h2>
-    <p>Selecciona año económico, curso, concepto y mes para generar la planilla mensual.</p>
+  <h2 style="color: var(--primary-color); margin-bottom:8px;">
+    Generación de Cargos Mensuales
+  </h2>
 
-    <form action="{% url 'cartera:cargos_mensuales_planilla' %}" method="get"
-          style="background:#fff;padding:20px;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,.1);">
+  <p style="color:#546e7a; margin-bottom:16px;">
+    Selecciona año económico, curso, concepto y mes para generar la planilla mensual.
+  </p>
 
-        <label><strong>Año económico</strong></label>
-        <select name="anio" required class="form-control">
-            <option value="">Seleccione...</option>
-            {% for a in anios %}
-                <option value="{{ a.id }}"
-                        {% if anio_selected == a.id|stringformat:"s" %}selected{% endif %}>
-                    {{ a.nombre }}
-                </option>
-            {% endfor %}
-        </select>
-        <br>
+  <form action="{% url 'cartera:cargos_mensuales_planilla' %}" method="get"
+        style="background:#fff;padding:22px;border-radius:12px;
+               box-shadow:0 4px 12px rgba(0,0,0,.08);">
 
-        <label><strong>Curso</strong></label>
-        <select name="curso" required class="form-control">
-            <option value="">Seleccione...</option>
-            {% for c in cursos %}
-                <option value="{{ c.id }}"
-                        {% if curso_selected == c.id|stringformat:"s" %}selected{% endif %}>
-                    {{ c.grado }} {{ c.nombre }}
-                </option>
-            {% endfor %}
-        </select>
-        <br>
+    <!-- Año económico -->
+    <div style="margin-bottom:14px;">
+      <label style="font-weight:700;">Año económico</label>
+      <select name="anio" required
+              style="width:100%;padding:10px 12px;border:1px solid #cfd8dc;border-radius:8px;">
+        <option value="">Seleccione…</option>
+        {% for a in anios %}
+          <option value="{{ a.id }}"
+                  {% if anio_selected == a.id|stringformat:"s" %}selected{% endif %}>
+            {{ a.nombre }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
 
-        <label><strong>Concepto (pensión)</strong></label>
-        <select name="concepto" required class="form-control">
-            <option value="">Seleccione...</option>
-            {% for c in conceptos %}
-                <option value="{{ c.id }}"
-                        {% if concepto_selected == c.id|stringformat:"s" %}selected{% endif %}>
-                    {{ c.nombre }} ({{ c.valor }})
-                </option>
-            {% endfor %}
-        </select>
-        <br>
+    <!-- Curso -->
+    <div style="margin-bottom:14px;">
+      <label style="font-weight:700;">Curso</label>
+      <select name="curso" required
+              style="width:100%;padding:10px 12px;border:1px solid #cfd8dc;border-radius:8px;">
+        <option value="">Seleccione…</option>
+        {% for c in cursos %}
+          <option value="{{ c.id }}"
+                  {% if curso_selected == c.id|stringformat:"s" %}selected{% endif %}>
+            {{ c.grado }} {{ c.nombre }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
 
-        <!-- NUEVO: selector de mes -->
-        <label><strong>Mes</strong></label>
-        <select name="mes" required class="form-control">
-            <option value="">Seleccione...</option>
-            {% for num, nombre in meses %}
-                <option value="{{ num }}"
-                        {% if mes_selected == num|stringformat:"s" %}selected{% endif %}>
-                    {{ nombre }}
-                </option>
-            {% endfor %}
-        </select>
-        <br>
+    <!-- Concepto -->
+    <div style="margin-bottom:14px;">
+      <label style="font-weight:700;">Concepto (pensión)</label>
+      <select name="concepto" required
+              style="width:100%;padding:10px 12px;border:1px solid #cfd8dc;border-radius:8px;">
+        <option value="">Seleccione…</option>
+        {% for c in conceptos %}
+          <option value="{{ c.id }}"
+                  {% if concepto_selected == c.id|stringformat:"s" %}selected{% endif %}>
+            {{ c.nombre }} ({{ c.valor }})
+          </option>
+        {% endfor %}
+      </select>
+    </div>
 
-        <button class="btn" style="margin-top:10px;">Continuar</button>
-    </form>
+    <!-- Mes -->
+    <div style="margin-bottom:18px;">
+      <label style="font-weight:700;">Mes</label>
+      <select name="mes" required
+              style="width:100%;padding:10px 12px;border:1px solid #cfd8dc;border-radius:8px;">
+        <option value="">Seleccione…</option>
+        {% for num, nombre in meses %}
+          <option value="{{ num }}"
+                  {% if mes_selected == num|stringformat:"s" %}selected{% endif %}>
+            {{ nombre }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- Botones -->
+    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+      <button type="submit"
+              style="padding:10px 18px;background: var(--button-color); color:#fff;
+                     border:none;border-radius:8px;cursor:pointer;font-weight:800;">
+        Continuar
+      </button>
+
+      <a href="{% url 'cartera:home' %}"
+         style="padding:10px 18px;background:#90a4ae;color:#fff;
+                border-radius:8px;text-decoration:none;font-weight:700;">
+        Cancelar
+      </a>
+    </div>
+
+  </form>
 </main>
 {% endblock %}

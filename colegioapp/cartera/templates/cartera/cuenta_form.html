@@ -1,36 +1,86 @@
 {% extends "colegioapp/base.html" %}
-{% block title %}{% if edit_mode %}Editar Cuenta{% else %}Nueva Cuenta{% endif %} | CEI GIN GABY{% endblock %}
+
+{% block title %}
+  {% if edit_mode %}Editar Cuenta{% else %}Nueva Cuenta{% endif %}
+  | {% if request.school %}{{ request.school.name }}{% else %}Centro Educativo{% endif %}
+{% endblock %}
 
 {% block content %}
 <main style="max-width:700px;margin:0 auto;text-align:left;">
-  <h2 style="color:#00796B;">{% if edit_mode %}Editar Cuenta por Cobrar{% else %}Nueva Cuenta por Cobrar{% endif %}</h2>
 
-  <form method="post" style="background:#fff;padding:25px;border-radius:12px;box-shadow:0 4px 10px rgba(0,0,0,0.1);">
+  <h2 style="color: var(--primary-color);">
+    {% if edit_mode %}Editar Cuenta por Cobrar{% else %}Nueva Cuenta por Cobrar{% endif %}
+  </h2>
+
+  <form method="post"
+        style="background:#fff;
+               padding:25px;
+               border-radius:12px;
+               box-shadow:0 4px 10px rgba(0,0,0,0.1);">
+
     {% csrf_token %}
+
     <div style="display:flex;flex-direction:column;gap:12px;">
+
       <label><strong>Estudiante</strong></label>
       {{ form.estudiante }}
+
       <label><strong>Concepto</strong></label>
       {{ form.concepto }}
+
       <label><strong>Fecha de vencimiento</strong></label>
       {{ form.fecha_vencimiento }}
+
       <label><strong>Valor total</strong></label>
       {{ form.valor_total }}
-      <label><strong>Saldo pendiente</strong> <small>(si lo dejas vacío toma el mismo valor)</small></label>
+
+      <label>
+        <strong>Saldo pendiente</strong>
+        <small style="color:#607d8b;">
+          (si lo dejas vacío toma el mismo valor)
+        </small>
+      </label>
       {{ form.saldo_pendiente }}
-      <label><strong>Pagada</strong> <small>(se marca automáticamente si saldo = 0)</small></label>
+
+      <label>
+        <strong>Pagada</strong>
+        <small style="color:#607d8b;">
+          (se marca automáticamente si saldo = 0)
+        </small>
+      </label>
       {{ form.pagada }}
+
     </div>
 
     {% if form.non_field_errors %}
-      <div style="color:#c62828;margin-top:10px;">{{ form.non_field_errors }}</div>
+      <div style="color:#c62828;margin-top:10px;">
+        {{ form.non_field_errors }}
+      </div>
     {% endif %}
 
-    <div style="margin-top:20px;display:flex;gap:10px;">
-      <button type="submit" style="padding:10px 16px;background:#00796B;color:white;border:none;border-radius:8px;cursor:pointer;">
+    <div style="margin-top:20px;display:flex;gap:10px;flex-wrap:wrap;">
+
+      <button type="submit"
+              style="padding:10px 16px;
+                     background: var(--primary-color);
+                     color:white;
+                     border:none;
+                     border-radius:8px;
+                     cursor:pointer;
+                     font-weight:700;">
         {% if edit_mode %}Actualizar{% else %}Guardar{% endif %}
       </button>
-      <a href="{% url 'cartera:cuentas' %}" style="padding:10px 16px;background:#9e9e9e;color:white;border-radius:8px;text-decoration:none;">Cancelar</a>
+
+      <a href="{% url 'cartera:cuentas' %}"
+         style="padding:10px 16px;
+                background:#9e9e9e;
+                color:white;
+                border-radius:8px;
+                text-decoration:none;
+                font-weight:700;">
+        Cancelar
+      </a>
+
     </div>
   </form>
 </main>

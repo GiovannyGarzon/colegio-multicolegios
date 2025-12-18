@@ -1,29 +1,56 @@
 {% extends "colegioapp/base.html" %}
-{% block title %}Logros | CEI GIN GABY{% endblock %}
+{% block title %}Logros | {{ request.school.name }}{% endblock %}
+
 {% block content %}
-<main>
-  <h2>Logros por Oferta y Periodo</h2>
+<main style="max-width:1100px;margin:0 auto;padding:20px 10px;">
 
-  <div style="max-width:1100px;margin:0 auto 14px;display:flex;gap:10px;justify-content:space-between;flex-wrap:wrap;">
-    <form method="get" style="display:flex;gap:10px;flex-wrap:wrap;flex:1;">
-      <input name="q" value="{{ q }}" placeholder="Buscar por título, curso, asignatura, año"
-             style="flex:1;min-width:240px;padding:10px 12px;border:1px solid #cfd8dc;border-radius:8px;">
+  <h2 style="color:var(--primary-color);margin-bottom:12px;">
+    Logros por Oferta y Período
+  </h2>
 
-      <select name="anio" style="padding:10px 12px;border:1px solid #cfd8dc;border-radius:8px;">
+  <div style="
+      margin:0 auto 14px;
+      display:flex;
+      gap:10px;
+      justify-content:space-between;
+      flex-wrap:wrap;
+  ">
+    <form method="get"
+          style="display:flex;gap:10px;flex-wrap:wrap;flex:1;align-items:center;">
+      <input name="q"
+             value="{{ q }}"
+             placeholder="Buscar por título, curso, asignatura, año"
+             style="
+               flex:1;
+               min-width:240px;
+               padding:10px 12px;
+               border:1px solid #cbd5e1;
+               border-radius:10px;
+               font-size:0.9rem;
+             ">
+
+      <select name="anio"
+              style="padding:10px 12px;border:1px solid #cbd5e1;border-radius:10px;font-size:0.9rem;">
         <option value="">Año</option>
         {% for a in anios %}
-          <option value="{{ a.id }}" {% if anio_selected == a.id|stringformat:'s' %}selected{% endif %}>{{ a.nombre }}</option>
+          <option value="{{ a.id }}" {% if anio_selected == a.id|stringformat:'s' %}selected{% endif %}>
+            {{ a.nombre }}
+          </option>
         {% endfor %}
       </select>
 
-      <select name="curso" style="padding:10px 12px;border:1px solid #cfd8dc;border-radius:8px;">
+      <select name="curso"
+              style="padding:10px 12px;border:1px solid #cbd5e1;border-radius:10px;font-size:0.9rem;">
         <option value="">Curso</option>
         {% for c in cursos %}
-          <option value="{{ c.id }}" {% if curso_selected == c.id|stringformat:'s' %}selected{% endif %}>{{ c.grado }} - {{ c.nombre }}</option>
+          <option value="{{ c.id }}" {% if curso_selected == c.id|stringformat:'s' %}selected{% endif %}>
+            {{ c.grado }} - {{ c.nombre }}
+          </option>
         {% endfor %}
       </select>
 
-      <select name="oferta" style="padding:10px 12px;border:1px solid #cfd8dc;border-radius:8px;min-width:220px;">
+      <select name="oferta"
+              style="padding:10px 12px;border:1px solid #cbd5e1;border-radius:10px;min-width:220px;font-size:0.9rem;">
         <option value="">Oferta (Año-Curso-Asignatura)</option>
         {% for o in ofertas %}
           <option value="{{ o.id }}" {% if oferta_selected == o.id|stringformat:'s' %}selected{% endif %}>
@@ -32,8 +59,9 @@
         {% endfor %}
       </select>
 
-      <select name="periodo" style="padding:10px 12px;border:1px solid #cfd8dc;border-radius:8px;">
-        <option value="">Periodo</option>
+      <select name="periodo"
+              style="padding:10px 12px;border:1px solid #cbd5e1;border-radius:10px;font-size:0.9rem;">
+        <option value="">Período</option>
         {% for p in periodos %}
           <option value="{{ p.id }}" {% if periodo_selected == p.id|stringformat:'s' %}selected{% endif %}>
             {{ p.anio.nombre }} - {{ p.nombre }}
@@ -41,88 +69,201 @@
         {% endfor %}
       </select>
 
-      <button type="submit" style="padding:10px 16px;background:#00796B;color:#fff;border:none;border-radius:8px;">Filtrar</button>
-      <a href="{% url 'academico:logros' %}" style="padding:10px 16px;background:#90a4ae;color:#fff;border-radius:8px;text-decoration:none;">Limpiar</a>
-      <a href="{% url 'academico:logro_create' %}" style="padding:10px 16px;background:#004d40;color:#fff;border-radius:8px;text-decoration:none;">+ Nuevo logro</a>
-      <a href="{% url 'academico:periodos' %}" style="padding:10px 16px;background:#004d40;color:#fff;border-radius:8px;text-decoration:none;">Periodos</a>
+      <button type="submit" class="btn-acad">
+        Filtrar
+      </button>
+
+      <a href="{% url 'academico:logros' %}" class="btn-acad-muted">
+        Limpiar
+      </a>
+
+      <a href="{% url 'academico:logro_create' %}" class="btn-acad-soft">
+        + Nuevo logro
+      </a>
+
+      <a href="{% url 'academico:periodos' %}" class="btn-acad-soft">
+        Periodos
+      </a>
     </form>
-
-
   </div>
 
-  <div style="max-width:1100px;margin:0 auto;">
-    <div style="overflow-x:auto;background:#fff;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.06);">
+  <div style="margin:0 auto;">
+    <div style="
+        overflow-x:auto;
+        background:#ffffff;
+        border-radius:12px;
+        box-shadow:0 4px 12px rgba(0,0,0,0.06);
+    ">
       <table style="width:100%;border-collapse:collapse;">
-        <thead style="background:#e0f2f1;">
+        <thead style="background:#f1f5f9;">
           <tr>
-            <th style="text-align:left;padding:12px;">Año</th>
-            <th style="text-align:left;padding:12px;">Curso</th>
-            <th style="text-align:left;padding:12px;">Asignatura</th>
-            <th style="text-align:left;padding:12px;">Periodo</th>
-            <th style="text-align:left;padding:12px;">Título</th>
-            <th style="text-align:left;padding:12px;">Peso %</th>
-            <th style="text-align:center;padding:12px;width:160px;">Acciones</th>
+            <th style="text-align:left;padding:12px;font-size:0.85rem;color:#0f172a;">Año</th>
+            <th style="text-align:left;padding:12px;font-size:0.85rem;color:#0f172a;">Curso</th>
+            <th style="text-align:left;padding:12px;font-size:0.85rem;color:#0f172a;">Asignatura</th>
+            <th style="text-align:left;padding:12px;font-size:0.85rem;color:#0f172a;">Período</th>
+            <th style="text-align:left;padding:12px;font-size:0.85rem;color:#0f172a;">Título</th>
+            <th style="text-align:left;padding:12px;font-size:0.85rem;color:#0f172a;">Peso %</th>
+            <th style="text-align:center;padding:12px;font-size:0.85rem;color:#0f172a;width:190px;">
+              Acciones
+            </th>
           </tr>
         </thead>
         <tbody>
           {% if page_obj.object_list %}
             {% for l in page_obj.object_list %}
-            <tr style="border-top:1px solid #eceff1;">
-              <td style="padding:10px 12px;">{{ l.oferta.anio.nombre }}</td>
-              <td style="padding:10px 12px;">{{ l.oferta.curso.grado }} - {{ l.oferta.curso.nombre }}</td>
-              <td style="padding:10px 12px;">{{ l.oferta.asignatura.nombre }}</td>
-              <td style="padding:10px 12px;">{{ l.periodo.nombre }}</td>
-              <td style="padding:10px 12px;">{{ l.titulo }}</td>
-              <td style="padding:10px 12px;">{{ l.peso }}%</td>
-              <td style="padding:10px 12px;text-align:center;">
+            <tr style="border-top:1px solid #e5e7eb;">
+              <td style="padding:10px 12px;font-size:0.9rem;color:#111827;">
+                {{ l.oferta.anio.nombre }}
+              </td>
+              <td style="padding:10px 12px;font-size:0.9rem;color:#111827;">
+                {{ l.oferta.curso.grado }} - {{ l.oferta.curso.nombre }}
+              </td>
+              <td style="padding:10px 12px;font-size:0.9rem;color:#111827;">
+                {{ l.oferta.asignatura.nombre }}
+              </td>
+              <td style="padding:10px 12px;font-size:0.9rem;color:#111827;">
+                {{ l.periodo.nombre }}
+              </td>
+              <td style="padding:10px 12px;font-size:0.9rem;color:#111827;">
+                {{ l.titulo }}
+              </td>
+              <td style="padding:10px 12px;font-size:0.9rem;color:#111827;">
+                {{ l.peso }}%
+              </td>
+              <td style="padding:10px 12px;text-align:center;font-size:0.85rem;white-space:nowrap;">
 
                 <!-- Botón actividades -->
                 <a href="{% url 'academico:actividades' l.id %}"
-                   style="text-decoration:none;margin-right:8px;">
+                   style="text-decoration:none;margin-right:8px;color:var(--primary-color);">
                   Actividades
-                </a> |
+                </a>
+                |
 
                 <!-- Editar -->
                 <a href="{% url 'academico:logro_update' l.id %}"
-                   style="text-decoration:none;margin:0 8px;">
+                   style="text-decoration:none;margin:0 8px;color:#0f172a;">
                   Editar
-                </a> |
+                </a>
+                |
 
                 <!-- Eliminar -->
                 <a href="{% url 'academico:logro_delete' l.id %}"
-                   style="text-decoration:none;color:#c62828;margin-left:8px;">
+                   style="text-decoration:none;color:#dc2626;margin-left:8px;">
                   Eliminar
                 </a>
               </td>
             </tr>
             {% endfor %}
           {% else %}
-            <tr><td colspan="7" style="padding:16px;text-align:center;color:#607d8b;">No hay logros registrados.</td></tr>
+            <tr>
+              <td colspan="7"
+                  style="padding:16px;text-align:center;color:#6b7280;font-size:0.9rem;">
+                No hay logros registrados.
+              </td>
+            </tr>
           {% endif %}
         </tbody>
       </table>
     </div>
 
     {% if page_obj.paginator.num_pages > 1 %}
-    <div style="display:flex;justify-content:center;gap:6px;margin:18px 0;">
+    <div style="display:flex;justify-content:center;gap:6px;margin:18px 0;font-size:0.85rem;">
       {% if page_obj.has_previous %}
-        <a href="?page=1{% if querystring %}&{{ querystring }}{% endif %}" style="padding:8px 10px;border:1px solid #cfd8dc;border-radius:8px;text-decoration:none;">« Primero</a>
-        <a href="?page={{ page_obj.previous_page_number }}{% if querystring %}&{{ querystring }}{% endif %}" style="padding:8px 10px;border:1px solid #cfd8dc;border-radius:8px;text-decoration:none;">‹ Anterior</a>
+        <a href="?page=1{% if querystring %}&{{ querystring }}{% endif %}"
+           class="pager-link">« Primero</a>
+        <a href="?page={{ page_obj.previous_page_number }}{% if querystring %}&{{ querystring }}{% endif %}"
+           class="pager-link">‹ Anterior</a>
       {% endif %}
-      <span style="padding:8px 10px;border:1px solid #cfd8dc;border-radius:8px;background:#f5f5f5;">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+
+      <span style="
+          padding:8px 10px;
+          border:1px solid #cbd5e1;
+          border-radius:999px;
+          background:#f9fafb;
+      ">
+        Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+      </span>
+
       {% if page_obj.has_next %}
-        <a href="?page={{ page_obj.next_page_number }}{% if querystring %}&{{ querystring }}{% endif %}" style="padding:8px 10px;border:1px solid #cfd8dc;border-radius:8px;text-decoration:none;">Siguiente ›</a>
-        <a href="?page={{ page_obj.paginator.num_pages }}{% if querystring %}&{{ querystring }}{% endif %}" style="padding:8px 10px;border:1px solid #cfd8dc;border-radius:8px;text-decoration:none;">Última »</a>
+        <a href="?page={{ page_obj.next_page_number }}{% if querystring %}&{{ querystring }}{% endif %}"
+           class="pager-link">Siguiente ›</a>
+        <a href="?page={{ page_obj.paginator.num_pages }}{% if querystring %}&{{ querystring }}{% endif %}"
+           class="pager-link">Última »</a>
       {% endif %}
     </div>
     {% endif %}
 
     <div style="display:flex;justify-content:center;margin-top:10px;">
-      <a href="{% url 'academico:hub' %}"
-         style="padding:10px 16px;background:#9e9e9e;color:#fff;border-radius:8px;text-decoration:none;">
+      <a href="{% url 'academico:hub' %}" class="btn-acad-muted">
         Ir a gestión académica avanzada
       </a>
     </div>
   </div>
 </main>
+
+<style>
+  .btn-acad{
+    background:var(--primary-color);
+    color:#ffffff;
+    padding:9px 16px;
+    border-radius:10px;
+    border:none;
+    cursor:pointer;
+    font-size:0.9rem;
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    gap:4px;
+    transition:0.15s ease;
+  }
+  .btn-acad:hover{
+    filter:brightness(1.07);
+  }
+
+  .btn-acad-soft{
+    background:rgba(16,185,129,0.08);
+    color:var(--primary-color);
+    padding:9px 16px;
+    border-radius:10px;
+    border:1px solid rgba(16,185,129,0.2);
+    cursor:pointer;
+    font-size:0.85rem;
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    gap:4px;
+    transition:0.15s ease;
+  }
+  .btn-acad-soft:hover{
+    background:rgba(16,185,129,0.12);
+  }
+
+  .btn-acad-muted{
+    background:#9ca3af;
+    color:#ffffff;
+    padding:9px 16px;
+    border-radius:10px;
+    text-decoration:none;
+    font-size:0.9rem;
+    display:inline-flex;
+    align-items:center;
+    gap:4px;
+    transition:0.15s ease;
+  }
+  .btn-acad-muted:hover{
+    background:#6b7280;
+  }
+
+  .pager-link{
+    padding:8px 10px;
+    border:1px solid #cbd5e1;
+    border-radius:999px;
+    text-decoration:none;
+    color:#374151;
+    transition:0.15s ease;
+  }
+  .pager-link:hover{
+    background:#e5e7eb;
+  }
+</style>
 {% endblock %}

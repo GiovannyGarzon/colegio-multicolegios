@@ -1,16 +1,29 @@
 {% extends "colegioapp/base.html" %}
 
-{% block title %}Años lectivos | Centro Educativo Infantil GIN GABY{% endblock %}
+{% block title %}Años lectivos | {{ request.school.nombre|default:"Colegio" }}{% endblock %}
 
 {% block content %}
 <main>
-  <h2>Años lectivos</h2>
+  <h2 style="max-width:900px;margin:10px auto 16px;font-size:1.6rem;color:#111827;">
+    Años lectivos
+  </h2>
 
   <!-- Botón volver -->
-  <div style="max-width:900px; margin:10px auto 20px;">
+  <div style="max-width:900px; margin:0 auto 20px;">
     <a href="{% url 'academico:hub' %}"
-       style="display:inline-block; background:#004d40; color:white;
-              padding:10px 16px; border-radius:8px; text-decoration:none;">
+       style="
+         display:inline-block;
+         background:#2563eb;
+         color:white;
+         padding:10px 16px;
+         border-radius:8px;
+         text-decoration:none;
+         font-size:0.95rem;
+         transition:background 0.2s, transform 0.1s;
+       "
+       onmouseover="this.style.background='#1d4ed8';"
+       onmouseout="this.style.background='#2563eb';"
+    >
       ← Volver al módulo académico
     </a>
   </div>
@@ -18,45 +31,59 @@
   <!-- Botón nuevo -->
   <div style="max-width:900px; margin:0 auto 20px; text-align:right;">
     <a href="{% url 'academico:anio_lectivo_create' %}"
-       style="display:inline-block; background:#00796B; color:white;
-              padding:10px 16px; border-radius:8px; text-decoration:none;">
+       style="
+         display:inline-block;
+         background:#16a34a;
+         color:white;
+         padding:10px 16px;
+         border-radius:8px;
+         text-decoration:none;
+         font-size:0.95rem;
+       ">
       + Nuevo año lectivo
     </a>
   </div>
 
   <!-- Tabla -->
   <div style="max-width:900px; margin:0 auto;">
-    <div style="overflow-x:auto; background:white; border-radius:12px;
-                box-shadow:0 4px 12px rgba(0,0,0,0.06);">
-      <table style="width:100%; border-collapse:collapse;">
-        <thead style="background:#e0f2f1;">
+    <div style="
+        overflow-x:auto;
+        background:white;
+        border-radius:12px;
+        box-shadow:0 4px 12px rgba(15,23,42,0.06);
+        border:1px solid #e5e7eb;
+      ">
+      <table style="width:100%; border-collapse:collapse; font-size:0.95rem;">
+        <thead style="background:#eff6ff; border-bottom:1px solid #e5e7eb;">
           <tr>
-            <th style="padding:10px;text-align:left;">Año</th>
-            <th style="padding:10px;text-align:left;">Fecha inicio</th>
-            <th style="padding:10px;text-align:left;">Fecha fin</th>
-            <th style="padding:10px;text-align:center;">Activo</th>
-            <th style="padding:10px;text-align:center;">Acciones</th>
+            <th style="padding:10px;text-align:left; color:#374151;">Año</th>
+            <th style="padding:10px;text-align:left; color:#374151;">Fecha inicio</th>
+            <th style="padding:10px;text-align:left; color:#374151;">Fecha fin</th>
+            <th style="padding:10px;text-align:center; color:#374151;">Activo</th>
+            <th style="padding:10px;text-align:center; color:#374151;">Acciones</th>
           </tr>
         </thead>
         <tbody>
         {% if anios %}
           {% for a in anios %}
-          <tr style="border-top:1px solid #eceff1;">
-            <td style="padding:8px 10px;">{{ a.nombre }}</td>
-            <td style="padding:8px 10px;">{{ a.fecha_inicio|date:"d/m/Y" }}</td>
-            <td style="padding:8px 10px;">{{ a.fecha_fin|date:"d/m/Y" }}</td>
+          <tr style="border-top:1px solid #e5e7eb; {% if forloop.counter0|divisibleby:2 %}background:#f9fafb;{% endif %}">
+            <td style="padding:8px 10px; color:#111827;">{{ a.nombre }}</td>
+            <td style="padding:8px 10px; color:#4b5563;">{{ a.fecha_inicio|date:"d/m/Y" }}</td>
+            <td style="padding:8px 10px; color:#4b5563;">{{ a.fecha_fin|date:"d/m/Y" }}</td>
             <td style="padding:8px 10px; text-align:center;">
               {% if a.activo %}
-                <span style="color:#2e7d32; font-weight:bold;">Sí</span>
+                <span style="color:#16a34a; font-weight:bold;">Sí</span>
               {% else %}
-                <span style="color:#c62828; font-weight:bold;">No</span>
+                <span style="color:#dc2626; font-weight:bold;">No</span>
               {% endif %}
             </td>
             <td style="padding:8px 10px; text-align:center; white-space:nowrap;">
               <a href="{% url 'academico:anio_lectivo_update' a.id %}"
-                 style="margin-right:6px; text-decoration:none;">✎ Editar</a>
+                 style="margin-right:6px; text-decoration:none; color:#2563eb;">
+                ✎ Editar
+              </a>
               <a href="{% url 'academico:anio_lectivo_delete' a.id %}"
-                 style="color:#c62828; text-decoration:none;"
+                 style="color:#dc2626; text-decoration:none;"
                  onclick="return confirm('¿Seguro que deseas eliminar este año lectivo?');">
                  🗑 Eliminar
               </a>
@@ -65,7 +92,8 @@
           {% endfor %}
         {% else %}
           <tr>
-            <td colspan="5" style="padding:12px; text-align:center; color:#607d8b;">
+            <td colspan="5"
+                style="padding:12px; text-align:center; color:#6b7280; background:#f9fafb;">
               No hay años lectivos registrados.
             </td>
           </tr>

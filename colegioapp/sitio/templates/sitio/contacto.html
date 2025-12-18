@@ -1,108 +1,297 @@
 {% extends "sitio/base_publico.html" %}
 {% load static %}
-{% block title %}Contacto | CEI GIN GABY{% endblock %}
+
+{% block title %}
+  {% if page and page.title %}{{ page.title }} | {% endif %}
+  {% if request.school %}{{ request.school.name }}{% else %}Contacto{% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  :root{
+    --primary: {% if request.school and request.school.color_primario %}{{ request.school.color_primario }}{% else %}#00796B{% endif %};
+    --secondary: {% if request.school and request.school.color_secundario %}{{ request.school.color_secundario }}{% else %}#004d40{% endif %};
+    --bg: {% if request.school and request.school.color_fondo %}{{ request.school.color_fondo }}{% else %}#f4fbf7{% endif %};
+    --btn: {% if request.school and request.school.color_botones %}{{ request.school.color_botones }}{% else %}#00796B{% endif %};
+  }
+
+  .hero{
+    background: linear-gradient(135deg, rgba(0,121,107,.10), rgba(0,77,64,.08));
+    padding: 34px 16px;
+    text-align:center;
+  }
+  .wrap{ max-width:1100px; margin:0 auto; padding:0 16px; }
+
+  .hero h2{ margin:0 0 6px; color: var(--secondary); font-weight:800; }
+  .hero p{ margin:0; color:#546e7a; }
+
+  .grid{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    margin: 18px 0 0;
+    align-items:start;
+  }
+
+  .card{
+    background:#fff;
+    border-radius:16px;
+    padding: 20px;
+    box-shadow:0 10px 26px rgba(0,0,0,.07);
+  }
+
+  .list{
+    list-style:none;
+    padding:0;
+    margin:0;
+    line-height:1.9;
+    color:#37474f;
+  }
+  .list strong{ color:#263238; }
+
+  .link{
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: 700;
+  }
+  .link:hover{ text-decoration: underline; }
+
+  .pill{
+    display:inline-block;
+    padding:6px 10px;
+    border-radius:999px;
+    background: rgba(0,77,64,.10);
+    color: var(--secondary);
+    font-size:.82rem;
+    font-weight:700;
+    margin-bottom:10px;
+  }
+
+  .btn-row{ display:flex; gap:10px; flex-wrap:wrap; margin-top:12px; }
+
+  .btn{
+    display:inline-block;
+    padding:10px 14px;
+    border-radius:10px;
+    text-decoration:none;
+    font-weight:800;
+    border: 0;
+    cursor:pointer;
+  }
+  .btn-primary{ background: var(--btn); color:#fff; }
+  .btn-wa{ background:#25D366; color:#fff; }
+
+  /* Form */
+  label{ display:block; font-weight:700; color:#37474f; margin-bottom:6px; font-size:.92rem; }
+  input, textarea, select{
+    width:100%;
+    border:1px solid rgba(0,0,0,.10);
+    border-radius:10px;
+    padding:10px 12px;
+    outline:none;
+    background:#fff;
+  }
+  input:focus, textarea:focus{
+    border-color: rgba(0,121,107,.35);
+    box-shadow: 0 0 0 4px rgba(0,121,107,.10);
+  }
+  textarea{ min-height: 120px; resize: vertical; }
+
+  .form-grid{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  /* checkbox alineado bien */
+  .check-row{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-top:12px;
+    color:#37474f;
+    font-weight:600;
+  }
+  .check-row input{
+    width:auto;
+    margin:0;
+    accent-color: var(--btn);
+  }
+
+  .err{ margin-top:6px; color:#c62828; font-size:.9rem; }
+
+  /* Map */
+  .map{
+    margin: 16px 0 34px;
+    border-radius:16px;
+    overflow:hidden;
+    box-shadow:0 10px 26px rgba(0,0,0,.07);
+    background:#fff;
+  }
+  .map iframe{ width:100%; height: 340px; border:0; display:block; }
+
+  @media (max-width: 980px){
+    .grid{ grid-template-columns: 1fr; }
+    .form-grid{ grid-template-columns: 1fr; }
+  }
+</style>
+{% endblock %}
 
 {% block content %}
-<main>
-  <h2>Contacto</h2>
-  <p>Estamos para ayudarte. Escríbenos por el formulario o usa cualquiera de nuestros medios de contacto.</p>
 
-  <!-- Mensajes (éxito / error) -->
+<section class="hero">
+  <div class="wrap">
+    <h2>{% if page and page.title %}{{ page.title }}{% else %}Contacto{% endif %}</h2>
+    <p>
+      {% if page and page.subtitle %}
+        {{ page.subtitle }}
+      {% else %}
+        Estamos para ayudarte. Escríbenos por el formulario o usa cualquiera de nuestros medios de contacto.
+      {% endif %}
+    </p>
+  </div>
+</section>
+
+<div class="wrap">
   {% if messages %}
-    <div style="max-width:980px;margin:14px auto;">
+    <div style="margin:14px 0;">
       {% for message in messages %}
-        <div style="padding:10px 14px;border-radius:8px;
-                    {% if message.tags == 'success' %}background:#e8f5e9;color:#2e7d32;
-                    {% elif message.tags == 'warning' %}background:#fff8e1;color:#8d6e63;
-                    {% elif message.tags == 'error' %}background:#ffebee;color:#c62828;
-                    {% else %}background:#e3f2fd;color:#1565c0;{% endif %}">
+        <div class="card" style="padding:12px 14px; margin-bottom:10px;">
           {{ message }}
         </div>
       {% endfor %}
     </div>
   {% endif %}
 
-  <!-- Layout 2 columnas -->
-  <div style="max-width:1100px;margin:20px auto;display:grid;grid-template-columns: 1fr 1fr;gap:24px;">
-    <!-- Columna izquierda: datos de contacto -->
-    <section style="background:#fff;border-radius:12px;padding:20px;box-shadow:0 4px 12px rgba(0,0,0,0.06);">
-      <h3 style="margin-top:0;">Información de contacto</h3>
+  <div class="grid">
 
-      <ul style="list-style:none;padding:0;margin:14px 0;line-height:1.9;">
-        <li><strong>WhatsApp:</strong> <a href="https://wa.me/573133144382" rel="noopener" target="_blank">313 314 4382</a></li>
-        <li><strong>Correo:</strong> <a href="mailto:c.egingabi@gmail.com">c.egingabi@gmail.com</a></li>
-        <li><strong>Dirección:</strong> Calle 5 Nº 6B-03, Barrio La Fragua</li>
+    <section class="card">
+      <span class="pill">Información de contacto</span>
+
+      <ul class="list">
+        {% if config and config.whatsapp %}
+          <li>
+            <strong>WhatsApp:</strong>
+            <a class="link"
+               href="https://wa.me/{{ config.whatsapp|cut:'+'|cut:' ' }}"
+               target="_blank" rel="noopener">
+              {{ config.whatsapp }}
+            </a>
+          </li>
+        {% endif %}
+
+        {% if config and config.email_public %}
+          <li>
+            <strong>Correo:</strong>
+            <a class="link" href="mailto:{{ config.email_public }}">
+              {{ config.email_public }}
+            </a>
+          </li>
+        {% endif %}
+
+        {% if request.school and request.school.direccion %}
+          <li><strong>Dirección:</strong> {{ request.school.direccion }}</li>
+        {% endif %}
       </ul>
 
-      <h4>Redes sociales</h4>
-      <p style="margin:8px 0;">
-        <a href="https://facebook.com/centroeducativogingabi" target="_blank" rel="noopener">Facebook: centroeducativogingabi</a><br>
-        <a href="https://instagram.com/centroeducativogingabi" target="_blank" rel="noopener">Instagram: centroeducativogingabi</a>
-      </p>
-
-      <h4>Horario de atención</h4>
-      <p style="margin:8px 0;">Lunes a Viernes: 7:00 a.m. – 4:00 p.m.<br>Sábados: 8:00 a.m. – 12:00 m.</p>
-
       <div style="margin-top:14px;">
-        <a href="{% url 'login' %}" style="padding:10px 14px;background:#004d40;color:#fff;border-radius:8px;text-decoration:none;">Ingresar (personal del colegio)</a>
+        <h4 style="margin:0 0 8px; color:var(--secondary);">Redes sociales</h4>
+        <div style="line-height:1.8;">
+          {% if config and config.facebook_url %}
+            <a class="link" href="{{ config.facebook_url }}" target="_blank" rel="noopener">Facebook</a><br>
+          {% endif %}
+          {% if config and config.instagram_url %}
+            <a class="link" href="{{ config.instagram_url }}" target="_blank" rel="noopener">Instagram</a><br>
+          {% endif %}
+          {% if config and config.youtube_url %}
+            <a class="link" href="{{ config.youtube_url }}" target="_blank" rel="noopener">YouTube</a>
+          {% endif %}
+        </div>
+      </div>
+
+      {% if config and config.schedule_text %}
+        <div style="margin-top:14px;">
+          <h4 style="margin:0 0 8px; color:var(--secondary);">Horario de atención</h4>
+          <p style="margin:0; color:#455a64;">{{ config.schedule_text }}</p>
+        </div>
+      {% endif %}
+
+      <div class="btn-row">
+        {% if config and config.whatsapp %}
+          <a class="btn btn-wa"
+             href="https://wa.me/{{ config.whatsapp|cut:'+'|cut:' ' }}"
+             target="_blank" rel="noopener">
+            💬 Escríbenos por WhatsApp
+          </a>
+        {% endif %}
       </div>
     </section>
 
-    <!-- Columna derecha: formulario -->
-    <section style="background:#fff;border-radius:12px;padding:20px;box-shadow:0 4px 12px rgba(0,0,0,0.06);">
-      <h3 style="margin-top:0;">Envíanos un mensaje</h3>
+    <section class="card">
+      <span class="pill">Envíanos un mensaje</span>
 
       <form method="post" novalidate>
         {% csrf_token %}
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+
+        <div class="form-grid">
           <div>
             <label>Nombre completo</label>
             {{ form.nombre }}
-            {% if form.nombre.errors %}<div style="color:#c62828;">{{ form.nombre.errors|striptags }}</div>{% endif %}
+            {% if form.nombre.errors %}<div class="err">{{ form.nombre.errors|striptags }}</div>{% endif %}
           </div>
+
           <div>
             <label>Correo</label>
             {{ form.email }}
-            {% if form.email.errors %}<div style="color:#c62828;">{{ form.email.errors|striptags }}</div>{% endif %}
+            {% if form.email.errors %}<div class="err">{{ form.email.errors|striptags }}</div>{% endif %}
           </div>
+
           <div>
             <label>Teléfono (opcional)</label>
             {{ form.telefono }}
-            {% if form.telefono.errors %}<div style="color:#c62828;">{{ form.telefono.errors|striptags }}</div>{% endif %}
+            {% if form.telefono.errors %}<div class="err">{{ form.telefono.errors|striptags }}</div>{% endif %}
           </div>
+
           <div>
             <label>Asunto</label>
             {{ form.asunto }}
-            {% if form.asunto.errors %}<div style="color:#c62828;">{{ form.asunto.errors|striptags }}</div>{% endif %}
+            {% if form.asunto.errors %}<div class="err">{{ form.asunto.errors|striptags }}</div>{% endif %}
           </div>
         </div>
 
         <div style="margin-top:12px;">
           <label>Mensaje</label>
           {{ form.mensaje }}
-          {% if form.mensaje.errors %}<div style="color:#c62828;">{{ form.mensaje.errors|striptags }}</div>{% endif %}
+          {% if form.mensaje.errors %}<div class="err">{{ form.mensaje.errors|striptags }}</div>{% endif %}
         </div>
 
-        <div style="margin-top:12px;">
-          <label style="display:flex;gap:8px;align-items:center;">
-            {{ form.autorizacion }} <span>Acepto el tratamiento de datos personales.</span>
-          </label>
-          {% if form.autorizacion.errors %}<div style="color:#c62828;">{{ form.autorizacion.errors|striptags }}</div>{% endif %}
+        <div class="check-row">
+          {{ form.autorizacion }}
+          <span>Acepto el tratamiento de datos personales.</span>
         </div>
+        {% if form.autorizacion.errors %}<div class="err">{{ form.autorizacion.errors|striptags }}</div>{% endif %}
 
-        <button type="submit"
-                style="margin-top:14px;background:#00796B;color:#fff;border:none;padding:10px 16px;border-radius:8px;cursor:pointer;">
+        <button type="submit" class="btn btn-primary" style="margin-top:14px;">
           Enviar
         </button>
       </form>
     </section>
+
   </div>
 
-  <!-- Mapa (opcional: ajusta coordenadas) -->
-  <div style="max-width:1100px;margin:10px auto;border-radius:12px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.06);">
-    <iframe
-      src="https://www.google.com/maps?q=Calle%205%20%236B-03%20La%20Fragua&output=embed"
-      width="100%" height="320" style="border:0;" loading="lazy"></iframe>
-  </div>
-</main>
+  {% if config and config.map_iframe %}
+    <div class="map" aria-label="Mapa">
+      {{ config.map_iframe|safe }}
+    </div>
+  {% else %}
+    <div class="map" aria-label="Mapa">
+      <iframe
+        src="https://www.google.com/maps?q=Calle%205%20%236B-03%20La%20Fragua&output=embed"
+        loading="lazy"
+        referrerpolicy="no-referrer-when-downgrade"></iframe>
+    </div>
+  {% endif %}
+
+</div>
+
 {% endblock %}

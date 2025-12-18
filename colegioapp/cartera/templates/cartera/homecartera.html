@@ -1,93 +1,103 @@
 {% extends "colegioapp/base.html" %}
 
-{% block title %}Cartera | Centro Educativo Infantil GIN GABY{% endblock %}
-
-{# Submenú propio del módulo Cartera #}
-
+{% block title %}
+  Cartera |
+  {% if request.school %}{{ request.school.name }}{% else %}Centro Educativo{% endif %}
+{% endblock %}
 
 {% block content %}
 <main>
-    <h2>Gestión de Cartera</h2>
-    <p>
-        Bienvenido al módulo de cartera. Desde aquí podrás administrar los
-        <strong>Años Económicos</strong>, definir <strong>Conceptos de Pago</strong>,
-        generar y consultar <strong>Cuentas por Cobrar</strong> a estudiantes,
-        registrar <strong>Pagos</strong> y consultar <strong>Reportes</strong>.
-    </p>
+  <h2 style="color: var(--primary-color);">Gestión de Cartera</h2>
 
-    <section class="banner-mision-vision">
-        <div class="container">
-            <!-- Años Económicos -->
-            <div class="banner-item">
-                <h3>
-                  <a href="{% url 'cartera:anios' %}" style="text-decoration:none; color:#00796B;">
-                      Años Económicos
-                    </a>
-                </h3>
-                <p>
-                    Crea y administra los periodos anuales (inicio, fin y estado). Activa el año vigente.
-                </p>
-            </div>
+  <p style="max-width:1000px; margin:0 auto 18px; color:#455a64;">
+    Bienvenido al módulo de cartera. Desde aquí podrás administrar los
+    <strong>Años Económicos</strong>, definir <strong>Conceptos de Pago</strong>,
+    generar y consultar <strong>Cuentas por Cobrar</strong> a estudiantes,
+    registrar <strong>Pagos</strong> y consultar <strong>Reportes</strong>.
+  </p>
 
-            <!-- Conceptos de Pago -->
-            <div class="banner-item">
-                <h3>
-                  <a href="{% url 'cartera:conceptos' %}" style="text-decoration:none; color:#00796B;">
-                    Conceptos de Pago
-                  </a>
-                </h3>
-                <p>
-                    Define pensión, matrícula u otros cobros; valores, si son recurrentes y su año económico.
-                </p>
-            </div>
+  <section class="banner-mision-vision" style="max-width:1100px; margin:0 auto;">
+    <div class="container" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:16px;">
 
-            <!-- Cuentas por Cobrar -->
-            <div class="banner-item">
-                <h3>
-                  <a href="{% url 'cartera:cuentas' %}" style="text-decoration:none; color:#00796B;">
-                      Cuentas por Cobrar
-                    </a>
-                </h3>
-                <p>
-                    Genera y consulta cargos por estudiante, fechas de vencimiento, saldos y estado de pago.
-                </p>
-            </div>
+      <!-- Años Económicos -->
+      <div class="banner-item" style="background:#fff; border-radius:12px; padding:18px; box-shadow:0 4px 12px rgba(0,0,0,.06);">
+        <h3 style="margin-top:0;">
+          <a href="{% url 'cartera:anios' %}"
+             style="text-decoration:none; color: var(--button-color); font-weight:800;">
+            Años Económicos
+          </a>
+        </h3>
+        <p style="margin:0; color:#607d8b;">
+          Crea y administra los periodos anuales (inicio, fin y estado). Activa el año vigente.
+        </p>
+      </div>
 
-            <!-- Pagos -->
-            <div class="banner-item">
-                <h3>
-                    <a href="{% url 'cartera:pagos' %}" style="text-decoration:none; color:#00796B;">
-                      Pagos
-                    </a>
-                </h3>
-                <p>
-                    Registra pagos (medio, valor, observaciones), concilia y actualiza saldos pendientes.
-                </p>
-            </div>
-            <div class="banner-item">
-                <h3>
-                  <a href="{% url 'cartera:cargos_mensuales_selector' %}"
-                     style="text-decoration:none; color:#00796B;">
-                      Pensiones Mensuales
-                  </a>
-                </h3>
-                <p>
-                    Gestiona el estado de pago mes a mes por curso y estudiante.
-                </p>
-            </div>
+      <!-- Conceptos de Pago -->
+      <div class="banner-item" style="background:#fff; border-radius:12px; padding:18px; box-shadow:0 4px 12px rgba(0,0,0,.06);">
+        <h3 style="margin-top:0;">
+          <a href="{% url 'cartera:conceptos' %}"
+             style="text-decoration:none; color: var(--button-color); font-weight:800;">
+            Conceptos de Pago
+          </a>
+        </h3>
+        <p style="margin:0; color:#607d8b;">
+          Define pensión, matrícula u otros cobros; valores, si son recurrentes y su año económico.
+        </p>
+      </div>
 
-            <!-- Reportes (opcional) -->
-            <div class="banner-item">
-                <h3>
-                  <a href="{% url 'cartera:reportes' %}" style="text-decoration:none; color:#00796B;">
-                      Reportes
-                    </a>
-                </h3>
-                <p>
-                    Consulta cartera vencida, pagos por periodo, estados de cuenta por estudiante, etc.
-                </p>
-            </div>
-        </div>
-    </section>
+      <!-- Cuentas por Cobrar -->
+      <div class="banner-item" style="background:#fff; border-radius:12px; padding:18px; box-shadow:0 4px 12px rgba(0,0,0,.06);">
+        <h3 style="margin-top:0;">
+          <a href="{% url 'cartera:cuentas' %}"
+             style="text-decoration:none; color: var(--button-color); font-weight:800;">
+            Cuentas por Cobrar
+          </a>
+        </h3>
+        <p style="margin:0; color:#607d8b;">
+          Genera y consulta cargos por estudiante, fechas de vencimiento, saldos y estado de pago.
+        </p>
+      </div>
+
+      <!-- Pagos -->
+      <div class="banner-item" style="background:#fff; border-radius:12px; padding:18px; box-shadow:0 4px 12px rgba(0,0,0,.06);">
+        <h3 style="margin-top:0;">
+          <a href="{% url 'cartera:pagos' %}"
+             style="text-decoration:none; color: var(--button-color); font-weight:800;">
+            Pagos
+          </a>
+        </h3>
+        <p style="margin:0; color:#607d8b;">
+          Registra pagos (medio, valor, observaciones), concilia y actualiza saldos pendientes.
+        </p>
+      </div>
+
+      <!-- Pensiones Mensuales -->
+      <div class="banner-item" style="background:#fff; border-radius:12px; padding:18px; box-shadow:0 4px 12px rgba(0,0,0,.06);">
+        <h3 style="margin-top:0;">
+          <a href="{% url 'cartera:cargos_mensuales_selector' %}"
+             style="text-decoration:none; color: var(--button-color); font-weight:800;">
+            Pensiones Mensuales
+          </a>
+        </h3>
+        <p style="margin:0; color:#607d8b;">
+          Gestiona el estado de pago mes a mes por curso y estudiante.
+        </p>
+      </div>
+
+      <!-- Reportes -->
+      <div class="banner-item" style="background:#fff; border-radius:12px; padding:18px; box-shadow:0 4px 12px rgba(0,0,0,.06);">
+        <h3 style="margin-top:0;">
+          <a href="{% url 'cartera:reportes' %}"
+             style="text-decoration:none; color: var(--button-color); font-weight:800;">
+            Reportes
+          </a>
+        </h3>
+        <p style="margin:0; color:#607d8b;">
+          Consulta cartera vencida, pagos por periodo, estados de cuenta por estudiante, etc.
+        </p>
+      </div>
+
+    </div>
+  </section>
 </main>
 {% endblock content %}

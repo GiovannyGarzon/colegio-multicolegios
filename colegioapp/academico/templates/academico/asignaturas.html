@@ -1,82 +1,245 @@
 {% extends "colegioapp/base.html" %}
-{% block title %}Asignaturas | CEI GIN GABY{% endblock %}
+{% block title %}Asignaturas | {{ request.school.nombre|default:"Institución Educativa" }}{% endblock %}
 
 {% block content %}
-<main>
-  <h2>Asignaturas (Catálogo)</h2>
+<main style="max-width:980px;margin:0 auto;padding:20px 12px;">
+  <h2 style="
+        margin-bottom:16px;
+        text-align:center;
+        color:var(--color-primary, #2563eb);
+      ">
+    Asignaturas (Catálogo)
+  </h2>
 
-  <div style="max-width:980px;margin:0 auto 14px;display:flex;gap:10px;justify-content:space-between;flex-wrap:wrap;">
-    <form method="get" style="display:flex;gap:10px;flex:1;">
-      <input type="text" name="q" value="{{ q }}" placeholder="Buscar por nombre o área"
-             style="flex:1;padding:10px 12px;border:1px solid #cfd8dc;border-radius:8px;">
-      <button type="submit" style="padding:10px 16px;background:#00796B;color:#fff;border:none;border-radius:8px;cursor:pointer;">
+  <div style="margin:0 auto 14px;display:flex;gap:10px;justify-content:space-between;flex-wrap:wrap;">
+    <form method="get" style="display:flex;gap:10px;flex:1;min-width:260px;">
+      <input
+        type="text"
+        name="q"
+        value="{{ q }}"
+        placeholder="Buscar por nombre o área"
+        style="
+          flex:1;
+          padding:10px 12px;
+          border:1px solid var(--color-muted-border, #cfd8dc);
+          border-radius:8px;
+          font-size:0.95rem;
+        "
+      >
+      <button type="submit" class="btn-acad">
         Buscar
       </button>
-      <a href="{% url 'academico:asignaturas' %}" style="padding:10px 16px;background:#90a4ae;color:#fff;border-radius:8px;text-decoration:none;">
+      <a href="{% url 'academico:asignaturas' %}" class="btn-acad-muted">
         Limpiar
       </a>
     </form>
 
-    <a href="{% url 'academico:asignatura_create' %}"
-       style="padding:10px 16px;background:#004d40;color:#fff;border-radius:8px;text-decoration:none;">
+    <a href="{% url 'academico:asignatura_create' %}" class="btn-acad" style="white-space:nowrap;">
       + Nueva asignatura
     </a>
   </div>
 
-  <div style="max-width:980px;margin:0 auto;">
-    <div style="overflow-x:auto;background:#fff;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.06);">
-      <table style="width:100%;border-collapse:collapse;">
-        <thead style="background:#e0f2f1;">
+  <div>
+    <div class="table-shell">
+      <table class="table-acad">
+        <thead>
           <tr>
-            <th style="text-align:left;padding:12px;">Nombre</th>
-            <th style="text-align:left;padding:12px;">Área</th>
-            <th style="text-align:center;padding:12px;width:180px;">Acciones</th>
+            <th>Nombre</th>
+            <th>Área</th>
+            <th style="text-align:center;width:180px;">Acciones</th>
           </tr>
         </thead>
         <tbody>
           {% if page_obj.object_list %}
             {% for a in page_obj.object_list %}
-            <tr style="border-top:1px solid #eceff1;">
-              <td style="padding:10px 12px;">{{ a.nombre }}</td>
-              <td style="padding:10px 12px;">{{ a.area|default:"—" }}</td>
-              <td style="padding:10px 12px;text-align:center;">
-                <a href="{% url 'academico:asignatura_update' a.id %}" style="text-decoration:none;margin-right:8px;">Editar</a>
-                |
-                <a href="{% url 'academico:asignatura_delete' a.id %}" style="text-decoration:none;color:#c62828;margin-left:8px;">
+            <tr>
+              <td>{{ a.nombre }}</td>
+              <td>{{ a.area|default:"—" }}</td>
+              <td style="text-align:center;">
+                <a href="{% url 'academico:asignatura_update' a.id %}" class="link-acad">
+                  Editar
+                </a>
+                <span style="color:#cbd5e1;margin:0 4px;">|</span>
+                <a href="{% url 'academico:asignatura_delete' a.id %}" class="link-danger">
                   Eliminar
                 </a>
               </td>
             </tr>
             {% endfor %}
           {% else %}
-            <tr><td colspan="3" style="padding:16px;text-align:center;color:#607d8b;">No hay asignaturas registradas.</td></tr>
+            <tr>
+              <td colspan="3" style="padding:16px;text-align:center;color:#64748b;">
+                No hay asignaturas registradas.
+              </td>
+            </tr>
           {% endif %}
         </tbody>
       </table>
     </div>
 
     {% if page_obj.paginator.num_pages > 1 %}
-    <div style="display:flex;justify-content:center;gap:6px;margin:18px 0;">
+    <div style="display:flex;justify-content:center;gap:6px;margin:18px 0;flex-wrap:wrap;">
       {% if page_obj.has_previous %}
-        <a href="?page=1{% if querystring %}&{{ querystring }}{% endif %}" style="padding:8px 10px;border:1px solid #cfd8dc;border-radius:8px;text-decoration:none;">« Primero</a>
-        <a href="?page={{ page_obj.previous_page_number }}{% if querystring %}&{{ querystring }}{% endif %}" style="padding:8px 10px;border:1px solid #cfd8dc;border-radius:8px;text-decoration:none;">‹ Anterior</a>
+        <a href="?page=1{% if querystring %}&{{ querystring }}{% endif %}" class="pager-btn">« Primero</a>
+        <a href="?page={{ page_obj.previous_page_number }}{% if querystring %}&{{ querystring }}{% endif %}" class="pager-btn">‹ Anterior</a>
       {% endif %}
-      <span style="padding:8px 10px;border:1px solid #cfd8dc;border-radius:8px;background:#f5f5f5;">
+
+      <span class="pager-current">
         Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
       </span>
+
       {% if page_obj.has_next %}
-        <a href="?page={{ page_obj.next_page_number }}{% if querystring %}&{{ querystring }}{% endif %}" style="padding:8px 10px;border:1px solid #cfd8dc;border-radius:8px;text-decoration:none;">Siguiente ›</a>
-        <a href="?page={{ page_obj.paginator.num_pages }}{% if querystring %}&{{ querystring }}{% endif %}" style="padding:8px 10px;border:1px solid #cfd8dc;border-radius:8px;text-decoration:none;">Última »</a>
+        <a href="?page={{ page_obj.next_page_number }}{% if querystring %}&{{ querystring }}{% endif %}" class="pager-btn">Siguiente ›</a>
+        <a href="?page={{ page_obj.paginator.num_pages }}{% if querystring %}&{{ querystring }}{% endif %}" class="pager-btn">Última »</a>
       {% endif %}
     </div>
     {% endif %}
 
     <div style="display:flex;justify-content:center;margin-top:10px;">
-      <a href="{% url 'academico:hub' %}"
-         style="padding:10px 16px;background:#9e9e9e;color:#fff;border-radius:8px;text-decoration:none;">
+      <a href="{% url 'academico:hub' %}" class="btn-acad-sec">
         Ir a gestión académica avanzada
       </a>
     </div>
   </div>
 </main>
+
+<style>
+  .btn-acad{
+    text-decoration:none;
+    background:var(--color-primary, #2563eb);
+    color:#ffffff;
+    padding:10px 16px;
+    border-radius:999px;
+    font-size:0.9rem;
+    border:1px solid transparent;
+    cursor:pointer;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    transition:background 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
+    white-space:nowrap;
+  }
+  .btn-acad:hover{
+    background:var(--color-primary-dark, #1d4ed8);
+    box-shadow:0 3px 8px rgba(15,23,42,0.25);
+    transform:translateY(-1px);
+  }
+
+  .btn-acad-muted{
+    text-decoration:none;
+    background:var(--color-muted, #6b7280);
+    color:#ffffff;
+    padding:10px 16px;
+    border-radius:999px;
+    font-size:0.9rem;
+    border:1px solid transparent;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    transition:background 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
+  }
+  .btn-acad-muted:hover{
+    background:var(--color-muted-dark, #4b5563);
+    box-shadow:0 3px 8px rgba(15,23,42,0.25);
+    transform:translateY(-1px);
+  }
+
+  .btn-acad-sec{
+    text-decoration:none;
+    background:var(--color-muted-soft, #9ca3af);
+    color:#ffffff;
+    padding:9px 16px;
+    border-radius:999px;
+    font-size:0.9rem;
+    border:1px solid transparent;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    transition:background 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
+  }
+  .btn-acad-sec:hover{
+    background:var(--color-muted, #6b7280);
+    box-shadow:0 3px 8px rgba(15,23,42,0.25);
+    transform:translateY(-1px);
+  }
+
+  .table-shell{
+    overflow-x:auto;
+    background:#ffffff;
+    border-radius:12px;
+    box-shadow:0 4px 12px rgba(15,23,42,0.08);
+    border:1px solid var(--color-muted-border, #e5e7eb);
+  }
+  .table-acad{
+    width:100%;
+    border-collapse:collapse;
+    font-size:0.93rem;
+  }
+  .table-acad thead{
+    background:var(--color-primary-soft, #e0f2fe);
+  }
+  .table-acad th{
+    text-align:left;
+    padding:12px;
+    font-weight:600;
+    color:#0f172a;
+  }
+  .table-acad td{
+    padding:10px 12px;
+    border-top:1px solid #e5e7eb;
+    color:#111827;
+  }
+
+  .pager-btn{
+    padding:8px 10px;
+    border:1px solid #cbd5e1;
+    border-radius:8px;
+    text-decoration:none;
+    font-size:0.85rem;
+    color:#1f2933;
+    background:#ffffff;
+    transition:background 0.15s ease, border-color 0.15s ease;
+  }
+  .pager-btn:hover{
+    background:#f3f4f6;
+    border-color:#94a3b8;
+  }
+  .pager-current{
+    padding:8px 10px;
+    border:1px solid #cbd5e1;
+    border-radius:8px;
+    background:#f3f4f6;
+    font-size:0.85rem;
+    color:#4b5563;
+  }
+
+  .link-acad{
+    text-decoration:none;
+    color:var(--color-primary, #2563eb);
+    font-weight:500;
+  }
+  .link-acad:hover{
+    text-decoration:underline;
+  }
+  .link-danger{
+    text-decoration:none;
+    color:#dc2626;
+    font-weight:500;
+  }
+  .link-danger:hover{
+    text-decoration:underline;
+  }
+</style>
 {% endblock %}
+
+
+
+
+
+
+
+
+
+

@@ -1,72 +1,113 @@
 {% extends "colegioapp/base.html" %}
-{% block title %}Planilla Mensual{% endblock %}
+
+{% block title %}
+  Planilla Mensual |
+  {% if request.school %}{{ request.school.name }}{% else %}Centro Educativo{% endif %}
+{% endblock %}
 
 {% block content %}
 <main style="margin:0 auto;max-width:1200px;">
 
-    <h2>Planilla Mensual de Pensiones</h2>
+  <h2 style="color: var(--primary-color); margin-bottom:10px;">
+    Planilla Mensual de Pensiones
+  </h2>
 
-    <p>
-        <strong>Año económico:</strong> {{ anio.nombre }} <br>
-        <strong>Curso:</strong> {{ curso.grado }} {{ curso.nombre }} <br>
-        <strong>Concepto:</strong> {{ concepto.nombre }} ({{ concepto.valor }})<br>
-        <strong>Mes:</strong> {{ mes }}  <!-- opcional: mostrar nombre bonito -->
+  <div style="background:#fff; border-radius:12px; padding:16px; box-shadow:0 4px 12px rgba(0,0,0,0.06); margin-bottom:16px;">
+    <p style="margin:0; color:#455a64; line-height:1.6;">
+      <strong>Año económico:</strong> {{ anio.nombre }} <br>
+      <strong>Curso:</strong> {{ curso.grado }} {{ curso.nombre }} <br>
+      <strong>Concepto:</strong> {{ concepto.nombre }} ({{ concepto.valor }})<br>
+      <strong>Mes:</strong> {{ mes }}
     </p>
+  </div>
 
-    <form action="" method="post">
-        {% csrf_token %}
+  <form action="" method="post">
+    {% csrf_token %}
 
-        <p>
-            <strong>Fecha de vencimiento por defecto:</strong> {{ fecha_vencimiento_defecto }}<br>
-            <strong>Valor por estudiante:</strong> {{ valor_defecto }}
-        </p>
+    <div style="background:#fff; border-radius:12px; padding:16px; box-shadow:0 4px 12px rgba(0,0,0,0.06); margin-bottom:16px;">
+      <p style="margin:0; color:#455a64; line-height:1.6;">
+        <strong>Fecha de vencimiento por defecto:</strong> {{ fecha_vencimiento_defecto }}<br>
+        <strong>Valor por estudiante:</strong> {{ valor_defecto }}
+      </p>
+    </div>
 
-        <table class="table table-bordered">
-            <thead>
-                <tr>
-                    <th>Seleccionar</th>
-                    <th>Estudiante</th>
-                    <th>Estado</th>
-                    <th>Acción</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for fila in filas %}
-                    <tr>
-                        <td>
-                            {% if not fila.cuenta %}
-                                <input type="checkbox" name="estudiantes" value="{{ fila.estudiante.id }}">
-                            {% else %}
-                                <!-- Ya tiene cuenta, no se marca -->
-                            {% endif %}
-                        </td>
-                        <td>{{ fila.estudiante.apellidos }} {{ fila.estudiante.nombres }}</td>
+    <div style="overflow-x:auto; background:#fff; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.06);">
+      <table style="width:100%; border-collapse:collapse;">
+        <thead style="background-color: var(--secondary-color, #e0f2f1);">
+          <tr>
+            <th style="padding:12px; text-align:left;">Seleccionar</th>
+            <th style="padding:12px; text-align:left;">Estudiante</th>
+            <th style="padding:12px; text-align:left;">Estado</th>
+            <th style="padding:12px; text-align:left;">Acción</th>
+          </tr>
+        </thead>
 
-                        {% if not fila.cuenta %}
-                            <td style="color:orange;font-weight:bold;">SIN CUENTA</td>
-                            <td>-</td>
-                        {% else %}
-                            {% if fila.estado == "pagada" %}
-                                <td style="color:green;font-weight:bold;">PAGADA</td>
-                            {% else %}
-                                <td style="color:red;font-weight:bold;">PENDIENTE</td>
-                            {% endif %}
-                            <td>
-                                <a href="{% url 'cartera:cuentas' %}?q={{ fila.estudiante.identificacion }}"
-                                   class="btn btn-sm">
-                                    Ver cuenta
-                                </a>
-                            </td>
-                        {% endif %}
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <tbody>
+          {% for fila in filas %}
+            <tr style="border-top:1px solid #eceff1;">
+              <td style="padding:10px 12px;">
+                {% if not fila.cuenta %}
+                  <input type="checkbox" name="estudiantes" value="{{ fila.estudiante.id }}">
+                {% else %}
+                  <span style="opacity:.6;">—</span>
+                {% endif %}
+              </td>
 
-        <button class="btn btn-primary" type="submit">
-            Generar cargos para seleccionados
-        </button>
-    </form>
+              <td style="padding:10px 12px;">
+                {{ fila.estudiante.apellidos }} {{ fila.estudiante.nombres }}
+              </td>
+
+              {% if not fila.cuenta %}
+                <td style="padding:10px 12px; font-weight:800; color:#ef6c00;">
+                  SIN CUENTA
+                </td>
+                <td style="padding:10px 12px; opacity:.7;">-</td>
+              {% else %}
+                {% if fila.estado == "pagada" %}
+                  <td style="padding:10px 12px; font-weight:800; color:#2e7d32;">
+                    PAGADA
+                  </td>
+                {% else %}
+                  <td style="padding:10px 12px; font-weight:800; color: var(--danger-color, #c62828);">
+                    PENDIENTE
+                  </td>
+                {% endif %}
+
+                <td style="padding:10px 12px;">
+                  <a href="{% url 'cartera:cuentas' %}?q={{ fila.estudiante.identificacion }}"
+                     style="display:inline-block; padding:8px 12px; border-radius:8px;
+                            text-decoration:none; background: var(--button-color); color:#fff; font-weight:700;">
+                    Ver cuenta
+                  </a>
+                </td>
+              {% endif %}
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="4" style="padding:14px; text-align:center; color:#607d8b;">
+                No hay estudiantes para mostrar.
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div style="margin-top:16px; display:flex; gap:10px; flex-wrap:wrap;">
+      <button type="submit"
+              style="padding:10px 16px; background: var(--button-color); color:#fff;
+                     border:none; border-radius:8px; cursor:pointer; font-weight:800;">
+        Generar cargos para seleccionados
+      </button>
+
+      <a href="{% url 'cartera:cargos_mensuales_selector' %}"
+         style="padding:10px 16px; background:#90a4ae; color:#fff; border-radius:8px;
+                text-decoration:none; font-weight:700;">
+        Volver
+      </a>
+    </div>
+
+  </form>
 
 </main>
 {% endblock %}

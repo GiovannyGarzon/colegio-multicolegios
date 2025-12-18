@@ -1,8 +1,13 @@
 {% extends "colegioapp/base.html" %}
 
+{% block title %}
+  Certificaciones |
+  {% if request.school %}{{ request.school.name }}{% else %}Centro Educativo{% endif %}
+{% endblock %}
+
 {% block content %}
 <div class="container mt-4">
-    <h2 class="mb-3">Certificaciones</h2>
+    <h2 class="mb-3" style="color: var(--primary-color);">Certificaciones</h2>
     <p>Busca el estudiante y genera el certificado estudiantil o de notas.</p>
 
     <!-- Buscador -->
@@ -15,7 +20,10 @@
                    placeholder="Buscar por nombre, apellido o identificación">
         </div>
         <div class="col-sm-4">
-            <button type="submit" class="btn btn-primary w-100">Buscar</button>
+            <button type="submit" class="btn btn-primary w-100"
+                    style="background: var(--primary-color); border-color: var(--primary-color);">
+                Buscar
+            </button>
         </div>
     </form>
 
@@ -49,7 +57,7 @@
                                    name="anio"
                                    class="form-control form-control-sm"
                                    placeholder="Año"
-                                   value="{{ hoy.year|default:2025 }}">
+                                   value="{{ hoy.year }}">
 
                             <button type="submit" class="btn btn-success btn-sm">
                                 Generar PDF

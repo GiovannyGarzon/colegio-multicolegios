@@ -14,6 +14,7 @@ from django.contrib.auth.models import User, Group
 from django.db import transaction
 from academico.utils_notas import recalcular_nota_logro_desde_actividades
 from django.conf import settings
+from academico.utils import crear_usuario_estudiante, crear_usuario_docente
 import os
 from cartera.utils import estudiante_tiene_deuda_bloqueante, resumen_cartera_para_boletin
 from reportlab.lib.pagesizes import letter
@@ -43,72 +44,7 @@ from cartera.models import AnioEconomico
 SABER_SER_PESO = Decimal("0.10")  # 10%
 LOGROS_PESO    = Decimal("0.90")  # 90%
 
-@transaction.atomic
-def crear_usuario_estudiante(estudiante):
-    """
-    Crea un User y lo vincula al Estudiante si aún no tiene uno.
-    Devuelve (user, password_clara).
-    """
-    if estudiante.user:   # ya tiene usuario
-        return estudiante.user, None
 
-    username = f"est{estudiante.identificacion}"
-    email = estudiante.correo or ""
-    password = User.objects.make_random_password()
-
-    user = User.objects.create_user(
-        username=username,
-        email=email,
-        password=password,
-        first_name=estudiante.nombres,
-        last_name=estudiante.apellidos,
-    )
-
-    # Añadir al grupo "Estudiante" si existe
-    try:
-        g = Group.objects.get(name="Estudiante")
-        user.groups.add(g)
-    except Group.DoesNotExist:
-        pass
-
-    estudiante.user = user
-    estudiante.save(update_fields=["user"])
-
-    return user, password
-
-
-@transaction.atomic
-def crear_usuario_docente(docente):
-    """
-    Crea un User y lo vincula al Docente si aún no tiene uno.
-    Devuelve (user, password_clara).
-    """
-    if docente.usuario:   # ya tiene usuario
-        return docente.usuario, None
-
-    username = f"doc{docente.identificacion}"
-    email = docente.correo or ""
-    password = User.objects.make_random_password()
-
-    user = User.objects.create_user(
-        username=username,
-        email=email,
-        password=password,
-        first_name=docente.nombres,
-        last_name=docente.apellidos,
-    )
-
-    # Añadir al grupo "Docente" si existe
-    try:
-        g = Group.objects.get(name="Docente")
-        user.groups.add(g)
-    except Group.DoesNotExist:
-        pass
-
-    docente.usuario = user
-    docente.save(update_fields=["usuario"])
-
-    return user, password
 
 @login_required
 def portal_boletin_pdf(request):
@@ -346,8 +282,14 @@ def _es_estudiante(u):
     return u.is_authenticated and u.groups.filter(name="Estudiante").exists()
 
 def _puede_gestionar(u):
-    # staff, superuser o docente
-    return u.is_authenticated and (u.is_staff or u.is_superuser or u.groups.filter(name="Docente").exists())
+    # staff, superuser o grupos directivos/docentes
+    return (
+        u.is_authenticated and (
+            u.is_staff
+            or u.is_superuser
+            or u.groups.filter(name__in=["Rector", "Coordinador"]).exists()
+        )
+    )
 
 def requiere_gestion(view_func):
     """Decorator: requiere ser staff/superuser/docente; si es estudiante, va al portal."""
@@ -380,7 +322,27 @@ def portal_estudiante(request):
     # 2. Año lectivo activo
     anio = AnioLectivo.objects.filter(activo=True).first()
 
-    # 3. Observaciones recientes (si el modelo las tiene)
+    # ✅ IMPORTANTÍSIMO: inicializar SIEMPRE (evita UnboundLocalError)
+    horarios_nivel = {
+        "preescolar": {
+            "titulo": "Preescolar",
+            "inicio": "6:45 a. m.",
+            "fin": "12:45 p. m.",
+        },
+        "primaria": {
+            "titulo": "Primaria",
+            "inicio": "6:45 a. m.",
+            "fin": "2:00 p. m.",
+        },
+        "bachillerato": {
+            "titulo": "Bachillerato",
+            "inicio": "6:45 a. m.",
+            "fin": "2:00 p. m.",
+        },
+    }
+    nivel_horario = None
+
+    # 3. Observaciones recientes
     observaciones = []
     if hasattr(est, "observaciones"):
         observaciones = est.observaciones.all().order_by("-fecha")[:5]
@@ -390,13 +352,13 @@ def portal_estudiante(request):
     if anio:
         ofertas = (
             AsignaturaOferta.objects
-                .select_related("asignatura")
-                .filter(anio=anio, curso=est.curso)
+            .select_related("asignatura")
+            .filter(anio=anio, curso=est.curso)
         )
         for of in ofertas:
             qs = CalificacionLogro.objects.filter(
                 estudiante=est,
-                logro__oferta=of,  # 👈 usamos el FK a través de Logro
+                logro__oferta=of,
             )
             if qs.exists():
                 promedios.append({
@@ -407,7 +369,7 @@ def portal_estudiante(request):
     # 5. Períodos del año
     periodos = Periodo.objects.filter(anio=anio).order_by("numero") if anio else []
 
-    # 6. Resumen de asistencia del año
+    # 6. Asistencia
     fallas_anio = 0
     tardanzas_anio = 0
     if anio and est.curso:
@@ -429,40 +391,15 @@ def portal_estudiante(request):
             estado=AsistenciaDetalle.TARDANZA
         ).count()
 
-        # ===============================
-        #  Horario compacto por nivel
-        # ===============================
-        # Puedes cambiar estos textos/horas cuando quieras
-        horarios_nivel = {
-            "preescolar": {
-                "titulo": "Preescolar",
-                "inicio": "6:45 a. m.",
-                "fin": "12:45 p. m.",
-            },
-            "primaria": {
-                "titulo": "Primaria",
-                "inicio": "6:45 a. m.",
-                "fin": "2:00 p. m.",
-            },
-            "bachillerato": {
-                "titulo": "Bachillerato",
-                "inicio": "6:45 a. m.",
-                "fin": "2:00 p. m.",
-            },
-        }
+        # ✅ determinar nivel
+        grado = str(est.curso.grado).upper()
 
-        nivel_horario = None  # preescolar / primaria / bachillerato
-
-        if est.curso:
-            grado = str(est.curso.grado).upper()
-
-            # 👇 Ajusta esta lista según cómo tengas guardado el grado
-            if grado in ["JARDIN", "JARDÍN", "PREJARDIN", "PREJARDÍN", "TRANSICION", "TRANSICIÓN"]:
-                nivel_horario = "preescolar"
-            elif grado in ["1", "01", "PRIMERO", "2", "SEGUNDO", "3", "TERCERO", "4", "CUARTO", "5", "QUINTO"]:
-                nivel_horario = "primaria"
-            else:
-                nivel_horario = "bachillerato"
+        if grado in ["JARDIN", "JARDÍN", "PREJARDIN", "PREJARDÍN", "TRANSICION", "TRANSICIÓN"]:
+            nivel_horario = "preescolar"
+        elif grado in ["1", "01", "PRIMERO", "2", "SEGUNDO", "3", "TERCERO", "4", "CUARTO", "5", "QUINTO"]:
+            nivel_horario = "primaria"
+        else:
+            nivel_horario = "bachillerato"
 
     ctx = {
         "est": est,
@@ -473,8 +410,8 @@ def portal_estudiante(request):
         "periodos": periodos,
         "fallas_anio": fallas_anio,
         "tardanzas_anio": tardanzas_anio,
-        "horarios_nivel": horarios_nivel,
-        "nivel_horario": nivel_horario,
+        "horarios_nivel": horarios_nivel,   # ✅ ahora SIEMPRE existe
+        "nivel_horario": nivel_horario,     # ✅ ahora SIEMPRE existe
     }
 
     return render(request, "portal/inicio.html", ctx)
@@ -507,9 +444,12 @@ def estudiantes_list(request):
     q = (request.GET.get('q') or '').strip()
     curso_id = (request.GET.get('curso') or '').strip()
 
-    qs = (Estudiante.objects
-          .select_related('curso')
-          .order_by('apellidos', 'nombres'))
+    qs = (
+        Estudiante.objects
+        .select_related('curso')
+        .filter(school=request.school)              # 👈 filtro por colegio
+        .order_by('apellidos', 'nombres')
+    )
 
     if q:
         qs = qs.filter(
@@ -524,7 +464,7 @@ def estudiantes_list(request):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
-    cursos = Curso.objects.all().order_by('grado', 'nombre')
+    cursos = Curso.objects.filter(school=request.school).order_by('grado', 'nombre')  # 👈
 
     base_params = {}
     if q:
@@ -548,7 +488,9 @@ def estudiante_create(request):
     if request.method == "POST":
         form = EstudianteForm(request.POST, request.FILES)
         if form.is_valid():
-            est = form.save()  # creamos el Estudiante
+            est = form.save(commit=False)
+            est.school = request.school
+            est.save()
 
             user, pwd = crear_usuario_estudiante(est)
 
@@ -557,23 +499,24 @@ def estudiante_create(request):
                 msg += f" Usuario: {user.username} - Contraseña: {pwd}"
             messages.success(request, msg)
 
-            return redirect(reverse("academico:estudiantes"))
+            return redirect("academico:estudiantes")
     else:
         form = EstudianteForm()
-    return render(
-        request,
-        "academico/estudiante_form.html",
-        {"form": form, "title": "Nuevo estudiante", "nav_active": "academico"}
-    )
 
+    return render(request, "academico/estudiante_form.html", {
+        "form": form,
+        "nav_active": "academico",
+    })
 
 @requiere_gestion
 def estudiante_update(request, pk):
-    est = get_object_or_404(Estudiante, pk=pk)
+    est = get_object_or_404(Estudiante, pk=pk, school=request.school)   # 👈
     if request.method == "POST":
-        form = EstudianteForm(request.POST, request.FILES, instance=est)  # 👈 aquí
+        form = EstudianteForm(request.POST, request.FILES, instance=est)
         if form.is_valid():
-            form.save()
+            est = form.save(commit=False)
+            est.school = request.school       # 👈 por seguridad
+            est.save()
             messages.success(request, "Estudiante actualizado correctamente.")
             return redirect(reverse("academico:estudiantes"))
     else:
@@ -589,19 +532,30 @@ def estudiante_update(request, pk):
         }
     )
 
+
 @requiere_gestion
 def estudiante_detail(request, pk):
-    est = get_object_or_404(Estudiante, pk=pk)
-    return render(request, "academico/estudiante_detail.html", {"e": est, "nav_active": "academico"})
+    est = get_object_or_404(Estudiante, pk=pk, school=request.school)  # 👈
+    return render(
+        request,
+        "academico/estudiante_detail.html",
+        {"e": est, "nav_active": "academico"}
+    )
+
 
 @requiere_gestion
 def estudiante_delete(request, pk):
-    est = get_object_or_404(Estudiante, pk=pk)
+    est = get_object_or_404(Estudiante, pk=pk, school=request.school)  # 👈
     if request.method == "POST":
         est.delete()
         messages.success(request, "Estudiante eliminado.")
         return redirect(reverse("academico:estudiantes"))
-    return render(request, "academico/estudiante_confirm_delete.html", {"e": est, "nav_active": "academico"})
+
+    return render(
+        request,
+        "academico/estudiante_confirm_delete.html",
+        {"e": est, "nav_active": "academico"}
+    )
 
 # ----------------- Docentes (gestión) -----------------
 
@@ -610,9 +564,12 @@ def docentes_list(request):
     q = (request.GET.get('q') or '').strip()
     curso_id = (request.GET.get('curso') or '').strip()
 
-    qs = (Docente.objects
-          .select_related('curso_asignado')
-          .order_by('apellidos', 'nombres'))
+    qs = (
+        Docente.objects
+        .select_related('curso_asignado')
+        .filter(school=request.school)              # 👈
+        .order_by('apellidos', 'nombres')
+    )
 
     if q:
         qs = qs.filter(
@@ -629,7 +586,11 @@ def docentes_list(request):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
-    cursos = Curso.objects.all().order_by('grado', 'nombre')
+    cursos = (
+        Curso.objects
+        .filter(school=request.school)              # 👈
+        .order_by('grado', 'nombre')
+    )
 
     base_params = {}
     if q:
@@ -653,7 +614,10 @@ def docente_create(request):
     if request.method == "POST":
         form = DocenteForm(request.POST, request.FILES)
         if form.is_valid():
-            d = form.save()
+            d = form.save(commit=False)
+            d.school = request.school
+            d.save()
+
             user, pwd = crear_usuario_docente(d)
 
             msg = "Docente creado correctamente."
@@ -661,36 +625,48 @@ def docente_create(request):
                 msg += f" Usuario: {user.username} - Contraseña: {pwd}"
             messages.success(request, msg)
 
-            return redirect(reverse("academico:docentes"))
+            return redirect("academico:docentes")
     else:
         form = DocenteForm()
-    return render(
-        request,
-        "academico/docente_form.html",
-        {"form": form, "title": "Nuevo docente", "nav_active": "academico"}
-    )
+
+    return render(request, "academico/docente_form.html", {
+        "form": form,
+        "nav_active": "academico",
+    })
 
 @requiere_gestion
 def docente_update(request, pk):
-    d = get_object_or_404(Docente, pk=pk)
+    d = get_object_or_404(Docente, pk=pk, school=request.school)     # 👈
     if request.method == "POST":
         form = DocenteForm(request.POST, request.FILES, instance=d)
         if form.is_valid():
-            form.save()
+            d = form.save(commit=False)
+            d.school = request.school
+            d.save()
             messages.success(request, "Docente actualizado correctamente.")
             return redirect(reverse("academico:docentes"))
     else:
         form = DocenteForm(instance=d)
-    return render(request, "academico/docente_form.html", {"form": form, "title": f"Editar docente: {d.apellidos} {d.nombres}", "nav_active": "academico"})
+    return render(
+        request,
+        "academico/docente_form.html",
+        {
+            "form": form,
+            "title": f"Editar docente: {d.apellidos} {d.nombres}",
+            "nav_active": "academico"
+        }
+    )
+
 
 @requiere_gestion
 def docente_detail(request, pk):
-    d = get_object_or_404(Docente, pk=pk)
+    d = get_object_or_404(Docente, pk=pk, school=request.school)     # 👈
     return render(request, "academico/docente_detail.html", {"d": d, "nav_active": "academico"})
+
 
 @requiere_gestion
 def docente_delete(request, pk):
-    d = get_object_or_404(Docente, pk=pk)
+    d = get_object_or_404(Docente, pk=pk, school=request.school)     # 👈
     if request.method == "POST":
         d.delete()
         messages.success(request, "Docente eliminado.")
@@ -703,12 +679,17 @@ def docente_delete(request, pk):
 def cursos_list(request):
     q = (request.GET.get('q') or '').strip()
 
-    qs = (Curso.objects
-          .all()
-          .order_by('grado', 'nombre')
-          .prefetch_related(
-              Prefetch('docente_set', queryset=Docente.objects.order_by('apellidos'))
-          ))
+    qs = (
+        Curso.objects
+        .filter(school=request.school)                      # 👈
+        .order_by('grado', 'nombre')
+        .prefetch_related(
+            Prefetch(
+                'docente_set',
+                queryset=Docente.objects.filter(school=request.school).order_by('apellidos')
+            )
+        )
+    )
 
     if q:
         qs = qs.filter(
@@ -724,32 +705,39 @@ def cursos_list(request):
     ctx = {"page_obj": page_obj, "q": q, "nav_active": "cursos"}
     return render(request, "academico/cursos.html", ctx)
 
+
 @requiere_gestion
 def curso_create(request):
     if request.method == "POST":
         form = CursoForm(request.POST)
         if form.is_valid():
-            form.save()
+            curso = form.save(commit=False)
+            curso.school = request.school                      # 👈
+            curso.save()
             return redirect("academico:cursos")
     else:
         form = CursoForm()
     return render(request, "academico/curso_form.html", {"form": form, "nav_active": "academico"})
 
+
 @requiere_gestion
 def curso_edit(request, pk):
-    curso = get_object_or_404(Curso, pk=pk)
+    curso = get_object_or_404(Curso, pk=pk, school=request.school)   # 👈
     if request.method == "POST":
         form = CursoForm(request.POST, instance=curso)
         if form.is_valid():
-            form.save()
+            curso = form.save(commit=False)
+            curso.school = request.school
+            curso.save()
             return redirect("academico:cursos")
     else:
         form = CursoForm(instance=curso)
     return render(request, "academico/curso_form.html", {"form": form, "edit_mode": True, "nav_active": "academico"})
 
+
 @requiere_gestion
 def curso_delete(request, pk):
-    curso = get_object_or_404(Curso, pk=pk)
+    curso = get_object_or_404(Curso, pk=pk, school=request.school)   # 👈
     if request.method == "POST":
         curso.delete()
         return redirect("academico:cursos")
@@ -760,9 +748,16 @@ def curso_delete(request, pk):
 @requiere_gestion
 def asignaturas_list(request):
     q = (request.GET.get("q") or "").strip()
-    asignaturas = AsignaturaCatalogo.objects.all().order_by("nombre")
+    asignaturas = (
+        AsignaturaCatalogo.objects
+        .filter(school=request.school)              # 👈
+        .order_by("nombre")
+    )
     if q:
-        asignaturas = asignaturas.filter(Q(nombre__icontains=q) | Q(area__icontains=q))
+        asignaturas = asignaturas.filter(
+            Q(nombre__icontains=q) |
+            Q(area__icontains=q)
+        )
 
     paginator = Paginator(asignaturas, 10)
     page_number = request.GET.get("page") or 1
@@ -779,32 +774,39 @@ def asignaturas_list(request):
         "nav_active": "academico",
     })
 
+
 @requiere_gestion
 def asignatura_create(request):
     if request.method == "POST":
         form = AsignaturaCatalogoForm(request.POST)
         if form.is_valid():
-            form.save()
+            obj = form.save(commit=False)
+            obj.school = request.school                 # 👈
+            obj.save()
             return redirect("academico:asignaturas")
     else:
         form = AsignaturaCatalogoForm()
     return render(request, "academico/asignatura_form.html", {"form": form, "edit_mode": False, "nav_active": "academico"})
 
+
 @requiere_gestion
 def asignatura_update(request, pk):
-    obj = get_object_or_404(AsignaturaCatalogo, pk=pk)
+    obj = get_object_or_404(AsignaturaCatalogo, pk=pk, school=request.school)  # 👈
     if request.method == "POST":
         form = AsignaturaCatalogoForm(request.POST, instance=obj)
         if form.is_valid():
-            form.save()
+            obj = form.save(commit=False)
+            obj.school = request.school
+            obj.save()
             return redirect("academico:asignaturas")
     else:
         form = AsignaturaCatalogoForm(instance=obj)
     return render(request, "academico/asignatura_form.html", {"form": form, "edit_mode": True, "obj": obj, "nav_active": "academico"})
 
+
 @requiere_gestion
 def asignatura_delete(request, pk):
-    obj = get_object_or_404(AsignaturaCatalogo, pk=pk)
+    obj = get_object_or_404(AsignaturaCatalogo, pk=pk, school=request.school)  # 👈
     if request.method == "POST":
         obj.delete()
         return redirect("academico:asignaturas")
@@ -820,7 +822,11 @@ def ofertas_list(request):
     asig_id = request.GET.get("asignatura") or ""
     docente_id = request.GET.get("docente") or ""
 
-    ofertas = AsignaturaOferta.objects.select_related("anio", "curso", "asignatura", "docente").all()
+    ofertas = (
+        AsignaturaOferta.objects
+        .select_related("anio", "curso", "asignatura", "docente")
+        .filter(school=request.school)                     # 👈
+    )
 
     if q:
         ofertas = ofertas.filter(
@@ -858,71 +864,86 @@ def ofertas_list(request):
         "asig_selected": asig_id,
         "docente_selected": docente_id,
         "anios": AnioLectivo.objects.all().order_by("-activo", "-nombre"),
-        "cursos": Curso.objects.all().order_by("grado", "nombre"),
-        "asignaturas": AsignaturaCatalogo.objects.all().order_by("nombre"),
-        "docentes": Docente.objects.all().order_by("apellidos", "nombres"),
+        "cursos": Curso.objects.filter(school=request.school).order_by("grado", "nombre"),     # 👈
+        "asignaturas": AsignaturaCatalogo.objects.filter(school=request.school).order_by("nombre"),  # 👈
+        "docentes": Docente.objects.filter(school=request.school).order_by("apellidos", "nombres"),  # 👈
         "querystring": querystring,
         "nav_active": "academico",
     }
     return render(request, "academico/ofertas.html", ctx)
+
 
 @requiere_gestion
 def oferta_create(request):
     if request.method == "POST":
         form = AsignaturaOfertaForm(request.POST)
         if form.is_valid():
-            form.save()
+            obj = form.save(commit=False)
+            obj.school = request.school                         # 👈
+            obj.save()
             messages.success(request, "Oferta creada correctamente.")
             return redirect("academico:ofertas")
     else:
         form = AsignaturaOfertaForm()
     return render(request, "academico/oferta_form.html", {"form": form, "edit_mode": False, "nav_active": "academico"})
 
+
 @requiere_gestion
 def oferta_update(request, pk):
-    obj = get_object_or_404(AsignaturaOferta, pk=pk)
+    obj = get_object_or_404(AsignaturaOferta, pk=pk, school=request.school)  # 👈
     if request.method == "POST":
         form = AsignaturaOfertaForm(request.POST, instance=obj)
         if form.is_valid():
-            form.save()
+            obj = form.save(commit=False)
+            obj.school = request.school
+            obj.save()
             messages.success(request, "Oferta actualizada.")
             return redirect("academico:ofertas")
     else:
         form = AsignaturaOfertaForm(instance=obj)
     return render(request, "academico/oferta_form.html", {"form": form, "edit_mode": True, "obj": obj, "nav_active": "academico"})
 
+
 @requiere_gestion
 def oferta_delete(request, pk):
-    obj = get_object_or_404(AsignaturaOferta, pk=pk)
+    obj = get_object_or_404(AsignaturaOferta, pk=pk, school=request.school)  # 👈
     if request.method == "POST":
         obj.delete()
         messages.success(request, "Oferta eliminada.")
         return redirect("academico:ofertas")
     return render(request, "academico/oferta_confirm_delete.html", {"obj": obj, "nav_active": "academico"})
 
+
 @requiere_gestion
 def oferta_bulk_create(request):
     if request.method == "POST":
         form = OfertaBulkForm(request.POST)
         if form.is_valid():
-            anio = form.cleaned_data["anio"]
+            anio       = form.cleaned_data["anio"]
             asignatura = form.cleaned_data["asignatura"]
-            cursos = form.cleaned_data["cursos"]
-            docente = form.cleaned_data["docente"]
+            cursos     = form.cleaned_data["cursos"]
+            docente    = form.cleaned_data["docente"]
             intensidad = form.cleaned_data["intensidad_horaria"] or 0
 
             creadas = 0
             duplicadas = 0
             for curso in cursos:
                 exists = AsignaturaOferta.objects.filter(
-                    anio=anio, curso=curso, asignatura=asignatura
+                    school=request.school,         # 👈
+                    anio=anio,
+                    curso=curso,
+                    asignatura=asignatura
                 ).exists()
                 if exists:
                     duplicadas += 1
                     continue
                 AsignaturaOferta.objects.create(
-                    anio=anio, curso=curso, asignatura=asignatura,
-                    docente=docente, intensidad_horaria=intensidad
+                    school=request.school,         # 👈
+                    anio=anio,
+                    curso=curso,
+                    asignatura=asignatura,
+                    docente=docente,
+                    intensidad_horaria=intensidad
                 )
                 creadas += 1
 
@@ -1013,7 +1034,11 @@ def logros_list(request):
     oferta_id = request.GET.get("oferta") or ""
     periodo_id = request.GET.get("periodo") or ""
 
-    logros = Logro.objects.select_related("oferta", "oferta__anio", "oferta__curso", "oferta__asignatura", "periodo").all()
+    logros = (
+        Logro.objects
+        .select_related("oferta", "oferta__anio", "oferta__curso", "oferta__asignatura", "periodo")
+        .filter(school=request.school)                # 👈
+    )
 
     if q:
         logros = logros.filter(
@@ -1033,7 +1058,13 @@ def logros_list(request):
     if periodo_id:
         logros = logros.filter(periodo_id=periodo_id)
 
-    logros = logros.order_by("oferta__anio__nombre", "oferta__curso__grado", "oferta__asignatura__nombre", "periodo__numero", "titulo")
+    logros = logros.order_by(
+        "oferta__anio__nombre",
+        "oferta__curso__grado",
+        "oferta__asignatura__nombre",
+        "periodo__numero",
+        "titulo",
+    )
 
     paginator = Paginator(logros, 12)
     page_number = request.GET.get("page") or 1
@@ -1051,9 +1082,12 @@ def logros_list(request):
         "oferta_selected": oferta_id,
         "periodo_selected": periodo_id,
         "anios": AnioLectivo.objects.all().order_by("-activo", "-nombre"),
-        "cursos": Curso.objects.all().order_by("grado", "nombre"),
-        "ofertas": AsignaturaOferta.objects.select_related("anio", "curso", "asignatura").all().order_by(
-            "anio__nombre", "curso__grado", "curso__nombre", "asignatura__nombre"
+        "cursos": Curso.objects.filter(school=request.school).order_by("grado", "nombre"),  # 👈
+        "ofertas": (
+            AsignaturaOferta.objects
+            .select_related("anio", "curso", "asignatura")
+            .filter(school=request.school)                                                # 👈
+            .order_by("anio__nombre", "curso__grado", "curso__nombre", "asignatura__nombre")
         ),
         "periodos": Periodo.objects.select_related("anio").all().order_by("anio__nombre", "numero"),
         "querystring": querystring,
@@ -1061,40 +1095,61 @@ def logros_list(request):
     }
     return render(request, "academico/logros.html", ctx)
 
+
 @requiere_gestion
 def logro_create(request):
     if request.method == "POST":
         form = LogroForm(request.POST)
         if form.is_valid():
-            obj = form.save()
-            total = Logro.objects.filter(oferta=obj.oferta, periodo=obj.periodo).aggregate(s=Sum("peso"))["s"] or Decimal("0")
+            obj = form.save(commit=False)
+            obj.school = request.school                    # 👈
+            obj.save()
+            total = Logro.objects.filter(
+                school=request.school,                     # 👈
+                oferta=obj.oferta,
+                periodo=obj.periodo
+            ).aggregate(s=Sum("peso"))["s"] or Decimal("0")
             if total != Decimal("100"):
-                messages.warning(request, f"Advertencia: la suma de pesos para esta oferta/periodo es {total}%, no 100%.")
+                messages.warning(
+                    request,
+                    f"Advertencia: la suma de pesos para esta oferta/periodo es {total}%, no 100%."
+                )
             messages.success(request, "Logro creado correctamente.")
             return redirect("academico:logros")
     else:
         form = LogroForm()
     return render(request, "academico/logro_form.html", {"form": form, "edit_mode": False, "nav_active": "academico"})
 
+
 @requiere_gestion
 def logro_update(request, pk):
-    obj = get_object_or_404(Logro, pk=pk)
+    obj = get_object_or_404(Logro, pk=pk, school=request.school)    # 👈
     if request.method == "POST":
         form = LogroForm(request.POST, instance=obj)
         if form.is_valid():
-            obj = form.save()
-            total = Logro.objects.filter(oferta=obj.oferta, periodo=obj.periodo).aggregate(s=Sum("peso"))["s"] or Decimal("0")
+            obj = form.save(commit=False)
+            obj.school = request.school
+            obj.save()
+            total = Logro.objects.filter(
+                school=request.school,
+                oferta=obj.oferta,
+                periodo=obj.periodo
+            ).aggregate(s=Sum("peso"))["s"] or Decimal("0")
             if total != Decimal("100"):
-                messages.warning(request, f"Advertencia: la suma de pesos para esta oferta/periodo es {total}%, no 100%.")
+                messages.warning(
+                    request,
+                    f"Advertencia: la suma de pesos para esta oferta/periodo es {total}%, no 100%."
+                )
             messages.success(request, "Logro actualizado.")
             return redirect("academico:logros")
     else:
         form = LogroForm(instance=obj)
     return render(request, "academico/logro_form.html", {"form": form, "edit_mode": True, "obj": obj, "nav_active": "academico"})
 
+
 @requiere_gestion
 def logro_delete(request, pk):
-    obj = get_object_or_404(Logro, pk=pk)
+    obj = get_object_or_404(Logro, pk=pk, school=request.school)    # 👈
     if request.method == "POST":
         obj.delete()
         messages.success(request, "Logro eliminado.")
@@ -1102,37 +1157,30 @@ def logro_delete(request, pk):
     return render(request, "academico/logro_confirm_delete.html", {"obj": obj, "nav_active": "academico"})
 
 # ----------------- Asistencia (gestión) -----------------
+
 @requiere_gestion
 def asistencia_selector(request):
-    """
-    Selector de año / curso / periodo / fecha para ir a tomar asistencia.
-    Docente de curso ve solo su curso_asignado; admin/rector ven todos.
-    """
-    docente = Docente.objects.filter(usuario=request.user).first()
+    docente = Docente.objects.filter(usuario=request.user, school=request.school).first()  # 👈
 
-    # Años lectivos
     anios = AnioLectivo.objects.all().order_by("-activo", "-nombre")
 
-    # Cursos según rol
     if docente and not (request.user.is_staff or request.user.is_superuser):
         if docente.curso_asignado_id:
-            cursos = Curso.objects.filter(pk=docente.curso_asignado_id)
+            cursos = Curso.objects.filter(pk=docente.curso_asignado_id, school=request.school)
         else:
             cursos = Curso.objects.none()
     else:
-        cursos = Curso.objects.all().order_by("grado", "nombre")
+        cursos = Curso.objects.filter(school=request.school).order_by("grado", "nombre")
 
-    # Periodos (podríamos filtrar por año luego, pero de entrada todos)
     periodos = Periodo.objects.select_related("anio").all().order_by("anio__nombre", "numero")
 
-    # Valores seleccionados (si viene algo por GET)
     anio_id = (request.GET.get("anio") or "").strip()
     curso_id = (request.GET.get("curso") or "").strip()
     periodo_id = (request.GET.get("periodo") or "").strip()
     fecha_str = (request.GET.get("fecha") or "").strip()
 
     if not fecha_str:
-        fecha_str = date.today().isoformat()  # YYYY-MM-DD
+        fecha_str = date.today().isoformat()
 
     ctx = {
         "anios": anios,
@@ -1149,12 +1197,6 @@ def asistencia_selector(request):
 
 @requiere_gestion
 def asistencia_tomar(request):
-    """
-    Pantalla para pasar lista de un curso en una fecha.
-    Crea (o reutiliza) un PaseLista y captura estados por estudiante.
-    """
-    from django.contrib import messages
-
     anio_id = request.GET.get("anio")
     curso_id = request.GET.get("curso")
     periodo_id = request.GET.get("periodo")
@@ -1171,13 +1213,13 @@ def asistencia_tomar(request):
         return redirect("academico:asistencia_selector")
 
     anio = get_object_or_404(AnioLectivo, pk=anio_id)
-    curso = get_object_or_404(Curso, pk=curso_id)
+    curso = get_object_or_404(Curso, pk=curso_id, school=request.school)          # 👈
     periodo = get_object_or_404(Periodo, pk=periodo_id, anio=anio)
 
-    docente = Docente.objects.filter(usuario=request.user).first()
+    docente = Docente.objects.filter(usuario=request.user, school=request.school).first()
 
-    # Obtener o crear el pase de lista para ese curso/fecha/periodo/año
-    pase, creado = PaseLista.objects.get_or_create(
+    pase, creado = PaseLista.objects.get_or_create(      # 👈 ahora con school
+        school=request.school,
         anio=anio,
         curso=curso,
         periodo=periodo,
@@ -1185,10 +1227,11 @@ def asistencia_tomar(request):
         defaults={"docente": docente},
     )
 
-    # Estudiantes del curso
-    estudiantes = Estudiante.objects.filter(curso=curso).order_by("apellidos", "nombres")
+    estudiantes = Estudiante.objects.filter(
+        curso=curso,
+        school=request.school
+    ).order_by("apellidos", "nombres")
 
-    # Detalles existentes (si ya se pasó lista antes)
     existentes = {
         det.estudiante_id: det
         for det in AsistenciaDetalle.objects.filter(pase=pase).select_related("estudiante")
@@ -1200,9 +1243,7 @@ def asistencia_tomar(request):
             estado = request.POST.get(f"estado_{est.id}", "").strip()
             obs = (request.POST.get(f"obs_{est.id}") or "").strip()
 
-            # Si no seleccionó nada, puedes ignorar o asumir "Presente"
             if not estado:
-                # opcional: salta este estudiante
                 continue
 
             AsistenciaDetalle.objects.update_or_create(
@@ -1216,12 +1257,10 @@ def asistencia_tomar(request):
             guardados += 1
 
         messages.success(request, f"Asistencia guardada. Registros procesados: {guardados}.")
-        # Recargar la misma página (GET) para ver lo guardado
         return redirect(
             f"{request.path}?anio={anio_id}&curso={curso_id}&periodo={periodo_id}&fecha={fecha_str}"
         )
 
-    # Para el GET armamos filas con estado inicial
     filas = []
     for est in estudiantes:
         det = existentes.get(est.id)
@@ -1241,43 +1280,39 @@ def asistencia_tomar(request):
         "nav_active": "academico",
     }
     return render(request, "academico/asistencia_tomar.html", ctx)
+
 # ----------------- Notas (gestión) -----------------
 
 @requiere_gestion
 def notas_selector(request):
-    # 1. Detectar si el usuario es docente
-    docente = Docente.objects.filter(usuario=request.user).first()
+    docente = Docente.objects.filter(usuario=request.user, school=request.school).first()
 
-    # 2. Ofertas base según el rol
-    base_ofertas = AsignaturaOferta.objects.select_related("anio", "curso", "asignatura")
+    base_ofertas = (
+        AsignaturaOferta.objects
+        .select_related("anio", "curso", "asignatura")
+        .filter(school=request.school)                        # 👈
+    )
 
     if docente and not (request.user.is_staff or request.user.is_superuser):
-        # Docente solo ve sus ofertas
         base_ofertas = base_ofertas.filter(docente=docente)
 
-    # 3. Años / cursos base según el rol
     if docente and not request.user.is_staff and not request.user.is_superuser:
-        # Solo años con ofertas del docente
         anios = (
             AnioLectivo.objects
             .filter(ofertas__in=base_ofertas)
             .distinct()
             .order_by("-activo", "-nombre")
         )
-
-        # Cursos que el docente atiende (sin filtrar aún por año)
         cursos = (
             Curso.objects
-            .filter(ofertas__in=base_ofertas)
+            .filter(ofertas__in=base_ofertas, school=request.school)   # 👈
             .distinct()
             .order_by("grado", "nombre")
         )
     else:
-        # Admin/directivo ve todo
         anios = AnioLectivo.objects.all().order_by("-activo", "-nombre")
-        cursos = Curso.objects.all().order_by("grado", "nombre")
+        cursos = Curso.objects.filter(school=request.school).order_by("grado", "nombre")
 
-    # 4. Parámetros GET
     anio_id = (request.GET.get("anio") or "").strip()
     curso_id = (request.GET.get("curso") or "").strip()
     oferta_id = (request.GET.get("oferta") or "").strip()
@@ -1286,22 +1321,16 @@ def notas_selector(request):
     ofertas = base_ofertas
     periodos = Periodo.objects.select_related("anio")
 
-    # 5. Filtros según lo escogido
-
-    # Si hay año → filtrar ofertas, periodos y cursos por ese año
     if anio_id:
         ofertas = ofertas.filter(anio_id=anio_id)
         periodos = periodos.filter(anio_id=anio_id)
-
-        # Cursos que tienen ofertas en ese año (según el rol)
         cursos = (
             Curso.objects
-            .filter(ofertas__in=ofertas)
+            .filter(ofertas__in=ofertas, school=request.school)
             .distinct()
             .order_by("grado", "nombre")
         )
 
-    # Si hay curso → filtrar ofertas por curso
     if curso_id:
         ofertas = ofertas.filter(curso_id=curso_id)
 
@@ -1341,26 +1370,36 @@ def notas_capturar(request):
 
     oferta = get_object_or_404(
         AsignaturaOferta.objects.select_related("anio", "curso", "asignatura"),
-        pk=oferta_id, anio_id=anio_id, curso_id=curso_id
+        pk=oferta_id,
+        anio_id=anio_id,
+        curso_id=curso_id,
+        school=request.school,          # 👈 seguridad por colegio
     )
     periodo = get_object_or_404(
         Periodo.objects.select_related("anio"),
         pk=periodo_id,
-        anio_id=anio_id
+        anio_id=anio_id,
     )
 
     if oferta.anio_id != periodo.anio_id:
         messages.error(request, "La oferta y el periodo pertenecen a años diferentes.")
         return redirect("academico:notas_selector")
 
-    estudiantes = Estudiante.objects.filter(
-        curso_id=curso_id
-    ).order_by("apellidos", "nombres")
+    estudiantes = (
+        Estudiante.objects
+        .filter(curso_id=curso_id, school=request.school)  # 👈
+        .order_by("apellidos", "nombres")
+    )
 
-    logros = Logro.objects.filter(
-        oferta_id=oferta.id,
-        periodo_id=periodo.id
-    ).order_by("titulo")
+    logros = (
+        Logro.objects
+        .filter(
+            oferta_id=oferta.id,
+            periodo_id=periodo.id,
+            school=request.school,                         # 👈
+        )
+        .order_by("titulo")
+    )
 
     if not estudiantes.exists():
         messages.warning(request, "Este curso no tiene estudiantes. Primero registra estudiantes.")
@@ -1409,11 +1448,9 @@ def notas_capturar(request):
     }
     return render(request, "academico/notas_capturar.html", ctx)
 
-
-
 @requiere_gestion
 def actividad_create(request, logro_id):
-    logro = get_object_or_404(Logro, pk=logro_id)
+    logro = get_object_or_404(Logro, pk=logro_id, school=request.school)  # 👈
 
     if request.method == "POST":
         titulo = request.POST.get("titulo")
@@ -1432,9 +1469,15 @@ def actividad_create(request, logro_id):
 def notas_actividades_capturar(request, actividad_id):
     actividad = get_object_or_404(Actividad, pk=actividad_id)
     logro = actividad.logro
+
+    # pequeña protección por colegio
+    if logro.school != request.school:  # 👈
+        messages.error(request, "No tienes acceso a esta actividad.")
+        return redirect("academico:notas_selector")
+
     estudiantes = list(
         Estudiante.objects
-        .filter(curso=logro.oferta.curso)
+        .filter(curso=logro.oferta.curso, school=request.school)  # 👈
         .order_by("apellidos", "nombres")
     )
 
@@ -1456,7 +1499,7 @@ def notas_actividades_capturar(request, actividad_id):
 
             try:
                 val = Decimal(raw.replace(",", "."))
-            except:
+            except Exception:
                 continue
 
             CalificacionActividad.objects.update_or_create(
@@ -1483,12 +1526,12 @@ def notas_actividades_capturar(request, actividad_id):
 
 @requiere_gestion
 def saber_ser_capturar(request, oferta_id, periodo_id):
-    oferta = get_object_or_404(AsignaturaOferta, pk=oferta_id)
+    oferta = get_object_or_404(AsignaturaOferta, pk=oferta_id, school=request.school)  # 👈
     periodo = get_object_or_404(Periodo, pk=periodo_id)
 
     estudiantes = list(
         Estudiante.objects
-        .filter(curso=oferta.curso)
+        .filter(curso=oferta.curso, school=request.school)   # 👈
         .order_by("apellidos", "nombres")
     )
 
@@ -1507,7 +1550,7 @@ def saber_ser_capturar(request, oferta_id, periodo_id):
             return None
         try:
             return Decimal(raw.replace(",", "."))
-        except:
+        except Exception:
             return None
 
     if request.method == "POST":
@@ -1618,12 +1661,12 @@ def boletines_masivos(request):
         return redirect(url)
 
     anio    = get_object_or_404(AnioLectivo, pk=anio_id)
-    curso   = get_object_or_404(Curso, pk=curso_id)
+    curso   = get_object_or_404(Curso, pk=curso_id, school=request.school)  # 👈
     periodo = get_object_or_404(Periodo, pk=periodo_id, anio=anio)
 
     estudiantes = (
         Estudiante.objects
-        .filter(id__in=est_ids, curso=curso)
+        .filter(id__in=est_ids, curso=curso, school=request.school)         # 👈
         .order_by("apellidos", "nombres")
     )
 
@@ -1641,7 +1684,7 @@ def boletines_masivos(request):
     return response
 
 def boletin_trimestral(request, estudiante_id, anio_id, trimestre):
-    estudiante = get_object_or_404(Estudiante, pk=estudiante_id)
+    estudiante = get_object_or_404(Estudiante, pk=estudiante_id, school=request.school)  # 👈
     anio = get_object_or_404(AnioEconomico, pk=anio_id)
 
     resumen = resumen_cartera_para_boletin(estudiante, anio, int(trimestre))
@@ -1664,7 +1707,6 @@ def boletin_trimestral(request, estudiante_id, anio_id, trimestre):
             "estudiante": estudiante,
             "trimestre": trimestre,
             "anio": anio,
-
         },
     )
 
@@ -1679,7 +1721,7 @@ def boletin_selector(request):
     if anio_id:
         cursos = (
             Curso.objects
-            .filter(ofertas__anio_id=anio_id)
+            .filter(ofertas__anio_id=anio_id, school=request.school)   # 👈
             .distinct()
             .order_by("grado", "nombre")
         )
@@ -1689,12 +1731,25 @@ def boletin_selector(request):
             .order_by("numero")
         )
     else:
-        cursos = Curso.objects.all().order_by("grado", "nombre")
-        periodos = Periodo.objects.select_related("anio").all().order_by("anio__nombre", "numero")
+        cursos = (
+            Curso.objects
+            .filter(school=request.school)                             # 👈
+            .order_by("grado", "nombre")
+        )
+        periodos = (
+            Periodo.objects
+            .select_related("anio")
+            .all()
+            .order_by("anio__nombre", "numero")
+        )
 
     estudiantes = []
     if curso_id:
-        estudiantes = Estudiante.objects.filter(curso_id=curso_id).order_by("apellidos", "nombres")
+        estudiantes = (
+            Estudiante.objects
+            .filter(curso_id=curso_id, school=request.school)          # 👈
+            .order_by("apellidos", "nombres")
+        )
 
     # 👉 aquí defines quién puede descargar masivo
     tiene_permiso_masivo = (
@@ -1728,8 +1783,12 @@ def boletin_generar(request):
         return redirect("academico:boletin_selector")
 
     periodo = get_object_or_404(Periodo, pk=periodo_id)
-    curso = get_object_or_404(Curso, pk=curso_id)
-    estudiantes = Estudiante.objects.filter(curso=curso).order_by("apellidos", "nombres")
+    curso = get_object_or_404(Curso, pk=curso_id, school=request.school)  # 👈
+    estudiantes = (
+        Estudiante.objects
+        .filter(curso=curso, school=request.school)                       # 👈
+        .order_by("apellidos", "nombres")
+    )
 
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="boletines_{curso}_{periodo}.pdf"'
@@ -1782,7 +1841,6 @@ from .models import (
 # _promedio_asignatura_periodo, _concepto_letra,
 # ranking_curso_periodo, ranking_curso_anual, _puede_gestionar
 
-
 @requiere_gestion
 def boletin_estudiante(request):
     anio_id    = request.GET.get("anio")
@@ -1795,9 +1853,14 @@ def boletin_estudiante(request):
         return redirect("academico:boletin_selector")
 
     anio    = get_object_or_404(AnioLectivo, pk=anio_id)
-    curso   = get_object_or_404(Curso, pk=curso_id)
+    curso   = get_object_or_404(Curso, pk=curso_id, school=request.school)  # 👈
     periodo = get_object_or_404(Periodo, pk=periodo_id, anio=anio)
-    est     = get_object_or_404(Estudiante, pk=est_id, curso=curso)
+    est     = get_object_or_404(
+        Estudiante,
+        pk=est_id,
+        curso=curso,
+        school=request.school,                                             # 👈
+    )
 
     # ====== OFERTAS (asignaturas del curso en ese año) ======
     ofertas = (
@@ -1807,7 +1870,7 @@ def boletin_estudiante(request):
         .order_by("asignatura__area", "asignatura__nombre")
     )
 
-    # ====== RESUMEN DE TRES TRIMESTRES (igual que ya tenías) ======
+    # ====== RESUMEN DE TRES TRIMESTRES ======
     periodos_anio = list(
         Periodo.objects.filter(anio=anio).order_by("numero")[:3]
     )
@@ -1903,7 +1966,7 @@ def boletin_estudiante(request):
     ]
     areas.sort(key=lambda a: a["nombre"])
 
-    # ====== OBSERVADOR (si lo quieres seguir mostrando en otro lado) ======
+    # ====== OBSERVADOR ======
     observaciones = (
         Observador.objects
         .filter(
@@ -1914,7 +1977,7 @@ def boletin_estudiante(request):
         .order_by("fecha")
     )
 
-    # ====== ASISTENCIA: fallas y tardanzas del período ======
+    # ====== ASISTENCIA ======
     total_fallas_periodo = AsistenciaDetalle.objects.filter(
         estudiante=est,
         estado=AsistenciaDetalle.AUSENTE,
@@ -1931,13 +1994,13 @@ def boletin_estudiante(request):
         pase__periodo=periodo,
     ).count()
 
-    # ====== OBSERVACIÓN GENERAL DEL BOLETÍN (como en el PDF) ======
+    # ====== OBSERVACIÓN GENERAL ======
     obs_general = ObservacionBoletin.objects.filter(
         estudiante=est,
         periodo=periodo
     ).first()
 
-    # ====== PUESTOS POR TRIMESTRE Y ANUAL (si tienes estas funciones) ======
+    # ====== PUESTOS POR TRIMESTRE Y ANUAL ======
     puestos_trimestres = []
     for per in periodos_anio:
         mapa_puestos = ranking_curso_periodo(anio, curso, per)  # {est_id: puesto}
@@ -1975,25 +2038,23 @@ def boletin_estudiante(request):
     }
     return render(request, "academico/boletin_estudiante.html", ctx)
 
-
 def boletin_estudiante_pdf(request):
     anio_id     = request.GET.get("anio")
     curso_id    = request.GET.get("curso")
     periodo_id  = request.GET.get("periodo")
     est_id      = request.GET.get("estudiante")
 
-    # Validación de parámetros
+    # ------------------ Validación de parámetros ------------------
     if not (anio_id and curso_id and periodo_id and est_id):
         messages.error(request, "Faltan parámetros para generar el boletín en PDF.")
         return redirect("academico:boletin_selector")
 
-    # Obtener objetos base
+    # ------------------ Objetos base ------------------
     anio    = get_object_or_404(AnioLectivo, pk=anio_id)
     curso   = get_object_or_404(Curso, pk=curso_id)
     periodo = get_object_or_404(Periodo, pk=periodo_id, anio=anio)
     est     = get_object_or_404(Estudiante, pk=est_id, curso=curso)
 
-    # Ofertas (asignaturas) del curso en ese año
     ofertas = (
         AsignaturaOferta.objects
         .select_related("asignatura", "docente")
@@ -2060,14 +2121,13 @@ def boletin_estudiante_pdf(request):
         mapa_puestos = ranking_curso_periodo(anio, curso, per)
         puestos_trimestres.append(mapa_puestos)
 
-    # Extraemos el puesto de ESTE estudiante en cada trimestre
     puesto_p1 = puestos_trimestres[0].get(est.id) if len(puestos_trimestres) > 0 else None
     puesto_p2 = puestos_trimestres[1].get(est.id) if len(puestos_trimestres) > 1 else None
     puesto_p3 = puestos_trimestres[2].get(est.id) if len(puestos_trimestres) > 2 else None
 
-    # Puesto final (anual)
     puestos_anual = ranking_curso_anual(anio, curso)
     puesto_final = puestos_anual.get(est.id)
+
     # ========================================
     #   ÁREAS / ASIGNATURAS (detalle por logros)
     # ========================================
@@ -2118,7 +2178,7 @@ def boletin_estudiante_pdf(request):
     ]
     areas.sort(key=lambda a: a["nombre"])
 
-    # Observación general (si existe)
+    # Observación general
     obs_general = ObservacionBoletin.objects.filter(
         estudiante=est,
         periodo=periodo
@@ -2127,28 +2187,26 @@ def boletin_estudiante_pdf(request):
     # ========= RESUMEN DE FALLAS DEL PERÍODO =========
     total_fallas_periodo = AsistenciaDetalle.objects.filter(
         estudiante=est,
-        estado=AsistenciaDetalle.AUSENTE,  # solo ausencias
+        estado=AsistenciaDetalle.AUSENTE,
         pase__anio=anio,
         pase__curso=curso,
         pase__periodo=periodo,
     ).count()
     total_tardanzas_periodo = AsistenciaDetalle.objects.filter(
         estudiante=est,
-        estado=AsistenciaDetalle.TARDANZA,  # 👈 tardanzas
+        estado=AsistenciaDetalle.TARDANZA,
         pase__anio=anio,
         pase__curso=curso,
         pase__periodo=periodo,
     ).count()
 
-    # ========= NOMBRES DOCENTE CURSO Y RECTOR ACTIVO =========
-    # Docente encargado del curso (Curso asignado)
+    # ========= DOCENTE CURSO Y RECTOR ACTIVO =========
     docente_curso = Docente.objects.filter(curso_asignado=curso).first()
     if docente_curso:
         docente_nombre = f"{docente_curso.nombres} {docente_curso.apellidos}".upper()
     else:
         docente_nombre = "DOCENTE"
 
-    # Rector activo (primer usuario activo del grupo "Rector")
     rector_user = (
         User.objects
         .filter(is_active=True, groups__name="Rector")
@@ -2163,13 +2221,24 @@ def boletin_estudiante_pdf(request):
     else:
         rector_nombre = "RECTOR(A)"
 
-    # ========= MAPA asignatura -> resumen (para el template) =========
     resumen_por_asig = {r["asignatura"]: r for r in resumen_asignaturas}
 
-    # ========= Contexto para el template HTML =========
-    logo_url = request.build_absolute_uri(static("img/logo.png"))
-    sello_url = request.build_absolute_uri(static("img/sello.png"))
+    # ========= COLEGIO (multi-colegio) =========
+    # Ajusta esta parte a cómo obtienes el colegio actual
+    colegio = getattr(request, "colegio", None)  # o request.colegio_actual, o est.colegio, etc.
 
+    # Logo y sello dinámicos por colegio, con fallback al estático
+    if colegio and getattr(colegio, "logo", None):
+        logo_url = request.build_absolute_uri(colegio.logo.url)
+    else:
+        logo_url = request.build_absolute_uri(static("img/logo.png"))
+
+    if colegio and getattr(colegio, "sello", None):
+        sello_url = request.build_absolute_uri(colegio.sello.url)
+    else:
+        sello_url = request.build_absolute_uri(static("img/sello.png"))
+
+    # ========= Contexto para el template HTML =========
     ctx = {
         "anio": anio,
         "curso": curso,
@@ -2191,10 +2260,15 @@ def boletin_estudiante_pdf(request):
         "puesto_p2": puesto_p2,
         "puesto_p3": puesto_p3,
         "puesto_final": puesto_final,
+        "colegio": colegio,  # para usar {{ colegio.nombre }}, {{ colegio.lema }}, etc. en el template
     }
 
     # =============== GENERAR PDF CON WEASYPRINT ===============
-    html_string = render_to_string("academico/boletin_estudiante_pdf.html", ctx)
+    html_string = render_to_string(
+        "academico/boletin_estudiante_pdf.html",
+        ctx,
+        request=request,  # para que también entren los context processors (si los usas)
+    )
 
     response = HttpResponse(content_type="application/pdf")
     filename = f"boletin_{est.apellidos}_{est.nombres}_{periodo.nombre}.pdf"
@@ -2212,11 +2286,11 @@ def observacion_nueva(request):
         messages.error(request, "Faltan parámetros (estudiante y periodo).")
         return redirect("academico:boletin_selector")
 
-    estudiante = get_object_or_404(Estudiante, pk=est_id)
+    estudiante = get_object_or_404(Estudiante, pk=est_id, school=request.school)  # 👈
     periodo = get_object_or_404(Periodo, pk=periodo_id)
 
     # Intentamos obtener el docente logueado (si existe vinculación)
-    docente = Docente.objects.filter(usuario=request.user).first()
+    docente = Docente.objects.filter(usuario=request.user, school=request.school).first()
 
     if request.method == "POST":
         texto = (request.POST.get("detalle") or "").strip()
@@ -2224,7 +2298,6 @@ def observacion_nueva(request):
         if not texto:
             messages.error(request, "Escribe alguna observación antes de guardar.")
         else:
-            # 🔹 Se guarda SIEMPRE en ObservacionBoletin
             obj, created = ObservacionBoletin.objects.update_or_create(
                 estudiante=estudiante,
                 periodo=periodo,
@@ -2238,7 +2311,6 @@ def observacion_nueva(request):
                 "Observación guardada correctamente." if created else "Observación actualizada correctamente."
             )
 
-            # Redirigimos de vuelta al boletín de ese estudiante
             url = (
                 f"{reverse('academico:boletin_estudiante')}"
                 f"?anio={periodo.anio_id}"
@@ -2405,7 +2477,7 @@ def academico_home(request):
 
 @requiere_gestion
 def actividades_list(request, logro_id):
-    logro = get_object_or_404(Logro, pk=logro_id)
+    logro = get_object_or_404(Logro, pk=logro_id, school=request.school)  # 👈
 
     actividades = (
         Actividad.objects

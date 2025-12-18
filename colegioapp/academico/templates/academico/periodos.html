@@ -1,30 +1,102 @@
 {% extends "colegioapp/base.html" %}
-{% block title %}Periodos | CEI GIN GABY{% endblock %}
+{% block title %}Periodos | Sistema Académico{% endblock %}
 
 {% block content %}
 <main>
-  <h2>Periodos</h2>
+  <h2 style="color:var(--color-primary, #00796B);">Periodos</h2>
 
-  <div style="max-width:1000px;margin:0 auto 14px;display:flex;gap:10px;justify-content:space-between;flex-wrap:wrap;">
-    <form method="get" style="display:flex;gap:10px;flex-wrap:wrap;flex:1;">
-      <input name="q" value="{{ q }}" placeholder="Buscar por nombre, año, número"
-             style="flex:1;min-width:240px;padding:10px 12px;border:1px solid #cfd8dc;border-radius:8px;">
-      <select name="anio" style="padding:10px 12px;border:1px solid #cfd8dc;border-radius:8px;">
+  <div style="
+        max-width:1000px;
+        margin:0 auto 14px;
+        display:flex;
+        gap:10px;
+        justify-content:space-between;
+        flex-wrap:wrap;
+      ">
+    <form method="get"
+          style="display:flex;gap:10px;flex-wrap:wrap;flex:1;">
+      <input
+        name="q"
+        value="{{ q }}"
+        placeholder="Buscar por nombre, año, número"
+        style="
+          flex:1;
+          min-width:240px;
+          padding:10px 12px;
+          border:1px solid #cfd8dc;
+          border-radius:8px;
+        "
+      >
+
+      <select
+        name="anio"
+        style="
+          padding:10px 12px;
+          border:1px solid #cfd8dc;
+          border-radius:8px;
+        ">
         <option value="">Año</option>
         {% for a in anios %}
-          <option value="{{ a.id }}" {% if anio_selected == a.id|stringformat:'s' %}selected{% endif %}>{{ a.nombre }}</option>
+          <option value="{{ a.id }}" {% if anio_selected == a.id|stringformat:'s' %}selected{% endif %}>
+            {{ a.nombre }}
+          </option>
         {% endfor %}
       </select>
-      <button type="submit" style="padding:10px 16px;background:#00796B;color:#fff;border:none;border-radius:8px;">Filtrar</button>
-      <a href="{% url 'academico:periodos' %}" style="padding:10px 16px;background:#90a4ae;color:#fff;border-radius:8px;text-decoration:none;">Limpiar</a>
+
+      <button type="submit"
+              style="
+                padding:10px 16px;
+                background:var(--color-primary, #00796B);
+                color:#fff;
+                border:none;
+                border-radius:8px;
+                cursor:pointer;
+              ">
+        Filtrar
+      </button>
+
+      <a href="{% url 'academico:periodos' %}"
+         style="
+           padding:10px 16px;
+           background:var(--color-neutral, #90a4ae);
+           color:#fff;
+           border-radius:8px;
+           text-decoration:none;
+         ">
+        Limpiar
+      </a>
     </form>
 
-    <a href="{% url 'academico:periodo_create' %}" style="padding:10px 16px;background:#004d40;color:#fff;border-radius:8px;text-decoration:none;">+ Nuevo periodo</a>
-    <a href="{% url 'academico:logros' %}" style="padding:10px 16px;background:#004d40;color:#fff;border-radius:8px;text-decoration:none;">Ver logros</a>
+    <a href="{% url 'academico:periodo_create' %}"
+       style="
+         padding:10px 16px;
+         background:var(--color-primary-strong, #004d40);
+         color:#fff;
+         border-radius:8px;
+         text-decoration:none;
+       ">
+      + Nuevo periodo
+    </a>
+
+    <a href="{% url 'academico:logros' %}"
+       style="
+         padding:10px 16px;
+         background:var(--color-primary-strong, #004d40);
+         color:#fff;
+         border-radius:8px;
+         text-decoration:none;
+       ">
+      Ver logros
+    </a>
   </div>
 
   <div style="max-width:1000px;margin:0 auto;">
-    <div style="overflow-x:auto;background:#fff;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.06);">
+    <div style="
+          overflow-x:auto;
+          background:#fff;
+          border-radius:12px;
+          box-shadow:0 4px 12px rgba(0,0,0,0.06);
+        ">
       <table style="width:100%;border-collapse:collapse;">
         <thead style="background:#e0f2f1;">
           <tr>
@@ -32,48 +104,111 @@
             <th style="text-align:left;padding:12px;">Número</th>
             <th style="text-align:left;padding:12px;">Nombre</th>
             <th style="text-align:left;padding:12px;">Peso %</th>
-            <th style="text-align:center;padding:12px;width:160px;">Acciones</th>
+            <th style="text-align:center;padding:12px;width:220px;">Acciones</th>
           </tr>
         </thead>
         <tbody>
           {% if page_obj.object_list %}
             {% for p in page_obj.object_list %}
-            <tr style="border-top:1px solid #eceff1;">
-              <td style="padding:10px 12px;">{{ p.anio.nombre }}</td>
-              <td style="padding:10px 12px;">{{ p.numero }}</td>
-              <td style="padding:10px 12px;">{{ p.nombre }}</td>
-              <td style="padding:10px 12px;">{{ p.peso }}%</td>
-              <td style="padding:10px 12px;text-align:center;">
-                <a href="{% url 'academico:periodo_update' p.id %}" style="text-decoration:none;margin-right:8px;">Editar</a> |
-                <a href="{% url 'academico:periodo_delete' p.id %}" style="text-decoration:none;color:#c62828;margin-left:8px;">Eliminar</a> |
-                <a href="{% url 'academico:logros' %}?periodo={{ p.id }}&anio={{ p.anio.id }}" style="text-decoration:none;margin-left:8px;">Logros</a>
-              </td>
-            </tr>
+              <tr style="border-top:1px solid #eceff1;">
+                <td style="padding:10px 12px;">{{ p.anio.nombre }}</td>
+                <td style="padding:10px 12px;">{{ p.numero }}</td>
+                <td style="padding:10px 12px;">{{ p.nombre }}</td>
+                <td style="padding:10px 12px;">{{ p.peso }}%</td>
+                <td style="padding:10px 12px;text-align:center;white-space:nowrap;">
+                  <a href="{% url 'academico:periodo_update' p.id %}"
+                     style="text-decoration:none;margin-right:8px;">
+                    Editar
+                  </a>
+                  |
+                  <a href="{% url 'academico:periodo_delete' p.id %}"
+                     style="text-decoration:none;color:var(--color-danger, #c62828);margin:0 8px;">
+                    Eliminar
+                  </a>
+                  |
+                  <a href="{% url 'academico:logros' %}?periodo={{ p.id }}&anio={{ p.anio.id }}"
+                     style="text-decoration:none;margin-left:8px;">
+                    Logros
+                  </a>
+                </td>
+              </tr>
             {% endfor %}
           {% else %}
-            <tr><td colspan="5" style="padding:16px;text-align:center;color:#607d8b;">No hay periodos registrados.</td></tr>
+            <tr>
+              <td colspan="5"
+                  style="padding:16px;text-align:center;color:#607d8b;">
+                No hay periodos registrados.
+              </td>
+            </tr>
           {% endif %}
         </tbody>
       </table>
     </div>
 
     {% if page_obj.paginator.num_pages > 1 %}
-    <div style="display:flex;justify-content:center;gap:6px;margin:18px 0;">
-      {% if page_obj.has_previous %}
-        <a href="?page=1{% if querystring %}&{{ querystring }}{% endif %}" style="padding:8px 10px;border:1px solid #cfd8dc;border-radius:8px;text-decoration:none;">« Primero</a>
-        <a href="?page={{ page_obj.previous_page_number }}{% if querystring %}&{{ querystring }}{% endif %}" style="padding:8px 10px;border:1px solid #cfd8dc;border-radius:8px;text-decoration:none;">‹ Anterior</a>
-      {% endif %}
-      <span style="padding:8px 10px;border:1px solid #cfd8dc;border-radius:8px;background:#f5f5f5;">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
-      {% if page_obj.has_next %}
-        <a href="?page={{ page_obj.next_page_number }}{% if querystring %}&{{ querystring }}{% endif %}" style="padding:8px 10px;border:1px solid #cfd8dc;border-radius:8px;text-decoration:none;">Siguiente ›</a>
-        <a href="?page={{ page_obj.paginator.num_pages }}{% if querystring %}&{{ querystring }}{% endif %}" style="padding:8px 10px;border:1px solid #cfd8dc;border-radius:8px;text-decoration:none;">Última »</a>
-      {% endif %}
-    </div>
+      <div style="display:flex;justify-content:center;gap:6px;margin:18px 0;">
+        {% if page_obj.has_previous %}
+          <a href="?page=1{% if querystring %}&{{ querystring }}{% endif %}"
+             style="
+               padding:8px 10px;
+               border:1px solid #cfd8dc;
+               border-radius:8px;
+               text-decoration:none;
+             ">
+            « Primero
+          </a>
+          <a href="?page={{ page_obj.previous_page_number }}{% if querystring %}&{{ querystring }}{% endif %}"
+             style="
+               padding:8px 10px;
+               border:1px solid #cfd8dc;
+               border-radius:8px;
+               text-decoration:none;
+             ">
+            ‹ Anterior
+          </a>
+        {% endif %}
+
+        <span style="
+                padding:8px 10px;
+                border:1px solid #cfd8dc;
+                border-radius:8px;
+                background:#f5f5f5;
+              ">
+          Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+        </span>
+
+        {% if page_obj.has_next %}
+          <a href="?page={{ page_obj.next_page_number }}{% if querystring %}&{{ querystring }}{% endif %}"
+             style="
+               padding:8px 10px;
+               border:1px solid #cfd8dc;
+               border-radius:8px;
+               text-decoration:none;
+             ">
+            Siguiente ›
+          </a>
+          <a href="?page={{ page_obj.paginator.num_pages }}{% if querystring %}&{{ querystring }}{% endif %}"
+             style="
+               padding:8px 10px;
+               border:1px solid #cfd8dc;
+               border-radius:8px;
+               text-decoration:none;
+             ">
+            Última »
+          </a>
+        {% endif %}
+      </div>
     {% endif %}
 
     <div style="display:flex;justify-content:center;margin-top:10px;">
       <a href="{% url 'academico:hub' %}"
-         style="padding:10px 16px;background:#9e9e9e;color:#fff;border-radius:8px;text-decoration:none;">
+         style="
+           padding:10px 16px;
+           background:var(--color-neutral, #9e9e9e);
+           color:#fff;
+           border-radius:8px;
+           text-decoration:none;
+         ">
         Ir a gestión académica avanzada
       </a>
     </div>
