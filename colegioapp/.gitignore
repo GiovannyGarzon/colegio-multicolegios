@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Django runtime
+media/
+staticfiles/
+
+# Virtualenv
+venv/
+.venv/
+.env
+../venv/
+
+# Dumps / exports
+data_*.json
+../data_*.json
