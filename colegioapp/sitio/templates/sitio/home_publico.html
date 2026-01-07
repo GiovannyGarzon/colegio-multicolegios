@@ -232,7 +232,7 @@ style="background-image:url('{{ slides.0.image.url }}');"
   <div class="hero-inner">
     <div class="hero-text">
       <div class="hero-kicker">
-        {{ page.subtitle|default:"Formando con amor, conocimiento y valores" }}
+        {{ page.subtitle|default:request.school.slogan|default:"Formando con amor, conocimiento y valores" }}
       </div>
 
       <h1>{{ page.title|default:request.school.name }}</h1>
