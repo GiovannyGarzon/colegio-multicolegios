@@ -181,7 +181,7 @@
         </h3>
         <div class="text">
           {% if mision and mision.content %}
-            {{ mision.content|linebreaksbr }}
+            {{ mision.content|safe }}
           {% else %}
             Crea una Página pública con slug <b>mision</b>.
           {% endif %}
@@ -196,7 +196,7 @@
         </h3>
         <div class="text">
           {% if vision and vision.content %}
-            {{ vision.content|linebreaksbr }}
+            {{ vision.content|safe }}
           {% else %}
             Crea una Página pública con slug <b>vision</b>.
           {% endif %}
@@ -217,7 +217,7 @@
       </h3>
       <div class="text">
         {% if historia and historia.content %}
-          {{ historia.content|linebreaksbr }}
+          {{ historia.content|safe }}
         {% else %}
           Crea una Página pública con slug <b>historia</b>.
         {% endif %}
