@@ -249,9 +249,18 @@ style="background-image:url('{{ slides.0.image.url }}');"
       </div>
 
       <div class="hero-metrics">
-        <div><strong>+10</strong>Años de experiencia</div>
-        <div><strong>Grados</strong>Prejardín a transición</div>
-        <div><strong>Familias</strong>Acompañadas</div>
+        <div>
+          <strong>+{{ request.school.hero_years|default:"10" }}</strong>
+          Años de experiencia
+        </div>
+        <div>
+          <strong>Grados</strong>
+          {{ request.school.hero_grades|default:"Prejardín a transición" }}
+        </div>
+        <div>
+          <strong>Familias</strong>
+          {{ request.school.hero_families_label|default:"Acompañadas" }}
+        </div>
       </div>
     </div>
   </div>
