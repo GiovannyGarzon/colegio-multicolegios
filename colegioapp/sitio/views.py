@@ -15,7 +15,7 @@ def _get_page(school, slug):
 def home(request):
     school = _get_school(request)
     page = _get_page(school, "home")
-    blocks = HomeBlock.objects.filter(school=school, is_active=True) if school else []
+    blocks = HomeBlock.objects.filter(school=school, is_active=True).order_by("order") if school else []
     config = SchoolPublicConfig.objects.filter(school=school).first() if school else None
 
     slides = HomeHeroSlide.objects.filter(school=school, is_active=True) if school else []
