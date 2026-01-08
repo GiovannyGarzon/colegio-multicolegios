@@ -271,9 +271,13 @@ style="background-image:url('{{ slides.0.image.url }}');"
 {% for b in blocks %}
   <section class="block">
     <div class="block-inner">
+
+      {% if b.image %}
       <div class="block-media">
         <img src="{{ b.image.url }}" alt="{{ b.title }}">
       </div>
+      {% endif %}
+
       <div class="block-text">
         <h2>{{ b.title }}</h2>
         <p>{{ b.text|linebreaksbr }}</p>
@@ -284,6 +288,7 @@ style="background-image:url('{{ slides.0.image.url }}');"
           </a>
         {% endif %}
       </div>
+
     </div>
   </section>
 {% endfor %}
